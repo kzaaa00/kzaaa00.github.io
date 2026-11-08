@@ -110,7 +110,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--red-d)}
 #btn:focus-visible,.small:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .row{display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:700}
-#hits{position:absolute;left:0;right:0;top:3%;z-index:8;text-align:center;font-family:var(--display);color:var(--red);font-size:clamp(34px,11vw,54px);line-height:1;font-variant-numeric:tabular-nums;pointer-events:none;white-space:nowrap}
+#hits{position:absolute;left:0;right:0;top:0;margin-top:-2px;z-index:8;text-align:center;font-family:var(--display);color:var(--red);font-size:clamp(34px,11vw,54px);line-height:1;font-variant-numeric:tabular-nums;pointer-events:none;white-space:nowrap}
 #hits small{font-family:var(--body);font-weight:900;font-size:.5em;color:var(--ink);margin-left:.12em}
 #hits.bump{animation:hitsPop .25s}
 @keyframes hitsPop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
@@ -418,7 +418,7 @@ async function makeShot(){
   const lines=wrap(x,TEXT,W-120);let y=56;
   for(const l of lines){x.fillText(l,60,y);y+=47;}
   /* count */
-  const cy=y+34;x.textAlign='center';x.textBaseline='alphabetic';
+  const cy=y+18;x.textAlign='center';x.textBaseline='alphabetic';
   const num=S.n.toLocaleString();
   x.font='400 132px "Dela Gothic One",sans-serif';const nw=x.measureText(num).width;
   
