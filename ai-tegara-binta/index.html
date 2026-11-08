@@ -317,6 +317,9 @@ function pick(){
   for(const [k,w] of NORMAL){if((x-=w)<0)return (k===S.last&&k!=='binta')?'binta':k;}
   return 'binta';
 }
+/* Pie, water and soot wear off on their own, even while you keep pressing. */
+const ST={};
+function status(key,ms){S.marks[key]=1;clearTimeout(ST[key]);ST[key]=setTimeout(()=>{S.marks[key]=0;draw(0);},ms);}
 function scheduleClear(ms){clearTimeout(S.clearT);S.clearT=setTimeout(()=>{Object.assign(S.marks,{L:[],R:[],dot:0,bump:0,pie:0,wet:0,burnt:0});draw(0);},ms||2500);}
 function slapOnce(side,delay){
   const m=S.marks;
@@ -346,14 +349,14 @@ function punish(){
     setTimeout(()=>{m.bump=Math.min(m.bump+1,2);draw(0);anim($('man'),'squash');hitFx();boom(k);},300);
   }else if(k==='pie'){
     setAnim($('pie'),'go');
-    setTimeout(()=>{m.pie=1;draw(0);anim($('man'),'back');SFX.pie();hitFx();boom(k);},280);
+    setTimeout(()=>{status('pie',2600);draw(0);anim($('man'),'back');SFX.pie();hitFx();boom(k);},280);
   }else if(k==='water'){
     setAnim($('water'),'go');
-    setTimeout(()=>{m.wet=1;draw(0);anim($('man'),'squash');SFX.water();hitFx();boom(k);},250);
+    setTimeout(()=>{status('wet',2600);draw(0);anim($('man'),'squash');SFX.water();hitFx();boom(k);},250);
   }else if(k==='kaminari'){
     
     setTimeout(()=>{setAnim($('bolt'),'go');anim($('flash'),'go');SFX.kaminari();},350);
-    setTimeout(()=>{m.burnt=1;draw(0);anim($('man'),'squash');setAnim($('smoke'),'go');hitFx();boom(k);},450);
+    setTimeout(()=>{status('burnt',2600);draw(0);anim($('man'),'squash');setAnim($('smoke'),'go');hitFx();boom(k);},450);
     scheduleClear(3200);return;
   }else if(k==='taraiRain'){
     
