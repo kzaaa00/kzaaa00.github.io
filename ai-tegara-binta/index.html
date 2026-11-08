@@ -45,24 +45,48 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 @keyframes back{20%{transform:translateX(-50%) rotate(-6deg) translateY(-4px)}100%{transform:translateX(-50%)}}
 
 
-.fx{position:absolute;z-index:7;pointer-events:none;opacity:0}
-#hand{top:14%;left:28%;width:46%;max-width:230px}
-#hand.fromR{animation:swingR .4s ease-out forwards}
-#hand.fromL{animation:swingL .4s ease-out forwards}
-@keyframes swingR{0%{opacity:1;transform:translate(70%,-10%) rotate(30deg)}35%{opacity:1;transform:translate(0,0) rotate(-8deg)}70%{opacity:1;transform:translate(-8%,4%) rotate(-14deg)}100%{opacity:0;transform:translate(-20%,8%) rotate(-20deg)}}
-@keyframes swingL{0%{opacity:1;transform:translate(-90%,-10%) scaleX(-1) rotate(30deg)}35%{opacity:1;transform:translate(-30%,0) scaleX(-1) rotate(-8deg)}70%{opacity:1;transform:translate(-22%,4%) scaleX(-1) rotate(-14deg)}100%{opacity:0;transform:translate(-10%,8%) scaleX(-1) rotate(-20deg)}}
-#harisen{top:-6%;left:34%;width:52%;max-width:250px;transform-origin:90% 90%}
-#harisen.go{animation:harisen .45s ease-in forwards}
-@keyframes harisen{0%{opacity:1;transform:rotate(-80deg) translate(10%,-30%)}40%{opacity:1;transform:rotate(8deg)}55%{transform:rotate(0deg)}85%{opacity:1}100%{opacity:0;transform:rotate(-6deg)}}
-#finger{top:14%;left:4%;width:34%;max-width:160px}
+/* Effects live in #rig, a box laid exactly over the person, so % positions are in the person's own coordinates
+   (head centre is about 50% across, 45% down; top of the beret about 18% down). */
+#rig{position:absolute;left:50%;bottom:0;height:76%;aspect-ratio:240/300;max-width:70%;transform:translateX(-50%);z-index:7;pointer-events:none}
+.fx{position:absolute;pointer-events:none;opacity:0;overflow:visible}
+.hand{top:20%;width:72%}
+.hand.fromR{left:40%;animation:swingR .4s ease-out forwards}
+.hand.fromL{left:-12%;animation:swingL .4s ease-out forwards}
+@keyframes swingR{0%{opacity:1;transform:translate(80%,-10%) rotate(30deg)}35%{opacity:1;transform:translate(0,0) rotate(-8deg)}70%{opacity:1;transform:translate(-6%,4%) rotate(-14deg)}100%{opacity:0;transform:translate(-14%,8%) rotate(-20deg)}}
+@keyframes swingL{0%{opacity:1;transform:translate(-80%,-10%) scaleX(-1) rotate(30deg)}35%{opacity:1;transform:translate(0,0) scaleX(-1) rotate(-8deg)}70%{opacity:1;transform:translate(6%,4%) scaleX(-1) rotate(-14deg)}100%{opacity:0;transform:translate(14%,8%) scaleX(-1) rotate(-20deg)}}
+#harisen,#hammer{top:-4%;left:30%;width:84%;transform-origin:92% 88%}
+#harisen.go,#hammer.go{animation:bonk .45s ease-in forwards}
+@keyframes bonk{0%{opacity:1;transform:rotate(-80deg)}40%{opacity:1;transform:rotate(8deg)}55%{transform:rotate(0deg)}85%{opacity:1}100%{opacity:0;transform:rotate(-6deg)}}
+#finger{top:22%;left:-28%;width:56%}
 #finger.go{animation:finger .45s ease-out forwards}
-@keyframes finger{0%{opacity:1;transform:translateX(-40%) rotate(0)}40%{opacity:1;transform:translateX(0) rotate(0)}55%{opacity:1;transform:translateX(4%) rotate(-25deg)}90%{opacity:1}100%{opacity:0;transform:translateX(-10%) rotate(-25deg)}}
-#tarai{top:0;left:50%;width:36%;max-width:170px;margin-left:-18%}
-#tarai.go{animation:tarai .8s cubic-bezier(.5,0,.75,0) forwards}
-@keyframes tarai{0%{opacity:1;transform:translateY(-120%)}38%{opacity:1;transform:translateY(22%)}52%{transform:translateY(8%) rotate(-10deg)}68%{transform:translateY(22%) rotate(6deg)}85%{opacity:1}100%{opacity:0;transform:translateY(200%) translateX(60%) rotate(40deg)}}
-#stars{top:2%;left:50%;width:30%;max-width:150px;margin-left:-15%}
+@keyframes finger{0%{opacity:1;transform:translateX(-40%)}40%{opacity:1;transform:translateX(0)}55%{opacity:1;transform:translateX(4%) rotate(-25deg)}90%{opacity:1}100%{opacity:0;transform:translateX(-10%) rotate(-25deg)}}
+.tarai{top:-4%;left:16%;width:68%}
+.tarai.go{animation:tarai .8s cubic-bezier(.5,0,.75,0) forwards}
+@keyframes tarai{0%{opacity:1;transform:translateY(-260%)}38%{opacity:1;transform:translateY(0)}52%{transform:translateY(-18%) rotate(-10deg)}68%{transform:translateY(0) rotate(6deg)}85%{opacity:1}100%{opacity:0;transform:translateY(300%) translateX(70%) rotate(40deg)}}
+#stars{top:-2%;left:18%;width:64%}
 #stars.go{animation:stars 1.2s linear forwards}
 @keyframes stars{0%,100%{opacity:0}10%,80%{opacity:1}0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+#pie{top:26%;left:22%;width:56%}
+#pie.go{animation:pie .32s cubic-bezier(.3,0,.6,1) forwards}
+@keyframes pie{0%{opacity:1;transform:translate(-190%,40%) rotate(-30deg) scale(.7)}85%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}100%{opacity:0;transform:scale(1.25)}}
+#water{top:-16%;left:2%;width:96%}
+#water.go{animation:water .55s ease-in forwards}
+@keyframes water{0%{opacity:1;transform:translateY(-60%) scaleY(1.2)}45%{opacity:1;transform:translateY(0) scaleY(1)}60%{opacity:.95;transform:translateY(8%) scale(1.25,.6)}100%{opacity:0;transform:translateY(14%) scale(1.5,.3)}}
+#bolt{top:-110%;left:28%;width:44%}
+#bolt.go{animation:bolt .7s steps(1) forwards}
+@keyframes bolt{0%,30%,55%{opacity:1}20%,45%,100%{opacity:0}}
+#smoke{top:-20%;left:10%;width:80%}
+#smoke.go{animation:smoke 1.8s ease-out forwards}
+@keyframes smoke{0%{opacity:0;transform:translateY(20%) scale(.6)}15%{opacity:.9}100%{opacity:0;transform:translateY(-40%) scale(1.3)}}
+#flash{position:absolute;inset:0;z-index:9;background:#fff;opacity:0;pointer-events:none}
+#flash.go{animation:flash .7s steps(1) forwards}
+@keyframes flash{0%,30%{opacity:.95}15%,45%,100%{opacity:0}}
+#stage.gold{animation:gold 2.6s ease-out}
+@keyframes gold{0%,100%{background:transparent}10%,85%{background:radial-gradient(circle at 50% 60%,#fff3b0 0,#ffd23f 45%,#f2a50c 100%)}}
+#rare{position:absolute;left:50%;top:15%;z-index:10;transform:translateX(-50%);font-family:var(--display);white-space:nowrap;pointer-events:none;opacity:0;padding:6px 16px 7px;border-radius:999px;border:3px solid var(--ink);background:#ffd23f;color:var(--ink);font-size:clamp(16px,4.8vw,22px);box-shadow:0 4px 0 var(--ink)}
+#rare.super{background:linear-gradient(90deg,#ff5f6d,#ffc371,#47e0a0,#5fa8ff,#c86bff);color:#fff;-webkit-text-stroke:1.5px var(--ink);paint-order:stroke fill;font-size:clamp(18px,5.6vw,26px)}
+#rare.show{animation:rare 2.2s ease-out forwards}
+@keyframes rare{0%{opacity:0;transform:translateX(-50%) scale(.3) rotate(-8deg)}12%{opacity:1;transform:translateX(-50%) scale(1.15) rotate(3deg)}22%{transform:translateX(-50%) scale(1) rotate(0)}85%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}
 
 #boom{position:absolute;left:3%;top:46%;z-index:8;font-family:var(--display);font-size:clamp(34px,11vw,56px);color:#ffd23f;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:3px 4px 0 var(--ink);transform:rotate(-10deg);pointer-events:none;opacity:0;white-space:nowrap}
 #boom.show{animation:boom .7s ease-out forwards}
@@ -73,7 +97,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--red-d)}
 #btn:focus-visible,.small:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .row{display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:700}
-#hits{position:absolute;left:0;right:0;top:3%;z-index:6;text-align:center;font-family:var(--display);color:var(--red);font-size:clamp(34px,11vw,54px);line-height:1;font-variant-numeric:tabular-nums;pointer-events:none;white-space:nowrap}
+#hits{position:absolute;left:0;right:0;top:3%;z-index:8;text-align:center;font-family:var(--display);color:var(--red);font-size:clamp(34px,11vw,54px);line-height:1;font-variant-numeric:tabular-nums;pointer-events:none;white-space:nowrap}
 #hits small{font-family:var(--body);font-weight:900;font-size:.5em;color:var(--ink);margin-left:.12em}
 #hits.bump{animation:hitsPop .25s}
 @keyframes hitsPop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
@@ -97,19 +121,29 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 <body>
 <div id="app">
   <header id="crime">
-    <p>AIに絵を描かせておきながら、プロンプトを何時間も練ったんだから自分の作品だと言い張り、試した回数の多さは創作への関わりにならないと文化庁が言っていても聞く耳を持たず、アイデアにはそもそも著作権がないことも知らないまま「権利をよこせ」と騒ぎ、AIで作ったことはこっそり隠して、人の生成物まで勝手に持ってきて自作みたいな顔で並べ、自分の手では線を一本も引いたことがないのに手で描いている人を「時代遅れ」と見下し、AIが一瞬で出した一枚に自分の名前だけ書いて「これが私の表現です」と胸を張り、そのせいでAIを使うと正直に明かしてルールの中で売っている人まで同じ目で見られる原因を作っておいて、褒められたら自分の才能、叩かれたらAIのせいにして、苦労した時間だけはしっかり数えるくせに、その時間で自分の手を動かせばいいという話には耳をふさぎ、それでもこの界隈で一番えらいのは自分だと信じて疑わない、AIの手柄を全部自分の手柄にする人</p>
+    <p>AIに絵を描かせておきながら、プロンプトを何時間も練ったんだから自分の作品だと言い張り、試した回数の多さは創作への関わりにならないと文化庁が言っていても聞く耳を持たず、アイデアにはそもそも著作権がないことも知らないまま「権利をよこせ」と騒ぎ、AIで作ったことはこっそり隠して、人の生成物まで勝手に持ってきて自作みたいな顔で並べ、自分の手では線を一本も引いたことがないのに手で描いている人を「時代遅れ」と見下し、AIが一瞬で出した一枚に自分の名前だけ書いて「これが私の表現です」と胸を張り、そのせいでAIを使うと正直に明かしてルールの中で売っている人まで同じ目で見られる原因を作っておいて、褒められたら自分の才能、叩かれたらAIのせいにして、苦労した時間だけはしっかり数えるくせに、その時間で自分の手を動かせばいいという話には耳をふさぎ、それでもこの界隈で一番えらいのは自分だと信じて疑わない、AIの手柄を全部自分の手柄にする人↓</p>
   </header>
 
   <div id="stage" aria-label="お仕置きされる人。タップでもお仕置きできます">
     <svg id="bg" viewBox="0 0 400 400" preserveAspectRatio="none" aria-hidden="true"><rect width="400" height="400" fill="#fffaf2"/></svg>
         <svg id="man" viewBox="0 0 240 300" aria-hidden="true"></svg>
-    <svg id="hand" class="fx" viewBox="0 0 200 200" aria-hidden="true"></svg>
-    <svg id="harisen" class="fx" viewBox="0 0 240 200" aria-hidden="true"></svg>
-    <svg id="finger" class="fx" viewBox="0 0 160 100" aria-hidden="true"></svg>
-    <svg id="tarai" class="fx" viewBox="0 0 170 90" aria-hidden="true"></svg>
-    <svg id="stars" class="fx" viewBox="0 0 150 60" aria-hidden="true"></svg>
+    <div id="rig" aria-hidden="true">
+      <svg id="handR" class="fx hand" viewBox="0 0 200 200"></svg>
+      <svg id="handL" class="fx hand" viewBox="0 0 200 200"></svg>
+      <svg id="harisen" class="fx" viewBox="0 0 240 200"></svg>
+      <svg id="hammer" class="fx" viewBox="0 0 240 200"></svg>
+      <svg id="finger" class="fx" viewBox="0 0 160 100"></svg>
+      <svg id="tarai" class="fx tarai" viewBox="0 0 170 90"></svg>
+      <svg id="stars" class="fx" viewBox="0 0 150 60"></svg>
+      <svg id="pie" class="fx" viewBox="0 0 160 110"></svg>
+      <svg id="water" class="fx" viewBox="0 0 240 160"></svg>
+      <svg id="bolt" class="fx" viewBox="0 0 100 260"></svg>
+      <svg id="smoke" class="fx" viewBox="0 0 200 120"></svg>
+    </div>
+    <div id="flash" aria-hidden="true"></div>
+    <div id="rare" aria-hidden="true"></div>
     <div id="boom" aria-hidden="true"></div>
-    <div id="hits" aria-live="polite">0<small>回</small></div>
+    <div id="hits" aria-live="polite">0</div>
   </div>
 
   <div id="ctrl">
@@ -137,7 +171,7 @@ const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|
 const $=id=>document.getElementById(id);
 const rnd=a=>a[Math.random()*a.length|0];
 
-const BOOM={binta:['バチーン！','ベチィン！','パァン！'],harisen:['スパーン！','スパァン！'],decopin:['ペチッ！','ピシッ！'],tarai:['ゴワーン！','ゴィーン！']};
+const BOOM={binta:['バチーン！','ベチィン！','パァン！'],ofuku:['バチバチーン！','往復ビンタ！'],harisen:['スパーン！','スパァン！'],decopin:['ペチッ！','ピシッ！'],tarai:['ゴワーン！','ゴィーン！'],hammer:['ピコッ！','ピコーン！'],pie:['ベシャッ！','パイーン！'],water:['バシャーン！','ザバーン！'],kaminari:['ドンガラガッシャーン！'],taraiRain:['ガンゴンゴワーン！'],senju:['ズババババ！']};
 
 /* ---------- drawing ---------- */
 const L={hc:'#2b2320',cap:'#c8322b',top:'#22252e',skin:'#f2c9a5'};
@@ -168,29 +202,51 @@ function manSVG(face,tilt,m){
   const bump=m.bump?`<g><ellipse cx="128" cy="${70-Math.min(m.bump,4)*5}" rx="${16+Math.min(m.bump,4)*2}" ry="${12+Math.min(m.bump,4)*5}" fill="${L.skin}" stroke="rgba(180,90,70,.5)" stroke-width="2"/><ellipse cx="124" cy="${66-Math.min(m.bump,4)*6}" rx="5" ry="4" fill="#fff" opacity=".6"/></g>`:'';
   const tears=face==='cry'?`<path d="M90 140 Q86 156 92 162 Q98 156 94 140 Z M146 140 Q142 156 148 162 Q154 156 150 140 Z" fill="#7cc4ff"/>`:'';
   const sweat=(face==='shock'||face==='hit')?`<path d="M178 100 C173 110 173 115 178 116 C183 115 183 110 178 100 Z" fill="#8fd0ff" stroke="#3b8fd0" stroke-width="1.5"/>`:'';
-  return `<path d="M22 302 L36 236 Q46 208 88 200 L152 200 Q194 208 204 236 L218 302 Z" fill="${L.top}"/>
-  <path d="M96 196 Q120 210 144 196 L146 214 Q120 226 94 214 Z" fill="${L.top}" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+  const burnt=!!m.burnt, skin=burnt?'#5b463f':L.skin, top=burnt?'#262022':L.top;
+  const pie=m.pie?`<g><path d="M70 132 Q76 112 98 118 Q112 104 130 114 Q152 104 166 124 Q178 140 166 158 Q170 182 146 184 Q132 196 112 186 Q86 194 76 176 Q60 160 70 132 Z" fill="#fffdf4" stroke="#e9dcc4" stroke-width="2"/>
+    <path d="M84 182 Q86 198 80 204 M150 182 Q152 196 158 202 M118 188 Q120 204 116 210" stroke="#fffdf4" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle cx="140" cy="122" r="9" fill="#e0314a"/><path d="M136 113 l4 -6 l4 6" fill="#3a9a5b"/></g>`:'';
+  const wet=m.wet?`<g fill="rgba(110,185,255,.75)"><path d="M68 112 Q60 150 66 170 Q74 150 74 112 Z M172 112 Q180 150 174 168 Q166 150 166 112 Z"/><path d="M96 96 Q92 120 98 128 Q104 120 100 96 Z M142 96 Q138 116 144 124 Q150 116 146 96 Z M120 92 Q116 112 122 118 Q128 112 124 92 Z"/>
+    <circle cx="58" cy="186" r="4"/><circle cx="184" cy="194" r="5"/><circle cx="74" cy="214" r="3"/><circle cx="168" cy="222" r="4"/></g>`:'';
+  const afro=burnt?`<g fill="#1d1717">${[[120,60,46],[78,80,30],[162,80,30],[94,52,28],[146,52,28],[120,36,26],[70,108,20],[170,108,20]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>`:'';
+  const hat=burnt?'':`<g transform="translate(0 ${m.bump?-Math.min(m.bump,4)*7:0}) rotate(${m.bump?-18:-10} 114 80)"><ellipse cx="114" cy="80" rx="64" ry="20" fill="${L.cap}"/><circle cx="104" cy="60" r="5" fill="${L.cap}"/></g>`;
+  const eyes=burnt?'<circle cx="98" cy="133" r="6" fill="#fff" stroke="none"/><circle cx="142" cy="133" r="6" fill="#fff" stroke="none"/>':EYES[face];
+  return `<path d="M22 302 L36 236 Q46 208 88 200 L152 200 Q194 208 204 236 L218 302 Z" fill="${top}"/>
+  <path d="M96 196 Q120 210 144 196 L146 214 Q120 226 94 214 Z" fill="${top}" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
   <g transform="rotate(${tilt} 120 210)">
-    <rect x="106" y="178" width="28" height="28" fill="${L.skin}"/>
-    <ellipse cx="64" cy="138" rx="9" ry="13" fill="${L.skin}"/><ellipse cx="176" cy="138" rx="9" ry="13" fill="${L.skin}"/>
-    <ellipse cx="120" cy="134" rx="56" ry="62" fill="${L.skin}"/>
-    ${bump}
-    <path d="M66 132 Q62 84 120 80 Q178 84 174 132 Q166 100 120 98 Q74 100 66 132 Z" fill="${L.hc}"/>
-    <g transform="translate(0 ${m.bump?-Math.min(m.bump,4)*7:0}) rotate(${m.bump?-18:-10} 114 80)"><ellipse cx="114" cy="80" rx="64" ry="20" fill="${L.cap}"/><circle cx="104" cy="60" r="5" fill="${L.cap}"/></g>
-    ${dot}
+    ${afro}
+    <rect x="106" y="178" width="28" height="28" fill="${skin}"/>
+    <ellipse cx="64" cy="138" rx="9" ry="13" fill="${skin}"/><ellipse cx="176" cy="138" rx="9" ry="13" fill="${skin}"/>
+    <ellipse cx="120" cy="134" rx="56" ry="62" fill="${skin}"/>
+    ${burnt?'':bump}
+    ${burnt?'':`<path d="M66 132 Q62 84 120 80 Q178 84 174 132 Q166 100 120 98 Q74 100 66 132 Z" fill="${L.hc}"/>`}
+    ${hat}
+    ${burnt?'':dot}
     <path d="${BROWS[face]}" stroke="#2a2420" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-    <g fill="#2a2420" stroke="#2a2420" stroke-width="3.5" stroke-linecap="round">${EYES[face]}</g>
+    <g fill="#2a2420" stroke="#2a2420" stroke-width="3.5" stroke-linecap="round">${eyes}</g>
     <path d="M120 138 Q127 150 117 154" stroke="rgba(150,90,60,.55)" stroke-width="3" fill="none" stroke-linecap="round"/>
-    ${MOUTH[face]}${tears}${prints}
+    ${MOUTH[face]}${tears}${burnt?'':prints}${pie}${wet}
   </g>${sweat}`;
 }
-$('hand').innerHTML=`<g fill="#f1c7a1" stroke="#b9805a" stroke-width="3"><path d="M60 196 L70 128 L140 128 L150 196 Z" fill="#3a3f52" stroke="none"/><ellipse cx="105" cy="110" rx="52" ry="44"/><rect x="52" y="20" width="20" height="78" rx="10"/><rect x="77" y="8" width="21" height="88" rx="10"/><rect x="103" y="10" width="21" height="86" rx="10"/><rect x="129" y="24" width="19" height="74" rx="9"/><rect x="140" y="88" width="20" height="58" rx="10" transform="rotate(-48 150 118)"/></g><path d="M14 70 L40 80 M10 104 L38 106 M18 136 L42 128" stroke="#fff" stroke-width="6" stroke-linecap="round"/>`;
+const HAND=`<g fill="#f1c7a1" stroke="#b9805a" stroke-width="3"><path d="M60 196 L70 128 L140 128 L150 196 Z" fill="#3a3f52" stroke="none"/><ellipse cx="105" cy="110" rx="52" ry="44"/><rect x="52" y="20" width="20" height="78" rx="10"/><rect x="77" y="8" width="21" height="88" rx="10"/><rect x="103" y="10" width="21" height="86" rx="10"/><rect x="129" y="24" width="19" height="74" rx="9"/><rect x="140" y="88" width="20" height="58" rx="10" transform="rotate(-48 150 118)"/></g><path d="M14 70 L40 80 M10 104 L38 106 M18 136 L42 128" stroke="#fff" stroke-width="6" stroke-linecap="round"/>`;
+$('handR').innerHTML=HAND;$('handL').innerHTML=HAND;
 $('harisen').innerHTML=`<g transform="rotate(-30 120 100)"><rect x="150" y="88" width="80" height="22" rx="6" fill="#d7263d" stroke="#1f1a24" stroke-width="3"/>
   <path d="M152 99 L20 40 L20 158 Z" fill="#fff" stroke="#1f1a24" stroke-width="3" stroke-linejoin="round"/>
   ${[52,70,88,106,124,140].map((y,i)=>`<path d="M152 99 L20 ${40+i*20+(i?0:0)}" stroke="#1f1a24" stroke-width="1.6" opacity=".55"/>`).join('')}
   <text x="70" y="106" font-size="22" font-weight="900" fill="#d7263d" font-family="sans-serif" transform="rotate(0)">反省</text></g>`;
 $('finger').innerHTML=`<g fill="#f1c7a1" stroke="#b9805a" stroke-width="3"><path d="M0 40 H40 V96 H0 Z" fill="#3a3f52" stroke="none"/><ellipse cx="62" cy="62" rx="34" ry="30"/><rect x="70" y="30" width="78" height="20" rx="10"/><ellipse cx="86" cy="80" rx="16" ry="10"/></g>`;
-$('tarai').innerHTML=`<path d="M8 24 H162 L146 82 Q85 96 24 82 Z" fill="#c9ccd2" stroke="#1f1a24" stroke-width="3"/><ellipse cx="85" cy="24" rx="77" ry="14" fill="#e6e8ec" stroke="#1f1a24" stroke-width="3"/><ellipse cx="85" cy="24" rx="62" ry="8" fill="#a9adb6"/><path d="M40 40 Q50 70 44 80" stroke="#fff" stroke-width="5" fill="none" opacity=".6" stroke-linecap="round"/>`;
+const TARAI=`<path d="M8 24 H162 L146 82 Q85 96 24 82 Z" fill="#c9ccd2" stroke="#1f1a24" stroke-width="3"/><ellipse cx="85" cy="24" rx="77" ry="14" fill="#e6e8ec" stroke="#1f1a24" stroke-width="3"/><ellipse cx="85" cy="24" rx="62" ry="8" fill="#a9adb6"/><path d="M40 40 Q50 70 44 80" stroke="#fff" stroke-width="5" fill="none" opacity=".6" stroke-linecap="round"/>`;
+$('tarai').innerHTML=TARAI;
+$('hammer').innerHTML=`<g transform="rotate(-30 120 100)"><rect x="140" y="92" width="96" height="16" rx="6" fill="#f2b134" stroke="#1f1a24" stroke-width="3"/>
+  <rect x="64" y="56" width="80" height="88" rx="14" fill="#e8344e" stroke="#1f1a24" stroke-width="3"/>
+  <rect x="30" y="62" width="38" height="76" rx="12" fill="#ffd23f" stroke="#1f1a24" stroke-width="3"/><rect x="140" y="62" width="20" height="76" rx="8" fill="#ffd23f" stroke="#1f1a24" stroke-width="3"/>
+  <path d="M78 70 V130 M96 70 V130 M114 70 V130 M130 70 V130" stroke="#b81d36" stroke-width="3"/></g>`;
+$('pie').innerHTML=`<ellipse cx="80" cy="74" rx="76" ry="26" fill="#d9a441" stroke="#1f1a24" stroke-width="3"/><path d="M14 70 Q20 20 80 18 Q140 20 146 70 Z" fill="#fffdf4" stroke="#1f1a24" stroke-width="3"/>
+  ${[30,52,74,96,118].map(x=>`<circle cx="${x+8}" cy="${34+(x%3)*4}" r="9" fill="#fff" stroke="#e9dcc4" stroke-width="2"/>`).join('')}<circle cx="80" cy="16" r="10" fill="#e0314a" stroke="#1f1a24" stroke-width="2"/>`;
+$('water').innerHTML=`<path d="M40 10 Q120 -4 200 10 Q236 60 214 120 Q190 156 150 140 Q120 160 90 140 Q50 158 26 120 Q4 60 40 10 Z" fill="rgba(90,170,255,.82)" stroke="#2a6fb0" stroke-width="3"/>
+  <path d="M70 40 Q80 80 70 110 M170 36 Q160 70 172 104" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" opacity=".7"/>`;
+$('bolt').innerHTML=`<path d="M60 0 L22 120 L52 120 L26 260 L84 104 L54 104 L80 0 Z" fill="#ffe14d" stroke="#1f1a24" stroke-width="4" stroke-linejoin="round"/>`;
+$('smoke').innerHTML=[[50,80,30],[100,60,38],[150,82,28],[76,40,24],[130,34,26]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#9a9aa2" opacity=".85"/>`).join('');
 $('stars').innerHTML=[[20,30],[75,10],[130,30],[75,52]].map(([x,y])=>`<path d="M${x} ${y-11} L${x+3} ${y-3} L${x+11} ${y} L${x+3} ${y+3} L${x} ${y+11} L${x-3} ${y+3} L${x-11} ${y} L${x-3} ${y-3} Z" fill="#ffd23f" stroke="#1f1a24" stroke-width="2"/>`).join('');
 
 /* ---------- audio ---------- */
@@ -212,51 +268,107 @@ const SFX={
   binta(){noise(.18,.8,700);noise(.06,.5,3000);tone(140,.16,'sine',.3,0,60);},
   harisen(){noise(.12,.9,2500);noise(.2,.4,900,.01);tone(220,.08,'square',.05);},
   decopin(){tone(1400,.05,'square',.06,0,700);noise(.04,.4,4000);},
-  tarai(){[[260,1.6],[655,1.2],[1015,.9],[1490,.6]].forEach(([f,d],i)=>tone(f,d,'sine',.12/(i+1),.3));noise(.1,.5,1500,.3);}
+  tarai(d=.3){[[260,1.6],[655,1.2],[1015,.9],[1490,.6]].forEach(([f,dd],i)=>tone(f,dd,'sine',.12/(i+1),d));noise(.1,.5,1500,d);},
+  hammer(){tone(1320,.06,'square',.06);tone(1760,.08,'square',.05,.05);noise(.05,.3,3000);},
+  pie(){noise(.25,.7,500,0,'lowpass');tone(110,.2,'sine',.25,0,60);},
+  water(){noise(.6,.5,900,0,'bandpass');noise(.3,.3,3000,.05);},
+  kaminari(){noise(.25,.9,2000);noise(1.4,.7,300,.05,'lowpass');tone(55,1.2,'sawtooth',.08,.05,30);},
+  rare(){[784,988,1175,1568].forEach((f,i)=>tone(f,.16,'triangle',.08,i*.07));},
+  superRare(){[523,659,784,1047,1319,1568,2093].forEach((f,i)=>tone(f,.22,'triangle',.08,i*.06));}
 };
 function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
 syncMute();
 
 /* ---------- state ---------- */
 /* The face never changes. Marks fade on their own; only the body moves. */
-const S={n:0,marks:{L:[],R:[],dot:0,bump:0},last:'',clearT:null};
+const S={n:0,marks:{L:[],R:[],dot:0,bump:0,pie:0,wet:0,burnt:0},last:'',clearT:null,busyUntil:0,force:null};
 function draw(tilt){$('man').innerHTML=manSVG('blank',tilt||0,S.marks);}
 function anim(el,c){el.classList.remove(c);void el.getBoundingClientRect();el.classList.add(c);}
-function setAnim(el,c){el.setAttribute('class','fx');void el.getBoundingClientRect();el.setAttribute('class','fx '+c);}
+function setAnim(el,c){const base=el.dataset.base||(el.dataset.base=el.getAttribute('class'));el.setAttribute('class',base);void el.getBoundingClientRect();el.setAttribute('class',base+' '+c);}
+function showCount(){const h=$('hits');h.textContent=S.n.toLocaleString();anim(h,'bump');}
+function boom(k){const b=$('boom');const t=rnd(BOOM[k]);b.textContent=t;b.style.fontSize=t.length>7?'clamp(22px,6.8vw,40px)':'';anim(b,'show');}
+function banner(t,sup){const r=$('rare');r.textContent=t;r.className=sup?'super':'';void r.offsetWidth;r.classList.add('show');}
+function hitFx(){anim($('stage'),'shake');try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}}
+const NORMAL=[['binta',30],['ofuku',8],['harisen',14],['decopin',12],['tarai',10],['hammer',10],['pie',8],['water',8]];
 function pick(){
-  const r=Math.random(),k=r<.42?'binta':r<.64?'harisen':r<.82?'decopin':'tarai';
-  return (k===S.last&&k!=='binta'&&Math.random()<.7)?'binta':k;
+  if(S.force){const f=S.force;S.force=null;return f;}
+  const r=Math.random();
+  if(r<.015)return 'senju';
+  if(r<.04)return 'kaminari';
+  if(r<.065)return 'taraiRain';
+  const tot=NORMAL.reduce((a,[,w])=>a+w,0);let x=Math.random()*tot;
+  for(const [k,w] of NORMAL){if((x-=w)<0)return (k===S.last&&k!=='binta')?'binta':k;}
+  return 'binta';
+}
+function scheduleClear(ms){clearTimeout(S.clearT);S.clearT=setTimeout(()=>{Object.assign(S.marks,{L:[],R:[],dot:0,bump:0,pie:0,wet:0,burnt:0});draw(0);},ms||2500);}
+function slapOnce(side,delay){
+  const m=S.marks;
+  setTimeout(()=>{
+    setAnim($(side==='R'?'handR':'handL'),side==='R'?'fromR':'fromL');
+    setTimeout(()=>{m[side].push(1);if(m[side].length>3)m[side].shift();draw(side==='R'?-10:10);anim($('man'),side==='R'?'hitR':'hitL');SFX.binta();hitFx();setTimeout(()=>draw(0),300);},90);
+  },delay);
 }
 function punish(){
   ac();
-  const k=pick();S.last=k;S.n++;
-  const m=S.marks;let tilt=0,delay=90;
-  if(k==='binta'){
-    const side=Math.random()<.5?'R':'L';
-    m[side].push(1);if(m[side].length>3)m[side].shift();
-    tilt=side==='R'?-10:10;
-    setAnim($('hand'),side==='R'?'fromR':'fromL');
-    setTimeout(()=>anim($('man'),side==='R'?'hitR':'hitL'),90);
-  }else if(k==='harisen'){
-    delay=150;setAnim($('harisen'),'go');setTimeout(()=>anim($('man'),'squash'),150);
+  const now=performance.now();if(now<S.busyUntil)return;
+  const k=pick();S.last=k;
+  const m=S.marks;
+  if(k==='senju'){return senju();}
+  S.n++;showCount();
+  if(k==='binta'){slapOnce(Math.random()<.5?'R':'L',0);setTimeout(()=>boom(k),90);}
+  else if(k==='ofuku'){const a=Math.random()<.5?'R':'L';slapOnce(a,0);slapOnce(a==='R'?'L':'R',170);setTimeout(()=>boom(k),260);}
+  else if(k==='harisen'||k==='hammer'){
+    setAnim($(k),'go');
+    setTimeout(()=>{if(k==='hammer')m.bump=Math.min(m.bump+1,2);draw(0);anim($('man'),'squash');SFX[k]();hitFx();boom(k);},160);
   }else if(k==='decopin'){
-    delay=200;setAnim($('finger'),'go');setTimeout(()=>{m.dot=Math.min(m.dot+1,3);anim($('man'),'back');},200);
-  }else{
-    delay=300;setAnim($('tarai'),'go');setAnim($('stars'),'go');
-    setTimeout(()=>{m.bump=Math.min(m.bump+1,2);anim($('man'),'squash');},300);
+    setAnim($('finger'),'go');
+    setTimeout(()=>{m.dot=Math.min(m.dot+1,3);draw(0);anim($('man'),'back');SFX.decopin();hitFx();boom(k);},200);
+  }else if(k==='tarai'){
+    setAnim($('tarai'),'go');setAnim($('stars'),'go');SFX.tarai();
+    setTimeout(()=>{m.bump=Math.min(m.bump+1,2);draw(0);anim($('man'),'squash');hitFx();boom(k);},300);
+  }else if(k==='pie'){
+    setAnim($('pie'),'go');
+    setTimeout(()=>{m.pie=1;draw(0);anim($('man'),'back');SFX.pie();hitFx();boom(k);},280);
+  }else if(k==='water'){
+    setAnim($('water'),'go');
+    setTimeout(()=>{m.wet=1;draw(0);anim($('man'),'squash');SFX.water();hitFx();boom(k);},250);
+  }else if(k==='kaminari'){
+    S.busyUntil=now+1300;banner('レア！ 雷',false);SFX.rare();
+    setTimeout(()=>{setAnim($('bolt'),'go');anim($('flash'),'go');SFX.kaminari();},350);
+    setTimeout(()=>{m.burnt=1;draw(0);anim($('man'),'squash');setAnim($('smoke'),'go');hitFx();boom(k);},450);
+    scheduleClear(3200);return;
+  }else if(k==='taraiRain'){
+    S.busyUntil=now+1900;banner('レア！ タライの雨',false);SFX.rare();
+    const rig=$('rig');
+    [[-30,0],[60,180],[16,360],[-10,520],[44,660],[16,820]].forEach(([left,d],i)=>{
+      const t=document.createElementNS('http://www.w3.org/2000/svg','svg');t.setAttribute('viewBox','0 0 170 90');t.setAttribute('class','fx tarai');t.innerHTML=TARAI;t.style.left=left+'%';t.style.top=(-4-(i%2)*6)+'%';
+      setTimeout(()=>{rig.appendChild(t);void t.getBoundingClientRect();t.setAttribute('class','fx tarai go');SFX.tarai();
+        setTimeout(()=>{if(left>-20&&left<50){m.bump=Math.min(m.bump+1,3);draw(0);anim($('man'),'squash');}hitFx();if(i===5)boom(k);},300);
+        setTimeout(()=>t.remove(),900);},d+250);
+    });
+    setTimeout(()=>setAnim($('stars'),'go'),700);
+    scheduleClear(3400);return;
   }
-  if(k==='tarai')SFX.tarai();
-  setTimeout(()=>{
-    draw(tilt);
-    if(k!=='tarai')SFX[k]();
-    anim($('stage'),'shake');
-    const b=$('boom');b.textContent=rnd(BOOM[k]);anim(b,'show');
-    try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
-    setTimeout(()=>draw(0),380);
-  },delay);
-  const h=$('hits');h.innerHTML=`${S.n.toLocaleString()}<small>回</small>`;anim(h,'bump');
-  clearTimeout(S.clearT);
-  S.clearT=setTimeout(()=>{m.L=[];m.R=[];m.dot=0;m.bump=0;draw(0);},2500);
+  scheduleClear(2500);
+}
+/* Super rare: a thousand hands. Every slap counts. */
+function senju(){
+  const HITS=30,GAP=62,rig=$('rig');
+  S.busyUntil=performance.now()+HITS*GAP+1400;
+  banner('超レア！！ 千手ビンタ',true);SFX.superRare();anim($('stage'),'gold');
+  for(let i=0;i<HITS;i++){
+    const side=i%2?'R':'L';
+    setTimeout(()=>{
+      const h=document.createElementNS('http://www.w3.org/2000/svg','svg');h.setAttribute('viewBox','0 0 200 200');h.innerHTML=HAND;
+      h.setAttribute('class','fx hand');h.style.top=(8+Math.random()*30)+'%';h.style.width=(50+Math.random()*30)+'%';
+      rig.appendChild(h);void h.getBoundingClientRect();h.setAttribute('class','fx hand '+(side==='R'?'fromR':'fromL'));
+      if(side==='R')h.style.left=(30+Math.random()*30)+'%';else h.style.left=(-30+Math.random()*30)+'%';
+      setTimeout(()=>{const m=S.marks;m[side].push(1);if(m[side].length>3)m[side].shift();draw(side==='R'?-10:10);anim($('man'),side==='R'?'hitR':'hitL');SFX.binta();S.n++;showCount();if(i%3===0)hitFx();if(i%6===0)boom('senju');},90);
+      setTimeout(()=>h.remove(),450);
+    },500+i*GAP);
+  }
+  setTimeout(()=>draw(0),500+HITS*GAP+200);
+  scheduleClear(500+HITS*GAP+2600);
 }
 $('btn').addEventListener('click',punish);
 $('stage').addEventListener('pointerdown',e=>{e.preventDefault();punish();});
@@ -281,9 +393,9 @@ async function makeShot(){
   const cy=y+34;x.textAlign='center';x.textBaseline='alphabetic';
   const num=S.n.toLocaleString();
   x.font='400 132px "Dela Gothic One",sans-serif';const nw=x.measureText(num).width;
-  const UF='900 64px "Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif';x.font=UF;const uw=x.measureText('回').width;
-  const gap=10,total=nw+gap+uw,left=W/2-total/2,base=cy+120;
-  x.textAlign='left';x.fillStyle='#1f1a24';x.font=UF;x.fillText('回',left+nw+gap,base);
+  
+  const left=W/2-nw/2,base=cy+120;
+  x.textAlign='left';
   x.font='400 132px "Dela Gothic One",sans-serif';x.fillStyle='#d7263d';x.fillText(num,left,base);
   /* person, with marks */
   const marks=S.n?{L:[1,1],R:[1,1],dot:1,bump:S.n>=10?2:1}:{L:[],R:[],dot:0,bump:0};
@@ -323,7 +435,7 @@ $('closeSheet').addEventListener('click',()=>{$('sheet').hidden=true;});
 $('sheet').addEventListener('click',e=>{if(e.target===$('sheet'))$('sheet').hidden=true;});
 
 draw(0);
-window.__oshioki={S,punish};
+window.__oshioki={S,punish,pick};
 </script>
 </body>
 </html>
