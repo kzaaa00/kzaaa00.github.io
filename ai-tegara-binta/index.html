@@ -34,7 +34,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #stage.shake{animation:shake .3s}
 @keyframes shake{20%{transform:translate(-7px,2px)}40%{transform:translate(6px,-2px)}60%{transform:translate(-3px,1px)}80%{transform:translate(2px,0)}}
 #bg{position:absolute;inset:0;width:100%;height:100%;display:block}
-#man{position:absolute;left:50%;bottom:0;height:92%;aspect-ratio:240/300;max-width:70%;transform:translateX(-50%);transform-origin:50% 100%;z-index:2}
+#man{position:absolute;left:50%;bottom:0;height:76%;aspect-ratio:240/300;max-width:70%;transform:translateX(-50%);transform-origin:50% 100%;z-index:2}
 #man.hitR{animation:hitR .45s}
 #man.hitL{animation:hitL .45s}
 #man.squash{animation:squash .5s}
@@ -73,9 +73,20 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--red-d)}
 #btn:focus-visible,.small:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .row{display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:700}
-#count{font-variant-numeric:tabular-nums;opacity:.9}
+#hits{position:absolute;left:0;right:0;top:3%;z-index:6;text-align:center;font-family:var(--display);color:var(--red);font-size:clamp(34px,11vw,54px);line-height:1;font-variant-numeric:tabular-nums;pointer-events:none;white-space:nowrap}
+#hits small{font-size:.42em;color:var(--ink);margin:0 .15em}
+#hits.bump{animation:hitsPop .25s}
+@keyframes hitsPop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
+#sheet{position:fixed;inset:0;z-index:30;background:rgba(31,26,36,.72);display:flex;align-items:center;justify-content:center;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+#sheet[hidden]{display:none}
+#sheet .card{width:min(100%,400px);max-height:100%;overflow-y:auto;background:var(--paper);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+#sheet img{display:block;width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#sheet .hint{margin:0;font-size:12.5px;font-weight:700;color:var(--muted);text-align:center;line-height:1.5}
+#doShare{border:0;border-radius:12px;background:#000;color:#fff;font:700 17px var(--body);padding:13px 0;cursor:pointer}
+#closeSheet{border:0;background:none;color:var(--muted);font:700 14px var(--body);padding:6px 0;cursor:pointer}
 .row .sp{flex:1}
 .small{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;font:700 12px var(--body);padding:5px 12px;cursor:pointer;white-space:nowrap}
+#share{background:#fff;color:#000;border-color:#fff;font-size:14px;padding:7px 18px}
 #note{color:rgba(255,255,255,.55);font-size:10.5px;text-align:center;margin:-2px 0 0}
 #toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
 #toast.show{opacity:1}
@@ -98,19 +109,27 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
     <svg id="tarai" class="fx" viewBox="0 0 170 90" aria-hidden="true"></svg>
     <svg id="stars" class="fx" viewBox="0 0 150 60" aria-hidden="true"></svg>
     <div id="boom" aria-hidden="true"></div>
+    <div id="hits" aria-live="polite"><small>お仕置き</small>0<small>回</small></div>
   </div>
 
   <div id="ctrl">
     <button id="btn" type="button">お仕置き！</button>
     <div class="row">
-      <span id="count" aria-live="polite">お仕置き 0回</span><span class="sp"></span>
-      <button id="share" class="small" type="button">Xに書く</button>
+      <button id="share" class="small" type="button">Xで共有</button><span class="sp"></span>
       <button id="mute" class="small" type="button" aria-pressed="false">音 ON</button>
     </div>
     <p id="note">登場人物は架空です。実在の人物・団体とは関係ありません。</p>
   </div>
 </div>
 <div id="toast" role="status"></div>
+<div id="sheet" hidden role="dialog" aria-modal="true" aria-label="Xで共有">
+  <div class="card">
+    <img id="shot" alt="お仕置き回数の画像">
+    <p class="hint" id="hint"></p>
+    <button id="doShare" type="button">Xで共有</button>
+    <button id="closeSheet" type="button">閉じる</button>
+  </div>
+</div>
 
 <script>
 const HASHTAG='AIの手柄おしおき';
@@ -235,20 +254,73 @@ function punish(){
     try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
     setTimeout(()=>draw(0),380);
   },delay);
-  $('count').textContent=`お仕置き ${S.n}回`;
+  const h=$('hits');h.innerHTML=`<small>お仕置き</small>${S.n.toLocaleString()}<small>回</small>`;anim(h,'bump');
   clearTimeout(S.clearT);
   S.clearT=setTimeout(()=>{m.L=[];m.R=[];m.dot=0;m.bump=0;draw(0);},2500);
 }
 $('btn').addEventListener('click',punish);
 $('stage').addEventListener('pointerdown',e=>{e.preventDefault();punish();});
-document.addEventListener('keydown',e=>{if((e.code==='Space'||e.code==='Enter')&&document.activeElement!==$('share')&&document.activeElement!==$('mute')){e.preventDefault();if(!e.repeat)punish();}});
+document.addEventListener('keydown',e=>{if(!$('sheet').hidden){if(e.code==='Escape')$('sheet').hidden=true;return;}if((e.code==='Space'||e.code==='Enter')&&document.activeElement!==$('share')&&document.activeElement!==$('mute')){e.preventDefault();if(!e.repeat)punish();}});
 $('mute').addEventListener('click',()=>{muted=!muted;try{localStorage.setItem('oshioki-mute',muted?'1':'0');}catch(e){}syncMute();});
 function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),1700);}
-$('share').addEventListener('click',()=>{
-  const text=S.n?`AIの手柄を全部自分の手柄にする人に、${S.n}回お仕置きしました。`:'AIの手柄を全部自分の手柄にする人に、お仕置きできるページ。';
-  const url='https://x.com/intent/post?text='+encodeURIComponent(text)+'&hashtags='+encodeURIComponent(HASHTAG)+(SHARE_URL?'&url='+encodeURIComponent(SHARE_URL):'');
+/* ---------- share: an image of the screen with the count ---------- */
+const TEXT=document.querySelector('#crime p').textContent;
+function shareText(){return S.n?`AIの手柄を全部自分の手柄にする人に、${S.n.toLocaleString()}回お仕置きしました。`:'AIの手柄を全部自分の手柄にする人に、お仕置きできるページ。';}
+function wrap(x,text,maxW){const out=[];let cur='';for(const ch of text){if(x.measureText(cur+ch).width>maxW&&cur){if('、。？！…」）'.includes(ch)){cur+=ch;continue;}out.push(cur);cur=ch;}else cur+=ch;}if(cur)out.push(cur);return out;}
+function svgImg(markup){return new Promise((ok,ng)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ng;
+  i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" width="480" height="600">${markup}</svg>`);});}
+async function makeShot(){
+  try{await document.fonts.ready;}catch(e){}
+  const W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#fffaf2';x.fillRect(0,0,W,H);
+  x.fillStyle='#1f1a24';x.textBaseline='top';
+  x.font='500 30px "Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif';
+  const lines=wrap(x,TEXT,W-120);let y=56;
+  for(const l of lines){x.fillText(l,60,y);y+=47;}
+  /* count */
+  const cy=y+34;x.textAlign='center';x.textBaseline='alphabetic';
+  const num=S.n.toLocaleString();
+  x.font='400 132px "Dela Gothic One",sans-serif';const nw=x.measureText(num).width;
+  x.font='400 44px "Dela Gothic One",sans-serif';const lw=x.measureText('お仕置き').width,uw=x.measureText('回').width;
+  const gap=14,total=lw+gap+nw+gap+uw,left=W/2-total/2,base=cy+120;
+  x.textAlign='left';x.fillStyle='#1f1a24';x.fillText('お仕置き',left,base);x.fillText('回',left+lw+gap+nw+gap,base);
+  x.font='400 132px "Dela Gothic One",sans-serif';x.fillStyle='#d7263d';x.fillText(num,left+lw+gap,base);
+  /* person, with marks */
+  const marks=S.n?{L:[1,1],R:[1,1],dot:1,bump:S.n>=10?2:1}:{L:[],R:[],dot:0,bump:0};
+  const img=await svgImg(manSVG('blank',0,marks));
+  const top=base+40,ph=H-70-top,pw=ph*240/300;
+  x.drawImage(img,W/2-pw/2,top,pw,ph);
+  x.fillStyle='#1f1a24';x.fillRect(0,H-70,W,70);
+  x.fillStyle='#fff';x.font='700 26px "Zen Maru Gothic",sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillText('#'+HASHTAG+(SHARE_URL?'　'+SHARE_URL.replace(/^https?:\/\//,'').replace(/\/$/,''):''),W/2,H-35);
+  const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+  return {url:URL.createObjectURL(blob),blob};
+}
+let SHOT=null;
+function canFileShare(f){try{return !!(navigator.canShare&&navigator.canShare({files:[f]}));}catch(e){return false;}}
+async function openSheet(){
+  const r=await makeShot();
+  if(SHOT)URL.revokeObjectURL(SHOT.url);
+  SHOT=r;SHOT.file=new File([r.blob],`oshioki-${S.n}.png`,{type:'image/png'});
+  $('shot').src=r.url;
+  $('hint').textContent=canFileShare(SHOT.file)?'共有先で X を選んでください。':'画像を保存して、ポストに添付してください（スマホは画像を長押し、PCは右クリックで保存）。';
+  $('doShare').textContent=canFileShare(SHOT.file)?'画像つきでXで共有':'Xを開く';
+  $('sheet').hidden=false;
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText())+'&hashtags='+encodeURIComponent(HASHTAG)+(SHARE_URL?'&url='+encodeURIComponent(SHARE_URL):'');
   const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+$('share').addEventListener('click',()=>{openSheet().catch(()=>openIntent());});
+$('doShare').addEventListener('click',async()=>{
+  if(SHOT&&canFileShare(SHOT.file)){
+    try{await navigator.share({files:[SHOT.file],text:shareText()+' #'+HASHTAG+(SHARE_URL?' '+SHARE_URL:'')});return;}
+    catch(e){if(e&&e.name==='AbortError')return;}
+  }
+  openIntent();
 });
+$('closeSheet').addEventListener('click',()=>{$('sheet').hidden=true;});
+$('sheet').addEventListener('click',e=>{if(e.target===$('sheet'))$('sheet').hidden=true;});
 
 draw(0);
 window.__oshioki={S,punish};
