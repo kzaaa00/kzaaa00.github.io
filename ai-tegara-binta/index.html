@@ -129,6 +129,14 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #toast.show{opacity:1}
 @media (max-height:680px){#crime{padding-top:calc(10px + env(safe-area-inset-top,0px))}#crime p{font-size:clamp(10.5px,2.95vw,13px);line-height:1.5}#note{display:none}#btn{padding:11px 0 12px}}
 @media (prefers-reduced-motion:reduce){#stage.shake{animation:none}}
+
+/* Wide screens (PC, link preview): the text runs across the top, the person stands below it. */
+@media (min-width:760px) and (min-aspect-ratio:5/4){
+  #app{max-width:1040px}
+  #crime{padding:22px 40px 0}
+  #crime p{font-size:clamp(14px,1.55vw,18px);line-height:1.65}
+  #ctrl{padding-left:max(14px,calc(50% - 230px));padding-right:max(14px,calc(50% - 230px))}
+}
 </style>
 </head>
 <body>
@@ -297,12 +305,15 @@ syncMute();
 
 /* ---------- state ---------- */
 /* The face never changes. Marks fade on their own; only the body moves. */
-const S={n:0,marks:{L:[],R:[],dot:0,bump:0,pie:0,wet:0,burnt:0},last:'',clearT:null,busyUntil:0,force:null};
+const S={n:0,seen:{},marks:{L:[],R:[],dot:0,bump:0,pie:0,wet:0,burnt:0},last:'',clearT:null,busyUntil:0,force:null};
 function draw(tilt){$('man').innerHTML=manSVG('blank',tilt||0,S.marks);}
 const MAN_ANIMS=['hitR','hitL','squash','back','fly','land'];
 function anim(el,c){if(el.id==='man')el.classList.remove(...MAN_ANIMS);el.classList.remove(c);void el.getBoundingClientRect();el.classList.add(c);}
 function setAnim(el,c){const base=el.dataset.base||(el.dataset.base=el.getAttribute('class'));el.setAttribute('class',base);void el.getBoundingClientRect();el.setAttribute('class',base+' '+c);}
-function showCount(){const h=$('hits');h.textContent=S.n.toLocaleString();anim(h,'bump');}
+/* The count (and which rare ones you have seen) survives a reload, so the number keeps growing. */
+function save(){try{localStorage.setItem('oshioki-n',String(S.n));localStorage.setItem('oshioki-seen',JSON.stringify(S.seen));}catch(e){}}
+try{S.n=Math.max(0,parseInt(localStorage.getItem('oshioki-n')||'0',10)||0);S.seen=JSON.parse(localStorage.getItem('oshioki-seen')||'{}')||{};}catch(e){}
+function showCount(){const h=$('hits');h.textContent=S.n.toLocaleString();anim(h,'bump');save();}
 function boom(){} /* sound-effect words were removed on request: effects play without captions */
 function hitFx(){anim($('stage'),'shake');try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}}
 const NORMAL=[['binta',30],['ofuku',8],['harisen',14],['decopin',12],['tarai',10],['hammer',10],['pie',8],['water',8]];
@@ -374,7 +385,7 @@ function punish(){
 }
 /* 0.1%: a giant uppercut sends him into the sky. He comes back down, still expressionless. */
 function sora(){
-  S.n++;showCount();S.busyUntil=performance.now()+3200;
+  S.seen.sora=1;S.n++;showCount();S.busyUntil=performance.now()+3200;
   const man=$('man');
   setAnim($('big'),'go');
   setTimeout(()=>{SFX.binta();SFX.thud();anim($('stage'),'bigshake');anim($('flash'),'go');boom('sora');man.classList.remove('hitL','hitR','squash','back');anim(man,'fly');SFX.whoosh();},180);
@@ -384,7 +395,7 @@ function sora(){
 }
 /* Super rare: a thousand hands. Every slap counts. */
 function senju(){
-  const HITS=30,GAP=62,rig=$('rig');
+  S.seen.senju=1;  const HITS=30,GAP=62,rig=$('rig');
   S.busyUntil=performance.now()+HITS*GAP+1400;
   anim($('stage'),'gold');
   for(let i=0;i<HITS;i++){
@@ -408,7 +419,11 @@ $('mute').addEventListener('click',()=>{muted=!muted;try{localStorage.setItem('o
 function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),1700);}
 /* ---------- share: an image of the screen with the count ---------- */
 const TEXT=document.querySelector('#crime p').textContent;
-function shareText(){return S.n?`AIの手柄を全部自分の手柄にする人に、${S.n.toLocaleString()}回お仕置きしました。`:'AIの手柄を全部自分の手柄にする人に、お仕置きできるページ。';}
+function shareText(){
+  if(!S.n)return 'AIの手柄を全部自分の手柄にする人に、お仕置きできるページ。';
+  const extra=S.seen.sora?'、空まで飛ばしました':S.seen.senju?'、千手でたたきました':'';
+  return `AIの手柄を全部自分の手柄にする人に、${S.n.toLocaleString()}回お仕置きして${extra||'ました'}。`.replace('してました。','しました。');
+}
 function wrap(x,text,maxW){const out=[];let cur='';for(const ch of text){if(x.measureText(cur+ch).width>maxW&&cur){if('、。？！…」）'.includes(ch)){cur+=ch;continue;}out.push(cur);cur=ch;}else cur+=ch;}if(cur)out.push(cur);return out;}
 function svgImg(markup){return new Promise((ok,ng)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ng;
   i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" width="480" height="600">${markup}</svg>`);});}
@@ -468,12 +483,13 @@ $('sheet').addEventListener('click',e=>{if(e.target===$('sheet'))$('sheet').hidd
 /* Keep a gap of about one head between the count and the top of the beret. */
 function fit(){
   const st=$('stage'),hs=st.clientHeight,hc=$('hits').getBoundingClientRect().height;
-  const mh=Math.max(115,Math.min(hs*.76,(hs-hc)/1.22));
+  const wide=matchMedia('(min-width:760px) and (min-aspect-ratio:5/4)').matches;
+  const mh=wide?Math.max(115,(hs-hc)/1.12):Math.max(115,Math.min(hs*.76,(hs-hc)/1.22));
   st.style.setProperty('--mh',mh+'px');
 }
 addEventListener('resize',fit);try{document.fonts.ready.then(fit);}catch(e){}
 fit();
-draw(0);
+draw(0);$("hits").textContent=S.n.toLocaleString();
 window.__oshioki={S,punish,pick};
 </script>
 </body>
