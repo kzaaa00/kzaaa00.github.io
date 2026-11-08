@@ -137,6 +137,19 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
   #crime p{font-size:clamp(14px,1.55vw,18px);line-height:1.65}
   #ctrl{padding-left:max(14px,calc(50% - 230px));padding-right:max(14px,calc(50% - 230px))}
 }
+
+/* Short screens (opened inside the X app, whose bars take some height): tighten the text and the buttons so the person stays big. */
+@media (max-height:680px){
+  #crime{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+  #crime p{line-height:1.5}
+  #ctrl{padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));gap:6px}
+  #btn{padding:9px 0 10px;font-size:clamp(22px,6.6vw,28px)}
+  #ctrl{position:relative}
+  #note{display:block;position:absolute;left:114px;right:84px;bottom:calc(9px + env(safe-area-inset-bottom,0px));margin:0;font-size:9px;line-height:1.3}
+}
+@media (max-height:620px){
+  #crime p{font-size:clamp(10.5px,3vw,13px);line-height:1.45}
+}
 </style>
 </head>
 <body>
@@ -487,7 +500,7 @@ function fit(){
   const mh=wide?Math.max(115,(hs-hc)/1.12):Math.max(115,Math.min(hs*.76,(hs-hc)/1.22));
   st.style.setProperty('--mh',mh+'px');
 }
-addEventListener('resize',fit);try{document.fonts.ready.then(fit);}catch(e){}
+addEventListener('resize',fit);try{visualViewport.addEventListener('resize',fit);new ResizeObserver(()=>fit()).observe($('stage'));}catch(e){}try{document.fonts.ready.then(fit);}catch(e){}
 fit();
 draw(0);$("hits").textContent=S.n.toLocaleString();
 window.__oshioki={S,punish,pick};
