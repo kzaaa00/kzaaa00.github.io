@@ -122,6 +122,7 @@ function pourSet(v){if(!pour.g||!AC)return;const t=AC.currentTime;pour.g.gain.se
 function pourOff(){if(pour.src){try{pour.src.stop();}catch(e){}pour.src=null;pour.g=null;}}
 const SFX={
   peel(){noise(.06,.05,3200,0,'highpass');},
+  tear(){noise(.22,.32,2600,0,'highpass');noise(.12,.2,1200,.05,'bandpass',2);},
   lift(){tone(220,.12,'triangle',.03);},
   becko(){tone(170,.09,'square',.09,0,90);noise(.08,.35,700,0,'bandpass',2);tone(330,.06,'triangle',.06,.03,160);},
   slop(d=0){noise(.18,.25,260,d,'lowpass');tone(90,.12,'sine',.08,d,60);},
@@ -252,8 +253,8 @@ function drawLidTop(){
   /* the printed line and its note (printed on the lid, so it goes away with the part you peel) */
   const kl=LINE*2*s;
   cx.save();cx.beginPath();cx.moveTo(x,y);cx.lineTo(x+s-k,y);cx.lineTo(x+s,y+k);cx.lineTo(x+s,y+s);cx.lineTo(x,y+s);cx.closePath();cx.clip();
-  cx.setLineDash([8,6]);cx.strokeStyle='#d8332f';cx.lineWidth=3;cx.beginPath();cx.moveTo(x+s-kl,y);cx.lineTo(x+s,y+kl);cx.stroke();cx.setLineDash([]);
-  cx.save();cx.translate(x+s-kl*.5-15,y+kl*.5+15);cx.rotate(Math.PI/4);cx.fillStyle='#d8332f';cx.font='900 13px '+getComputedStyle(document.body).getPropertyValue('--body');cx.textAlign='center';cx.textBaseline='middle';cx.fillText('湯切り口 ここまで',0,0);cx.restore();
+  cx.setLineDash([4,4]);cx.strokeStyle='#8a8178';cx.lineWidth=1.4;cx.beginPath();cx.moveTo(x+s-kl,y);cx.lineTo(x+s,y+kl);cx.stroke();cx.setLineDash([]);
+  cx.save();cx.translate(x+s-kl*.5-11,y+kl*.5+11);cx.rotate(Math.PI/4);cx.fillStyle='#8a8178';cx.font='700 10.5px '+getComputedStyle(document.body).getPropertyValue('--body');cx.textAlign='center';cx.textBaseline='middle';cx.fillText('湯切り口 ここまで',0,0);cx.restore();
   cx.restore();
   cx.restore();
   /* the peeled edge: a bright rim with a shadow, and the flap standing up from it */
@@ -263,7 +264,9 @@ function drawLidTop(){
     const up=Math.min(26,6+k*.18);
     cx.fillStyle='#c9ced3';cx.beginPath();cx.moveTo(ax,ay);cx.lineTo(bx,by);cx.lineTo(bx+up*.7,by-up*.7);cx.lineTo(ax+up*.7,ay-up*.7);cx.closePath();cx.fill();
     cx.fillStyle='rgba(255,255,255,.55)';cx.beginPath();cx.moveTo(ax+up*.35,ay-up*.35);cx.lineTo(bx+up*.35,by-up*.35);cx.lineTo(bx+up*.7,by-up*.7);cx.lineTo(ax+up*.7,ay-up*.7);cx.closePath();cx.fill();
-    cx.strokeStyle='#fff';cx.lineWidth=2.5;cx.beginPath();cx.moveTo(ax,ay);cx.lineTo(bx,by);cx.stroke();
+    cx.strokeStyle='#fff';cx.lineWidth=2.5;cx.beginPath();cx.moveTo(ax,ay);
+    if(G.torn){const n=Math.max(4,Math.round(k/7));for(let i=1;i<=n;i++){const t=i/n,j=(i%2?1:-1)*4;cx.lineTo(ax+(bx-ax)*t-j*.7,ay+(by-ay)*t-j*.7);}}else cx.lineTo(bx,by);
+    cx.stroke();
   }else{
     /* the tab: sticks out of the corner */
     cx.fillStyle='#c9ced3';cx.beginPath();cx.moveTo(x+s-22,y);cx.lineTo(x+s,y+22);cx.lineTo(x+s+14,y-14);cx.closePath();cx.fill();
@@ -289,9 +292,10 @@ function drawKitchen(){
 
 /* ---------- peel input ---------- */
 function peelDown(e){
+  if(G.coast)return;
   const P=pt(e);const {x,y,s}=lidGeo();
   if(P.x<x-30||P.x>x+s+40||P.y<y-40||P.y>y+s+30)return;
-  G.peelDrag={x:P.x,y:P.y,p0:G.p};$('hint').classList.remove('on');
+  G.peelDrag={x:P.x,y:P.y,p0:G.p,pts:[[performance.now(),G.p]]};$('hint').classList.remove('on');
 }
 function peelMove(e){
   if(!G.peelDrag)return;const P=pt(e);const {s}=lidGeo();
@@ -299,12 +303,21 @@ function peelMove(e){
   const dx=P.x-G.peelDrag.x,dy=P.y-G.peelDrag.y;const along=(-dx+dy)/Math.SQRT2;
   const p=Math.max(G.p,Math.min(.62,G.peelDrag.p0+along/(s*Math.SQRT2)));
   if(p>G.p+.01)SFX.peel();
-  if(G.p<LINE&&p>=LINE){tone(1500,.05,'square',.04);try{navigator.vibrate&&navigator.vibrate(12);}catch(err){}}
   G.p=p;
+  const now=performance.now(),q=G.peelDrag.pts;q.push([now,p]);while(q.length>2&&now-q[0][0]>90)q.shift();
 }
+/* Letting go of a fast peel: the lid keeps tearing a little on its own, like the real thing. */
 function peelUp(){
-  if(!G.peelDrag)return;G.peelDrag=null;
+  if(!G.peelDrag)return;const q=G.peelDrag.pts;G.peelDrag=null;
   if(G.p<.03)return;
+  const a=q[0],b=q[q.length-1],now=performance.now();
+  const v=(now-b[0]>80)?0:Math.max(0,(b[1]-a[1])/Math.max(16,b[0]-a[0])*1000);
+  /* slow peels barely coast; fast ones keep going, and a really fast one tears */
+  G.coast={v:v*Math.min(1,v/1.5)};G.peelV=v;
+  if(v>1.6){G.torn=true;SFX.tear();anim($('app'),'shake');try{navigator.vibrate&&navigator.vibrate(30);}catch(err){}}
+}
+function peelDone(){
+  G.coast=null;
   /* decide the hole size and how weak the lid is */
   G.hole=Math.max(.18,Math.min(1,G.p/LINE));
   G.weak=G.p<=LINE+.05?1:Math.max(.25,1-(G.p-LINE-.05)*3.2);
@@ -342,6 +355,7 @@ cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 /* ---------- physics ---------- */
 function step(dt){
   G.t+=dt;
+  if(G.phase==='peel'&&G.coast){const c=G.coast;const d=c.v*dt;if(d>.0004){G.p=Math.min(.62,G.p+d);if(Math.random()<.4)SFX.peel();}c.v*=Math.exp(-dt*7);if(c.v<.02)peelDone();return;}
   if(G.phase==='lift'){G.lift=Math.min(1,G.t/.5);if(G.t>.6){G.phase='tilt';G.lift=0;pourOn();}return;}
   if(G.phase!=='tilt')return;
   if(G.done){pourSet(0);G.ang+=(0-G.ang)*Math.min(1,dt*(performance.now()<G.holdUntil?0:9));updateParticles(dt);if(performance.now()>G.endAt&&!G.shown){G.shown=true;showResult();}return;}
@@ -506,7 +520,7 @@ async function showResult(){
   $('rCount').innerHTML=G.rare?'シンクに落ちた麺 <b>ひとかたまり</b>':`シンクに落ちた麺 <b>${G.fallen}</b>本`;
   $('rTitle').textContent='【'+titleOf()+'】';
   const F=G.flick||{A:0,z:{lo:0,hi:0}};
-  $('rSub').textContent=G.popped?(G.weak<.97&&F.A<=140?'フタをはがしすぎて、外れやすくなっていた。':'はじくのが強すぎて、フタが外れた。')
+  $('rSub').textContent=G.popped?(G.weak<.97&&F.A<=140?(G.torn?'フタをはがす勢いでビリッと破れて、外れやすくなっていた。':'フタをはがしすぎて、外れやすくなっていた。'):'はじくのが強すぎて、フタが外れた。')
     :G.water>.03?(G.hole<.9&&F.A>=110?`湯切り口が小さくて、お湯が ${Math.round(G.water*100)}% 残った。`:`はじくのが弱くて、お湯が ${Math.round(G.water*100)}% 残った。`)
     :G.fallen?'ちょっと強くて、湯切り口から麺が逃げた。':'お湯も麺も完璧。';
   $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
