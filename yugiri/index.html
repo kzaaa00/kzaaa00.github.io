@@ -61,6 +61,8 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
 #result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
 #result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
 #mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
 #mute[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
@@ -74,7 +76,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
   <div id="title" class="panel">
     <h1>カップ焼きそばの湯切りで、麺を1本も落とすな。</h1>
     <button class="btn" id="startBtn" type="button">はじめる</button>
-    <p class="fine">商品はすべて架空です。音が出ます。</p>
+    <p class="fine">商品はすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
   </div>
 
   <div id="result" class="panel" hidden>
@@ -92,7 +94,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
         <button class="btn ghost" id="retry" type="button">もう一回</button>
       </div>
       <img id="card" alt="湯切り完成度とシンクに落ちた麺の画像">
-      <p class="fine">商品はすべて架空です。</p>
+      <p class="fine">商品はすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
     </div>
   </div>
 
@@ -535,7 +537,7 @@ function detailText(){
   return w>0?`${lost}・お湯${w}%残り`:lost;
 }
 function shareText(){
-  return `${GAME}\n湯切り完成度${pctText()}%（${detailText()}）【${titleOf()}】\n${SHARE_URL}\n作った人 ${CREATOR}`;
+  return `湯切りで麺を1本も落とすな　完成度${pctText()}%【${titleOf()}】\n${SHARE_URL}`;
 }
 async function showResult(){
   pourOff();
