@@ -108,6 +108,7 @@ const CREATOR='@ordwxjhj';
 const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/yugiri/';})();
 const TOTAL=214;          /* noodles in one cup */
 const LINE=.22;           /* the printed "peel to here" line, as a share of the corner-to-corner distance */
+const PEEL_OK=.01;        /* a clean peel stops between the line and just past it */
 
 /* ---------- audio ---------- */
 let AC=null,muted=false;
@@ -166,7 +167,16 @@ function newGame(){
   G={phase:'peel',p:0,p0:0,peelDrag:null,
      ang:0,target:0,vel:0,water:1,hole:1,weak:1,stress:0,fallen:0,popped:false,rare:false,leak:0,
      drag:null,tilted:false,done:false,t:0,lift:0,
-     drops:[],strands:[],sink:[],steam:[],lid:null,block:null,shownHint:false,endAt:0};
+     drops:[],strands:[],sink:[],steam:[],lid:null,block:null,shownHint:false,endAt:0,
+     /* each cup is filled a little differently: more water is heavier and needs a harder flick. It shows as more steam. */
+     need:.88+Math.random()*.24};
+}
+function fill(){return G?(G.need-.88)/.24:.5;}
+/* steam rising from a point; how much depends on how full the cup is */
+function puffs(X,Y,spread,rise){
+  const q=fill(),n=2+Math.round(q*6);
+  for(let i=0;i<n;i++){const t=(G.t*(.5+q*.25)+i/n)%1;const sz=(5+t*(9+q*9));
+    cx.fillStyle=`rgba(255,255,255,${(.32+.4*q)*(1-t)})`;cx.beginPath();cx.arc(X+Math.sin(t*6+i*1.7)*spread*(.4+q*.6),Y-t*rise*(.8+q*.5),sz,0,Math.PI*2);cx.fill();}
 }
 
 /* deterministic-ish noodle shapes for the sink */
@@ -252,6 +262,8 @@ function drawLidTop(){
   cx.save();rr(cx,x,y,s,s,14);cx.clip();
   cx.fillStyle='#6b4a26';cx.fillRect(x,y,s,s);
   for(let i=0;i<70;i++){const r=i*97%1000/1000,q=i*61%1000/1000;noodle(cx,x+r*s,y+q*s,28,i,i,'#e7b547',2.6);}
+  /* the hot water over the noodles: fuller cups look wetter */
+  cx.fillStyle=`rgba(196,220,236,${.1+.45*fill()})`;cx.fillRect(x,y,s,s);
   /* lid with the peeled triangle cut away */
   const k=d*2*s; /* along both edges from the corner */
   cx.beginPath();cx.moveTo(x,y);cx.lineTo(x+s-k,y);cx.lineTo(x+s,y+k);cx.lineTo(x+s,y+s);cx.lineTo(x,y+s);cx.closePath();
@@ -283,7 +295,7 @@ function drawLidTop(){
     cx.strokeStyle='rgba(0,0,0,.2)';cx.lineWidth=1.5;cx.stroke();
   }
   /* steam from the opening */
-  if(k>4)for(let i=0;i<3;i++){const t=(G.t*.6+i/3)%1;cx.fillStyle=`rgba(255,255,255,${.5*(1-t)})`;cx.beginPath();cx.arc(x+s-k*.35+Math.sin(t*6+i)*6,y+k*.35-t*60,6+t*10,0,Math.PI*2);cx.fill();}
+  if(k>4)puffs(x+s-k*.35,y+k*.35,8,60);else puffs(x+s+2,y-2,4,36);
 }
 
 function drawKitchen(){
@@ -339,8 +351,8 @@ function peelDone(){
 const V_PER_DEG=8;   /* logical px per second of flick for each degree of tilt */
 function zone(){
   /* best: the tip that gets every drop out and nothing else. Small hole: needs a harder tip. */
-  const best=40+86/Math.sqrt(G.hole);
-  const ok=best*.04;                          /* the clean window is narrow on purpose */
+  const best=(40+86/Math.sqrt(G.hole))*G.need;
+  const ok=best*.0012;                        /* the clean window is very narrow on purpose: 100% is rare */
   const pop=(best+30)*Math.pow(G.weak,1.5); /* peeled too far: the lid gives way sooner */
   return {best,lo:best-ok,hi:best+ok,pop};
 }
@@ -422,7 +434,7 @@ function pop(){
 }
 function finish(why){
   if(G.done)return;G.done=true;G.why=why;G.holdUntil=performance.now()+(why==='pop'?800:0);G.endAt=performance.now()+(why==='pop'?2300:1300);
-  if(why==='down'&&G.fallen===0&&G.water<.03)setTimeout(()=>SFX.good(),500);
+  if(why==='down'&&score()===100)setTimeout(()=>SFX.good(),500);
 }
 function updateParticles(dt){
   const {sinkTop,sinkBot}=L();const floor=sinkBot-10;
@@ -494,6 +506,7 @@ function render(){
     if(G.p<.015&&!G.peelDrag){const {x,y,s}=lidGeo();guide(x+s+4,y-4,x+s-s*.15,y+s*.15,'角をつまんで、引いてはがす',180,y-34);}
   }else{
     drawCup();
+    if(!G.flick){const [sx,sy]=cupPoint(CUP.w/2-14,-CUP.h/2-CUP.lid-4);puffs(sx,sy,8,70);}
     /* water */
     for(const d of G.drops){cx.fillStyle='rgba(205,225,240,.75)';cx.beginPath();cx.arc(d.x,d.y,d.r,0,Math.PI*2);cx.fill();}
     for(const s of G.strands)noodle(cx,s.x,s.y,24,s.a,s.seed,'#e7b547',2.4);
@@ -515,16 +528,19 @@ function hint(t,y){const h=$('hint');h.textContent=t;h.style.top=(y*cv.clientWid
    100% only for a clean drain; anything else tops out at 99.9%. */
 function score(){
   const n=Math.min(TOTAL,G.fallen),w=Math.max(0,G.water);
-  if(!G.popped&&n===0&&w<1e-4)return 100;
-  let s=100-75*Math.pow(w,.85)-60*Math.sqrt(n/TOTAL)-(G.popped?40:0);
+  const dev=peelDev();
+  if(!G.popped&&n===0&&w<1e-4&&dev===0)return 100;
+  let s=100-75*Math.pow(w,1.1)-60*Math.pow(n/TOTAL,.85)-(G.popped?40:0)-dev*60;
   return Math.max(0,Math.min(99.9,Math.floor(s*10)/10));
 }
+function peelDev(){return G.p<LINE?LINE-G.p:G.p>LINE+PEEL_OK?G.p-LINE-PEEL_OK:0;}
 function pctText(){const s=score();return s===100?'100':s.toFixed(1);}
 function titleOf(){
   if(G.rare)return 'シンク一本釣り';
   if(G.fallen>=TOTAL)return '全部シンク';
   const s=score(),wet=!G.popped&&G.fallen===0;
   if(s===100)return '無傷の湯切り職人';
+  if(wet&&G.water<1e-4&&s>=80)return 'フタだけ惜しい人';
   if(s>=95)return wet?'あと一滴の湯切り人':'ほぼ無傷の湯切り人';
   if(s>=80)return wet?'ちょいべちゃ':'シンクにも食べさせた人';
   if(s>=50)return wet?'べちゃべちゃ焼そば職人':'シンクと半分こした人';
@@ -546,8 +562,8 @@ async function showResult(){
   $('rTitle').textContent='【'+titleOf()+'】';
   const F=G.flick||{A:0,z:{lo:0,hi:0,pop:0}};
   $('rSub').textContent=G.popped?(G.weak<.97&&F.A<=(F.z.best+30)?(G.torn?'フタをはがす勢いでビリッと破れて、外れやすくなっていた。':'フタをはがしすぎて、外れやすくなっていた。'):'はじくのが強すぎて、フタが外れた。')
-    :G.water>.03?(G.hole<.9&&F.A>=118?`湯切り口が小さくて、お湯が ${Math.round(G.water*100)}% 残った。`:`はじくのが弱くて、お湯が ${Math.round(G.water*100)}% 残った。`)
-    :G.fallen?'ちょっと強くて、湯切り口から麺が逃げた。':'お湯も麺も完璧。';
+    :G.water>=1e-4?(Math.round(G.water*100)<1?'はじくのがほんの少し弱くて、お湯がほんの少し残った。':G.hole<.9&&F.A>=118?`湯切り口が小さくて、お湯が ${Math.round(G.water*100)}% 残った。`:`はじくのが弱くて、お湯が ${Math.round(G.water*100)}% 残った。`)
+    :G.fallen?'ちょっと強くて、湯切り口から麺が逃げた。':peelDev()>0?(G.p<LINE?'お湯も麺も完璧。でも、フタのはがしが線の少し手前だった。':'お湯も麺も完璧。でも、フタを線より少しはがしすぎた。'):'お湯も麺も完璧。';
   $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
   G.cardFile=null;setShareUI();
   try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
