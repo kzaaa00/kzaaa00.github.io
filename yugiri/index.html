@@ -55,9 +55,11 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
 #rSub{font-size:13px;font-weight:700;color:var(--muted);margin:0}
 #card{width:100%;border-radius:10px;border:1px solid #ddd3c4;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
-#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:-4px 0 0}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
 #result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
 #result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
 #result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
 #mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
 #mute[hidden]{display:none}
@@ -82,12 +84,14 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
       <p id="rCount"></p>
       <p id="rTitle"></p>
       <p id="rSub"></p>
-      <img id="card" alt="湯切り完成度とシンクに落ちた麺の画像">
-      <p class="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
       <div class="btns">
         <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
         <button class="btn ghost" id="retry" type="button">もう一回</button>
       </div>
+      <img id="card" alt="湯切り完成度とシンクに落ちた麺の画像">
       <p class="fine">商品はすべて架空です。</p>
     </div>
   </div>
@@ -543,11 +547,37 @@ async function showResult(){
     :G.water>.03?(G.hole<.9&&F.A>=118?`湯切り口が小さくて、お湯が ${Math.round(G.water*100)}% 残った。`:`はじくのが弱くて、お湯が ${Math.round(G.water*100)}% 残った。`)
     :G.fallen?'ちょっと強くて、湯切り口から麺が逃げた。':'お湯も麺も完璧。';
   $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
   try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(r=>G.cardCanvas.toBlob(r,'image/png'));if(b)G.cardFile=new File([b],'yugiri-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
 }
-$('shareX').addEventListener('click',()=>{
+/* On phones, hand the image and the text to the share sheet together, so picking X opens a post with the picture attached.
+   Where that is not possible (PCs, some in-app browsers) fall back to the X post link plus a save button. */
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function setShareUI(){
+  const f=canShareFile();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
   const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
   const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){openIntent();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+});
+$('textOnly').addEventListener('click',openIntent);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='yugiri-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
 });
 $('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
 
@@ -570,6 +600,7 @@ async function drawCard(){
   x.fillStyle='#24201c';x.fillRect(646,Hc-110,Wc-646,110);
   x.fillStyle='#fff';x.font=`400 22px ${D}`;wrap(x,GAME,Wc-646-60).forEach((l,k)=>x.fillText(l,676,Hc-68+k*32));
   x.fillStyle='#ffd23f';x.font=`700 20px ${F}`;x.textAlign='right';x.fillText('作った人 '+CREATOR,Wc-30,Hc-24);
+  G.cardCanvas=c;
   return c.toDataURL('image/png');
 }
 
