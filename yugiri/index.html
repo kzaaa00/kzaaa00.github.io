@@ -327,10 +327,12 @@ function peelDone(){
 /* ---------- tilt input ---------- */
 /* One flick. The speed of the flick sets how far the cup tips: too soft leaves water, too hard pops the lid. */
 const V_PER_DEG=8;   /* logical px per second of flick for each degree of tilt */
-function zone(){ /* the tilt angles that drain everything without popping the lid */
-  const lo=40+70/Math.sqrt(G.hole);          /* small hole: needs a harder tip */
-  const hi=140*G.weak;                        /* peeled too far: the lid gives way sooner */
-  return {lo,hi,leak:hi-14};
+function zone(){
+  /* best: the tip that gets every drop out and nothing else. Small hole: needs a harder tip. */
+  const best=40+86/Math.sqrt(G.hole);
+  const ok=best*.04;                          /* the clean window is narrow on purpose */
+  const pop=(best+30)*Math.pow(G.weak,1.5); /* peeled too far: the lid gives way sooner */
+  return {best,lo:best-ok,hi:best+ok,pop};
 }
 function tiltDown(e){if(G.phase!=='tilt'||G.done||G.flick)return;const P=pt(e);G.drag={pts:[[performance.now(),P.x]],x0:P.x};}
 function tiltMove(e){if(!G.drag)return;const P=pt(e);const now=performance.now();G.drag.pts.push([now,P.x]);while(G.drag.pts.length>2&&now-G.drag.pts[0][0]>90)G.drag.pts.shift();G.nudge=Math.max(0,Math.min(14,(P.x-G.drag.x0)*.12));}
@@ -367,14 +369,15 @@ function step(dt){
   if(F.t<UP){const e=F.t/UP;G.ang=F.A*(1-(1-e)*(1-e));}
   else{
     G.ang=F.A;
-    if(F.A>F.z.hi){pop();return;}
-    /* pour: how much of the water this tip can get out */
-    const can=Math.max(0,Math.min(1,(F.A-40)/70*Math.sqrt(G.hole)));
-    const left=F.w0*(1-can);
+    if(F.A>F.z.pop){pop();return;}
+    /* pour: too soft leaves water, more the softer it was */
+    const left=F.A>=F.z.lo?0:F.w0*Math.min(1,(F.z.lo-F.A)/90);
     const k=Math.min(1,(F.t-UP)/HOLD);const target=F.w0-(F.w0-left)*(1-(1-k)*(1-k));
     flow=Math.max(0,G.water-target);G.water=target;
-    /* a hard tip, close to popping, lets a few strands escape */
-    if(F.A>F.z.leak){G.leak+=dt*(F.A-F.z.leak)/4*(G.p>LINE+.03?1.6:1);while(G.leak>=1){G.leak-=1;spawnStrand();}}
+    /* too hard but not enough to pop: the lid bulges and strands escape, more the harder it was */
+    if(F.A>F.z.hi){const r=(F.A-F.z.hi)/Math.max(1,F.z.pop-F.z.hi);G.stress=Math.min(.95,r);
+      const want=Math.round(1+Math.pow(r,1.4)*70);if(F.out===undefined)F.out=0;
+      const due=Math.round(want*k);while(F.out<due){F.out++;spawnStrand();}}
     if(F.t>UP+HOLD+.15){finish('down');}
   }
   pourSet(flow/dt*2.2);
@@ -457,6 +460,7 @@ function tiltGuide(){
   else{const r=(t-.5)/.5;cx.strokeStyle=`rgba(36,32,28,${.7*(1-r)})`;cx.lineWidth=2.5;cx.beginPath();cx.arc(x1,y0,15+r*16,0,Math.PI*2);cx.stroke();}
   cx.restore();
   pill('右へシュッとはじいて、1回で湯切り',180,cupY+160);
+  pill('弱いとお湯が残る、強いとフタが飛ぶ',180,cupY+196);
 }
 /* after the flick: how hard it was, against the range that works */
 function meter(x,y,w){
@@ -488,7 +492,6 @@ function render(){
     if(G.block){if(G.block.brick)drawBrick(cx,G.block.x,G.block.y,1,G.block.a);else{for(let i=0;i<22;i++)noodle(cx,G.block.x+(i%6-2.5)*14,G.block.y+(Math.floor(i/6)-1.5)*9,30,G.block.a+i*.3,i,'#e7b547',2.6);}}
   }
   for(const s of G.steam){cx.fillStyle=`rgba(255,255,255,${.55*(1-s.t/1.6)})`;cx.beginPath();cx.arc(s.x+Math.sin(s.t*4)*5,s.y-s.t*50,6+s.t*12,0,Math.PI*2);cx.fill();}
-  if(G.phase==='tilt'&&G.flick)meter(60,74,240);
 }
 let last=performance.now();
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(G)step(dt);render();}
@@ -519,9 +522,9 @@ async function showResult(){
   pourOff();
   $('rCount').innerHTML=G.rare?'シンクに落ちた麺 <b>ひとかたまり</b>':`シンクに落ちた麺 <b>${G.fallen}</b>本`;
   $('rTitle').textContent='【'+titleOf()+'】';
-  const F=G.flick||{A:0,z:{lo:0,hi:0}};
-  $('rSub').textContent=G.popped?(G.weak<.97&&F.A<=140?(G.torn?'フタをはがす勢いでビリッと破れて、外れやすくなっていた。':'フタをはがしすぎて、外れやすくなっていた。'):'はじくのが強すぎて、フタが外れた。')
-    :G.water>.03?(G.hole<.9&&F.A>=110?`湯切り口が小さくて、お湯が ${Math.round(G.water*100)}% 残った。`:`はじくのが弱くて、お湯が ${Math.round(G.water*100)}% 残った。`)
+  const F=G.flick||{A:0,z:{lo:0,hi:0,pop:0}};
+  $('rSub').textContent=G.popped?(G.weak<.97&&F.A<=(F.z.best+30)?(G.torn?'フタをはがす勢いでビリッと破れて、外れやすくなっていた。':'フタをはがしすぎて、外れやすくなっていた。'):'はじくのが強すぎて、フタが外れた。')
+    :G.water>.03?(G.hole<.9&&F.A>=118?`湯切り口が小さくて、お湯が ${Math.round(G.water*100)}% 残った。`:`はじくのが弱くて、お湯が ${Math.round(G.water*100)}% 残った。`)
     :G.fallen?'ちょっと強くて、湯切り口から麺が逃げた。':'お湯も麺も完璧。';
   $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
   try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
