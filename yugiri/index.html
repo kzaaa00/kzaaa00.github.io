@@ -312,11 +312,27 @@ function peelUp(){
 }
 
 /* ---------- tilt input ---------- */
-/* tilt follows the finger left and right only; the gain makes sure a full tilt fits before the screen edge */
-function tiltDown(e){if(G.phase!=='tilt'||G.done)return;const P=pt(e);G.drag={x:P.x,a0:G.target,gain:Math.max(1,135/Math.max(40,W-12-P.x))};$('hint').classList.remove('on');}
-function tiltMove(e){if(!G.drag||G.done)return;const P=pt(e);G.target=Math.max(0,Math.min(150,G.drag.a0+(P.x-G.drag.x)*G.drag.gain));if(G.target>25)G.tilted=true;}
-function tiltUp(){if(!G.drag)return;G.drag=null;if(G.tilted&&!G.done)finish('down');}
-
+/* One flick. The speed of the flick sets how far the cup tips: too soft leaves water, too hard pops the lid. */
+const V_PER_DEG=8;   /* logical px per second of flick for each degree of tilt */
+function zone(){ /* the tilt angles that drain everything without popping the lid */
+  const lo=40+70/Math.sqrt(G.hole);          /* small hole: needs a harder tip */
+  const hi=140*G.weak;                        /* peeled too far: the lid gives way sooner */
+  return {lo,hi,leak:hi-14};
+}
+function tiltDown(e){if(G.phase!=='tilt'||G.done||G.flick)return;const P=pt(e);G.drag={pts:[[performance.now(),P.x]],x0:P.x};}
+function tiltMove(e){if(!G.drag)return;const P=pt(e);const now=performance.now();G.drag.pts.push([now,P.x]);while(G.drag.pts.length>2&&now-G.drag.pts[0][0]>90)G.drag.pts.shift();G.nudge=Math.max(0,Math.min(14,(P.x-G.drag.x0)*.12));}
+function tiltUp(){
+  if(!G.drag)return;const d=G.drag;G.drag=null;G.nudge=0;
+  const now=performance.now();d.pts.push([now,d.pts[d.pts.length-1][1]]);
+  const a=d.pts[0],b=d.pts[d.pts.length-2];const dt=Math.max(16,b[0]-a[0]);
+  const v=(b[1]-a[1])/dt*1000;
+  if(b[1]-d.x0<18||v<60)return; /* a tap or a drag to the left: nothing happens */
+  flick(v);
+}
+function flick(v){
+  const A=Math.min(178,v/V_PER_DEG);const z=zone();
+  G.flick={v,A,t:0,z,w0:G.water};G.tilted=true;
+}
 function pt(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/SC,y:(e.clientY-r.top)/SC};}
 cv.addEventListener('pointerdown',e=>{if(!G)return;ac();try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();if(G.phase==='peel')peelDown(e);else tiltDown(e);});
 cv.addEventListener('pointermove',e=>{if(!G)return;if(G.phase==='peel')peelMove(e);else tiltMove(e);});
@@ -328,36 +344,28 @@ function step(dt){
   G.t+=dt;
   if(G.phase==='lift'){G.lift=Math.min(1,G.t/.5);if(G.t>.6){G.phase='tilt';G.lift=0;pourOn();}return;}
   if(G.phase!=='tilt')return;
-  const prev=G.ang;
-  const target=G.done?(performance.now()<G.holdUntil?G.ang:0):G.target;
-  const maxStep=520*dt;let next=G.ang+(target-G.ang)*Math.min(1,dt*16);
-  next=Math.max(G.ang-maxStep,Math.min(G.ang+maxStep,next));G.ang=next;
-  const v=(G.ang-prev)/dt;G.vel=G.vel*.7+v*.3;
-  if(G.done){pourSet(0);updateParticles(dt);if(performance.now()>G.endAt&&!G.shown){G.shown=true;showResult();}return;}
-  /* draining */
+  if(G.done){pourSet(0);G.ang+=(0-G.ang)*Math.min(1,dt*(performance.now()<G.holdUntil?0:9));updateParticles(dt);if(performance.now()>G.endAt&&!G.shown){G.shown=true;showResult();}return;}
+  const F=G.flick;
+  if(!F){G.ang+=((G.nudge||0)-G.ang)*Math.min(1,dt*14);updateParticles(dt);return;}
+  F.t+=dt;
+  const UP=.22,HOLD=1.15;
   let flow=0;
-  if(!G.popped&&G.ang>38&&G.water>0){flow=G.hole*Math.min(1.25,(G.ang-38)/80)*.34*(.35+.65*G.water)*dt;flow=Math.min(flow,G.water);G.water-=flow;}
+  if(F.t<UP){const e=F.t/UP;G.ang=F.A*(1-(1-e)*(1-e));}
+  else{
+    G.ang=F.A;
+    if(F.A>F.z.hi){pop();return;}
+    /* pour: how much of the water this tip can get out */
+    const can=Math.max(0,Math.min(1,(F.A-40)/70*Math.sqrt(G.hole)));
+    const left=F.w0*(1-can);
+    const k=Math.min(1,(F.t-UP)/HOLD);const target=F.w0-(F.w0-left)*(1-(1-k)*(1-k));
+    flow=Math.max(0,G.water-target);G.water=target;
+    /* a hard tip, close to popping, lets a few strands escape */
+    if(F.A>F.z.leak){G.leak+=dt*(F.A-F.z.leak)/4*(G.p>LINE+.03?1.6:1);while(G.leak>=1){G.leak-=1;spawnStrand();}}
+    if(F.t>UP+HOLD+.15){finish('down');}
+  }
   pourSet(flow/dt*2.2);
-  /* the lid: tilting fast with water inside pushes it off */
-  if(!G.popped){
-    const load=.25+.75*G.water;
-    const safe=(185-95*load)*G.weak;
-    const ex=Math.max(0,Math.abs(G.vel)-safe);
-    G.stress+=ex*dt*.03*(.4+load);
-    if(G.ang>100)G.stress+=(G.ang-100)*dt*.004*load/G.weak;
-    if(G.weak<1&&G.ang>60)G.stress+=(1-G.weak)*dt*2.2;
-    G.stress=Math.max(0,G.stress-dt*.35);
-    if(G.stress>=1)pop();
-  }
-  /* noodles sneak out of the drain holes when held steep */
-  if(!G.popped&&G.ang>96){
-    G.leak+=dt*G.hole*((G.ang-96)/40)*(G.water<.35?1.5:.3)*(G.p>LINE+.03?1.8:1);
-    while(G.leak>=1){G.leak-=1;const n=1+(Math.random()<.35?1:0);for(let i=0;i<n;i++)spawnStrand();}
-  }
-  /* spawn water drops */
-  if(flow>0){const [hx,hy]=cupPoint(CUP.w/2-4,-CUP.h/2-2);const k=Math.min(6,Math.ceil(flow/dt*30));const a=G.ang*Math.PI/180;
-    for(let i=0;i<k;i++)G.drops.push({x:hx+Math.random()*3,y:hy,vx:Math.cos(a)*40+Math.random()*20-10,vy:Math.sin(a)*40+20,life:1,r:2+flow/dt*6*Math.random()});}
-  if(G.water<=.001&&!G.popped){G.water=0;}
+  if(flow>0&&G.ang>38){const [hx,hy]=cupPoint(CUP.w/2-4,-CUP.h/2-2);const kk=Math.min(6,Math.ceil(flow/dt*30));const a=G.ang*Math.PI/180;
+    for(let i=0;i<kk;i++)G.drops.push({x:hx+Math.random()*3,y:hy,vx:Math.cos(a)*40+Math.random()*20-10,vy:Math.sin(a)*40+20,life:1,r:2+flow/dt*6*Math.random()});}
   updateParticles(dt);
 }
 function spawnStrand(){
@@ -387,7 +395,7 @@ function pop(){
 }
 function finish(why){
   if(G.done)return;G.done=true;G.why=why;G.holdUntil=performance.now()+(why==='pop'?800:0);G.endAt=performance.now()+(why==='pop'?2300:1300);
-  if(why==='down'&&G.fallen===0&&G.water<.1)setTimeout(()=>SFX.good(),500);
+  if(why==='down'&&G.fallen===0&&G.water<.03)setTimeout(()=>SFX.good(),500);
 }
 function updateParticles(dt){
   const {sinkTop,sinkBot}=L();const floor=sinkBot-10;
@@ -421,23 +429,32 @@ function guide(x0,y0,x1,y1,label,lx,ly){
 }
 function pill(label,lx,ly){cx.save();cx.font='900 15px '+getComputedStyle(document.body).getPropertyValue('--body');cx.textAlign='center';cx.textBaseline='middle';
   const w=cx.measureText(label).width+22;cx.fillStyle='rgba(36,32,28,.88)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
-/* the tilt lesson: press, slide right and keep holding while the water runs out, then let go */
+/* the tilt lesson: one quick flick to the right */
 function tiltGuide(){
-  const {cupY}=L();const T=3.2,t=(G.t%T)/T;
-  const x0=110,y0=cupY+100,x1=270,y1=cupY+100;
-  let e,msg,down=true;
-  if(t<.42){e=t/.42;e=e*e*(3-2*e);msg='① 押したまま、ゆっくり右へ';}
-  else if(t<.72){e=1;msg='② そのまま、お湯が出きるまで待つ';}
-  else{e=1;down=false;msg='③ 指を離すと、置いて終わり';}
-  const fx=x0+(x1-x0)*e,fy=y0+(y1-y0)*e;
+  const {cupY}=L();const T=1.6,t=(G.t%T)/T;
+  const x0=110,x1=270,y0=cupY+100;
+  let fx=x0,show=true;
+  if(t<.35)fx=x0;else if(t<.5){const e=(t-.35)/.15;fx=x0+(x1-x0)*e*e;}else{fx=x1;show=false;}
   cx.save();
-  cx.setLineDash([5,5]);cx.strokeStyle='rgba(36,32,28,.55)';cx.lineWidth=2.5;cx.beginPath();cx.moveTo(x0,y0);cx.lineTo(x1,y1);cx.stroke();cx.setLineDash([]);
-  const ang=Math.atan2(y1-y0,x1-x0);cx.fillStyle='rgba(36,32,28,.55)';cx.beginPath();cx.moveTo(x1+Math.cos(ang)*12,y1+Math.sin(ang)*12);cx.lineTo(x1+Math.cos(ang+2.4)*12,y1+Math.sin(ang+2.4)*12);cx.lineTo(x1+Math.cos(ang-2.4)*12,y1+Math.sin(ang-2.4)*12);cx.closePath();cx.fill();
-  if(down){cx.fillStyle='rgba(255,255,255,.8)';cx.strokeStyle='#24201c';cx.lineWidth=2.5;cx.beginPath();cx.arc(fx,fy,15,0,Math.PI*2);cx.fill();cx.stroke();}
-  else{const r=(t-.72)/.28;cx.strokeStyle=`rgba(36,32,28,${.8*(1-r)})`;cx.lineWidth=2.5;cx.beginPath();cx.arc(fx,fy,15+r*18,0,Math.PI*2);cx.stroke();}
+  cx.setLineDash([5,5]);cx.strokeStyle='rgba(36,32,28,.55)';cx.lineWidth=2.5;cx.beginPath();cx.moveTo(x0,y0);cx.lineTo(x1,y0);cx.stroke();cx.setLineDash([]);
+  cx.fillStyle='rgba(36,32,28,.55)';cx.beginPath();cx.moveTo(x1+12,y0);cx.lineTo(x1-4,y0-9);cx.lineTo(x1-4,y0+9);cx.closePath();cx.fill();
+  if(show){cx.fillStyle='rgba(255,255,255,.8)';cx.strokeStyle='#24201c';cx.lineWidth=2.5;cx.beginPath();cx.arc(fx,y0,15,0,Math.PI*2);cx.fill();cx.stroke();
+    if(t>.35)for(let i=1;i<4;i++){cx.fillStyle=`rgba(36,32,28,${.25-i*.06})`;cx.beginPath();cx.arc(fx-i*14,y0,13-i*2,0,Math.PI*2);cx.fill();}}
+  else{const r=(t-.5)/.5;cx.strokeStyle=`rgba(36,32,28,${.7*(1-r)})`;cx.lineWidth=2.5;cx.beginPath();cx.arc(x1,y0,15+r*16,0,Math.PI*2);cx.stroke();}
   cx.restore();
-  /* the cup in the lesson tilts with the finger: a faint copy */
-  pill(msg,180,cupY+190);
+  pill('右へシュッとはじいて、1回で湯切り',180,cupY+160);
+}
+/* after the flick: how hard it was, against the range that works */
+function meter(x,y,w){
+  const F=G.flick;if(!F)return;const max=180;
+  const X=a=>x+Math.max(0,Math.min(1,a/max))*w;
+  cx.save();cx.fillStyle='rgba(36,32,28,.85)';rr(cx,x-10,y-20,w+20,44,12);cx.fill();
+  cx.fillStyle='#55504a';rr(cx,x,y,w,10,5);cx.fill();
+  cx.fillStyle='#3fae6a';cx.fillRect(X(F.z.lo),y,Math.max(2,X(F.z.hi)-X(F.z.lo)),10);
+  const mx=X(F.A);cx.fillStyle='#ffd23f';cx.beginPath();cx.moveTo(mx,y-2);cx.lineTo(mx-7,y-12);cx.lineTo(mx+7,y-12);cx.closePath();cx.fill();
+  cx.fillStyle='#fff';cx.font='700 10px '+getComputedStyle(document.body).getPropertyValue('--body');cx.textBaseline='middle';
+  cx.textAlign='left';cx.fillText('弱い',x,y+18);cx.textAlign='right';cx.fillText('強い',x+w,y+18);
+  cx.restore();
 }
 /* ---------- render ---------- */
 function render(){
@@ -454,10 +471,10 @@ function render(){
     for(const s of G.strands)noodle(cx,s.x,s.y,24,s.a,s.seed,'#e7b547',2.4);
     if(G.lid)drawLidSide(cx,G.lid.x,G.lid.y,1,G.lid.a);
     if(G.phase==='tilt'&&!G.tilted&&!G.drag&&!G.done)tiltGuide();
-    if(G.phase==='tilt'&&G.drag&&!G.done){const {cupY}=L();const msg=G.ang<38?'押したまま、もっと右へ':G.water>.04?'そのまま、お湯が出きるまで待つ':'指を離すと、置いて終わり';pill(msg,180,cupY-92);}
     if(G.block){if(G.block.brick)drawBrick(cx,G.block.x,G.block.y,1,G.block.a);else{for(let i=0;i<22;i++)noodle(cx,G.block.x+(i%6-2.5)*14,G.block.y+(Math.floor(i/6)-1.5)*9,30,G.block.a+i*.3,i,'#e7b547',2.6);}}
   }
   for(const s of G.steam){cx.fillStyle=`rgba(255,255,255,${.55*(1-s.t/1.6)})`;cx.beginPath();cx.arc(s.x+Math.sin(s.t*4)*5,s.y-s.t*50,6+s.t*12,0,Math.PI*2);cx.fill();}
+  if(G.phase==='tilt'&&G.flick)meter(60,74,240);
 }
 let last=performance.now();
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(G)step(dt);render();}
@@ -475,20 +492,23 @@ function titleOf(){
   if(n>=10)return 'シンクにも食べさせた人';
   if(n>=1)return 'ほぼ無傷の湯切り人';
   if(G.water>.25)return 'べちゃべちゃ焼そば職人';
-  if(G.water>.08)return 'ちょいべちゃ';
+  if(G.water>.03)return 'ちょいべちゃ';
   return '無傷の湯切り職人';
 }
 function countText(){return G.rare?'ひとかたまり':G.fallen+'本';}
 function shareText(){
   const n=G.fallen;
-  const line=G.rare?'麺がひとかたまりでシンクに落ちた':n?`シンクに${n}本落ちた`:(G.water>.08?'1本も落とさなかった（お湯は残った）':'1本も落とさなかった');
+  const line=G.rare?'麺がひとかたまりでシンクに落ちた':n?`シンクに${n}本落ちた`:(G.water>.03?'1本も落とさなかった（お湯は残った）':'1本も落とさなかった');
   return `${GAME}\n${line}【${titleOf()}】\n${SHARE_URL}\n作った人 ${CREATOR}`;
 }
 async function showResult(){
   pourOff();
   $('rCount').innerHTML=G.rare?'シンクに落ちた麺 <b>ひとかたまり</b>':`シンクに落ちた麺 <b>${G.fallen}</b>本`;
   $('rTitle').textContent='【'+titleOf()+'】';
-  $('rSub').textContent=G.popped?(G.weak<1?'フタをはがしすぎて、湯切り中に外れた。':'傾けるのが速すぎて、フタが外れた。'):G.water>.08?`お湯が ${Math.round(G.water*100)}% 残った。`:G.fallen?'湯切り口から麺が逃げた。':'お湯も麺も完璧。';
+  const F=G.flick||{A:0,z:{lo:0,hi:0}};
+  $('rSub').textContent=G.popped?(G.weak<.97&&F.A<=140?'フタをはがしすぎて、外れやすくなっていた。':'はじくのが強すぎて、フタが外れた。')
+    :G.water>.03?(G.hole<.9&&F.A>=110?`湯切り口が小さくて、お湯が ${Math.round(G.water*100)}% 残った。`:`はじくのが弱くて、お湯が ${Math.round(G.water*100)}% 残った。`)
+    :G.fallen?'ちょっと強くて、湯切り口から麺が逃げた。':'お湯も麺も完璧。';
   $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
   try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
 }
@@ -528,7 +548,7 @@ function begin(){
   
 }
 $('startBtn').addEventListener('click',()=>{ac();begin();});
-window.__yugiri={get G(){return G;},begin,L,lidGeo,cupPoint,pop,showResult,TOTAL};
+window.__yugiri={get G(){return G;},begin,L,lidGeo,cupPoint,pop,showResult,TOTAL,flick,zone};
 </script>
 </body>
 </html>
