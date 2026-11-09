@@ -47,8 +47,11 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #result{background:#f6f1e8;justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
 #result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
 #result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
-#rCount{font-size:19px;font-weight:900;margin:0;line-height:1.4}
-#rCount b{font-family:var(--display);font-weight:400;font-size:44px;color:var(--red);margin:0 4px;font-variant-numeric:tabular-nums}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:64px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
+#rCount b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--ink);margin:0 2px;font-variant-numeric:tabular-nums}
 #rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
 #rSub{font-size:13px;font-weight:700;color:var(--muted);margin:0}
 #card{width:100%;border-radius:10px;border:1px solid #ddd3c4;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
@@ -75,10 +78,11 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
   <div id="result" class="panel" hidden>
     <div class="sheet">
       <h2>湯切りの結果</h2>
+      <p id="rScore"></p>
       <p id="rCount"></p>
       <p id="rTitle"></p>
       <p id="rSub"></p>
-      <img id="card" alt="シンクに落ちた麺の画像">
+      <img id="card" alt="湯切り完成度とシンクに落ちた麺の画像">
       <p class="cap">画像を長押し（PCは右クリック）で保存できます。</p>
       <div class="btns">
         <button class="btn x" id="shareX" type="button">Xで共有</button>
@@ -501,26 +505,38 @@ function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(
 function hint(t,y){const h=$('hint');h.textContent=t;h.style.top=(y*cv.clientWidth/360)+'px';h.classList.add('on');}
 
 /* ---------- result ---------- */
+/* One number for the whole job: strands lost and water left both count, a popped lid costs a lot.
+   100% only for a clean drain; anything else tops out at 99.9%. */
+function score(){
+  const n=Math.min(TOTAL,G.fallen),w=Math.max(0,G.water);
+  if(!G.popped&&n===0&&w<1e-4)return 100;
+  let s=100-75*Math.pow(w,.85)-60*Math.sqrt(n/TOTAL)-(G.popped?40:0);
+  return Math.max(0,Math.min(99.9,Math.floor(s*10)/10));
+}
+function pctText(){const s=score();return s===100?'100':s.toFixed(1);}
 function titleOf(){
   if(G.rare)return 'シンク一本釣り';
-  const n=G.fallen;
-  if(n>=TOTAL)return '全部シンク';
-  if(n>=100)return 'シンクと半分こした人';
-  if(n>=10)return 'シンクにも食べさせた人';
-  if(n>=1)return 'ほぼ無傷の湯切り人';
-  if(G.water>.25)return 'べちゃべちゃ焼そば職人';
-  if(G.water>.03)return 'ちょいべちゃ';
-  return '無傷の湯切り職人';
+  if(G.fallen>=TOTAL)return '全部シンク';
+  const s=score(),wet=!G.popped&&G.fallen===0;
+  if(s===100)return '無傷の湯切り職人';
+  if(s>=95)return wet?'あと一滴の湯切り人':'ほぼ無傷の湯切り人';
+  if(s>=80)return wet?'ちょいべちゃ':'シンクにも食べさせた人';
+  if(s>=50)return wet?'べちゃべちゃ焼そば職人':'シンクと半分こした人';
+  return wet?'ほぼスープ焼そば':'シンクに献上した人';
 }
-function countText(){return G.rare?'ひとかたまり':G.fallen+'本';}
+function waterPct(){return Math.round(Math.max(0,G.water)*100);}
+function detailText(){
+  const lost=G.rare?'シンクにひとかたまり':`シンクに${G.fallen}本`;
+  const w=waterPct();
+  return w>0?`${lost}・お湯${w}%残り`:lost;
+}
 function shareText(){
-  const n=G.fallen;
-  const line=G.rare?'麺がひとかたまりでシンクに落ちた':n?`シンクに${n}本落ちた`:(G.water>.03?'1本も落とさなかった（お湯は残った）':'1本も落とさなかった');
-  return `${GAME}\n${line}【${titleOf()}】\n${SHARE_URL}\n作った人 ${CREATOR}`;
+  return `${GAME}\n湯切り完成度${pctText()}%（${detailText()}）【${titleOf()}】\n${SHARE_URL}\n作った人 ${CREATOR}`;
 }
 async function showResult(){
   pourOff();
-  $('rCount').innerHTML=G.rare?'シンクに落ちた麺 <b>ひとかたまり</b>':`シンクに落ちた麺 <b>${G.fallen}</b>本`;
+  $('rScore').innerHTML=`湯切り完成度<b>${pctText()}<small>%</small></b>`;
+  $('rCount').innerHTML=(G.rare?'シンクに落ちた麺 <b>ひとかたまり</b>':`シンクに落ちた麺 <b>${G.fallen}</b>本`)+`　お湯 <b>${waterPct()}</b>%残り`;
   $('rTitle').textContent='【'+titleOf()+'】';
   const F=G.flick||{A:0,z:{lo:0,hi:0,pop:0}};
   $('rSub').textContent=G.popped?(G.weak<.97&&F.A<=(F.z.best+30)?(G.torn?'フタをはがす勢いでビリッと破れて、外れやすくなっていた。':'フタをはがしすぎて、外れやすくなっていた。'):'はじくのが強すぎて、フタが外れた。')
@@ -546,12 +562,11 @@ async function drawCard(){
   /* right side */
   x.fillStyle='#fbf6ee';x.fillRect(640,0,Wc-640,Hc);x.fillStyle='#24201c';x.fillRect(640,0,6,Hc);
   x.textBaseline='alphabetic';x.textAlign='left';
-  x.fillStyle='#7a7068';x.font=`900 28px ${F}`;x.fillText('シンクに落ちた麺',690,120);
-  x.fillStyle='#d8332f';
-  if(G.rare){x.font=`400 76px ${D}`;x.fillText('ひとかたまり',690,230);}
-  else{x.font=`400 140px ${D}`;const t=String(G.fallen);x.fillText(t,690,262);const tw=x.measureText(t).width;x.fillStyle='#24201c';x.font=`900 44px ${F}`;x.fillText('本',700+tw,256);}
-  x.fillStyle='#9e1f1c';x.font=`900 36px ${F}`;wrap(x,'【'+titleOf()+'】',Wc-640-90).forEach((l,k)=>x.fillText(l,684,340+k*46));
-  x.fillStyle='#7a7068';x.font=`700 24px ${F}`;x.fillText($('rSub').textContent,690,440);
+  x.fillStyle='#7a7068';x.font=`900 28px ${F}`;x.fillText('湯切り完成度',690,96);
+  x.fillStyle='#d8332f';x.font=`400 132px ${D}`;const t=pctText();x.fillText(t,684,226);const tw=x.measureText(t).width;x.font=`400 58px ${D}`;x.fillText('%',694+tw,226);
+  x.fillStyle='#24201c';x.font=`900 26px ${F}`;x.fillText((G.rare?'シンクに落ちた麺 ひとかたまり':`シンクに落ちた麺 ${G.fallen}本`)+`　お湯 ${waterPct()}%残り`,690,282);
+  x.fillStyle='#9e1f1c';x.font=`900 36px ${F}`;wrap(x,'【'+titleOf()+'】',Wc-640-90).forEach((l,k)=>x.fillText(l,684,348+k*46));
+  x.fillStyle='#7a7068';x.font=`700 22px ${F}`;wrap(x,$('rSub').textContent,Wc-640-60).slice(0,3).forEach((l,k)=>x.fillText(l,690,420+k*32));
   x.fillStyle='#24201c';x.fillRect(646,Hc-110,Wc-646,110);
   x.fillStyle='#fff';x.font=`400 22px ${D}`;wrap(x,GAME,Wc-646-60).forEach((l,k)=>x.fillText(l,676,Hc-68+k*32));
   x.fillStyle='#ffd23f';x.font=`700 20px ${F}`;x.textAlign='right';x.fillText('作った人 '+CREATOR,Wc-30,Hc-24);
@@ -565,7 +580,7 @@ function begin(){
   
 }
 $('startBtn').addEventListener('click',()=>{ac();begin();});
-window.__yugiri={get G(){return G;},begin,L,lidGeo,cupPoint,pop,showResult,TOTAL,flick,zone};
+window.__yugiri={get G(){return G;},begin,L,lidGeo,cupPoint,pop,showResult,TOTAL,flick,zone,score,shareText};
 </script>
 </body>
 </html>
