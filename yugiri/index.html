@@ -53,7 +53,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
 #rCount b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--ink);margin:0 2px;font-variant-numeric:tabular-nums}
 #rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
-#rSub{font-size:13px;font-weight:700;color:var(--muted);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
 #card{width:100%;border-radius:10px;border:1px solid #ddd3c4;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
 #result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
 #result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
@@ -546,6 +546,23 @@ function titleOf(){
   if(s>=50)return wet?'べちゃべちゃ焼そば職人':'シンクと半分こした人';
   return wet?'ほぼスープ焼そば':'シンクに献上した人';
 }
+/* Two lines of feedback, one for the peel and one for the flick, so the next try knows which way to go. */
+function feedback(){
+  const F=G.flick||{A:0,z:{best:1,lo:0,hi:0,pop:0}};
+  let peel;
+  if(G.torn)peel='ビリッと破れた（速く引きすぎ）';
+  else if(G.p<LINE){const d=LINE-G.p;peel=d<.01?'ほんの少し手前':d<.04?'少し手前':'かなり手前';}
+  else if(G.p>LINE+PEEL_OK){const d=G.p-LINE-PEEL_OK;peel=d<.01?'ほんの少しはがしすぎ':d<.05?'少しはがしすぎ':'はがしすぎ（フタが弱くなった）';}
+  else peel='ぴったり';
+  let flick;
+  const r=(F.A-F.z.best)/F.z.best;
+  const how=Math.abs(r)<.01?'ほんの少し':Math.abs(r)<.05?'少し':'';
+  if(G.popped)flick=F.A<=F.z.best*(1+.0012)?'強くなかったのに、弱ったフタが飛んだ':`${how?how+'強すぎて':'強すぎて'}、フタが飛んだ`;
+  else if(F.A<F.z.lo)flick=`${how}弱い（お湯が${Math.max(1,Math.round(G.water*100))}%残った）`;
+  else if(F.A>F.z.hi)flick=`${how}強い（麺が${G.fallen}本逃げた）`;
+  else flick='ぴったり';
+  return ['めくり：'+peel,'はじき：'+flick];
+}
 function waterPct(){return Math.round(Math.max(0,G.water)*100);}
 function detailText(){
   const lost=G.rare?'シンクにひとかたまり':`シンクに${G.fallen}本`;
@@ -561,9 +578,7 @@ async function showResult(){
   $('rCount').innerHTML=(G.rare?'シンクに落ちた麺 <b>ひとかたまり</b>':`シンクに落ちた麺 <b>${G.fallen}</b>本`)+`　お湯 <b>${waterPct()}</b>%残り`;
   $('rTitle').textContent='【'+titleOf()+'】';
   const F=G.flick||{A:0,z:{lo:0,hi:0,pop:0}};
-  $('rSub').textContent=G.popped?(G.weak<.97&&F.A<=(F.z.best+30)?(G.torn?'フタをはがす勢いでビリッと破れて、外れやすくなっていた。':'フタをはがしすぎて、外れやすくなっていた。'):'はじくのが強すぎて、フタが外れた。')
-    :G.water>=1e-4?(Math.round(G.water*100)<1?'はじくのがほんの少し弱くて、お湯がほんの少し残った。':G.hole<.9&&F.A>=118?`湯切り口が小さくて、お湯が ${Math.round(G.water*100)}% 残った。`:`はじくのが弱くて、お湯が ${Math.round(G.water*100)}% 残った。`)
-    :G.fallen?'ちょっと強くて、湯切り口から麺が逃げた。':peelDev()>0?(G.p<LINE?'お湯も麺も完璧。でも、フタのはがしが線の少し手前だった。':'お湯も麺も完璧。でも、フタを線より少しはがしすぎた。'):'お湯も麺も完璧。';
+  $('rSub').innerHTML=feedback().map(l=>`<span>${l}</span>`).join('<br>');
   $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
   G.cardFile=null;setShareUI();
   try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
@@ -622,7 +637,7 @@ async function drawCard(){
   x.fillStyle='#d8332f';x.font=`400 132px ${D}`;const t=pctText();x.fillText(t,684,226);const tw=x.measureText(t).width;x.font=`400 58px ${D}`;x.fillText('%',694+tw,226);
   x.fillStyle='#24201c';x.font=`900 26px ${F}`;x.fillText((G.rare?'シンクに落ちた麺 ひとかたまり':`シンクに落ちた麺 ${G.fallen}本`)+`　お湯 ${waterPct()}%残り`,690,282);
   x.fillStyle='#9e1f1c';x.font=`900 36px ${F}`;wrap(x,'【'+titleOf()+'】',Wc-640-90).forEach((l,k)=>x.fillText(l,684,348+k*46));
-  x.fillStyle='#7a7068';x.font=`700 22px ${F}`;wrap(x,$('rSub').textContent,Wc-640-60).slice(0,3).forEach((l,k)=>x.fillText(l,690,420+k*32));
+  x.fillStyle='#7a7068';x.font=`700 22px ${F}`;feedback().slice(0,2).forEach((l,k)=>wrap(x,l,Wc-640-60).slice(0,1).forEach(t=>x.fillText(t,690,420+k*34)));
   x.fillStyle='#24201c';x.fillRect(646,Hc-110,Wc-646,110);
   x.fillStyle='#fff';x.font=`400 22px ${D}`;wrap(x,GAME,Wc-646-60).forEach((l,k)=>x.fillText(l,676,Hc-68+k*32));
   x.fillStyle='#ffd23f';x.font=`700 20px ${F}`;x.textAlign='right';x.fillText('作った人 '+CREATOR,Wc-30,Hc-24);
