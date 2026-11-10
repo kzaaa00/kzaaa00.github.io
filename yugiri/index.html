@@ -573,26 +573,34 @@ async function showResult(){
 /* On phones, hand the image and the text to the share sheet together, so picking X opens a post with the picture attached.
    Where that is not possible (PCs, some in-app browsers) fall back to the X post link plus a save button. */
 const TOUCH=matchMedia('(pointer:coarse)').matches;
+/* Phones: everything goes through the share sheet, so picking X opens the post inside the X app
+   (also from X's own in-app browser) instead of jumping out to a web page. Only where there is no share sheet
+   at all (PCs, some in-app browsers) do we open the X post page. */
 function canShareFile(){
   try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
 }
+function canShareText(){return TOUCH&&!!navigator.share;}
 function setShareUI(){
-  const f=canShareFile();
+  const f=canShareFile(),t=canShareText();
   $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
   $('textOnly').hidden=!f;
   $('saveImg').hidden=f||!G.cardFile;
-  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
 }
 function openIntent(){
   const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
   const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
 $('shareX').addEventListener('click',async()=>{
-  if(!canShareFile()){openIntent();return;}
+  if(!canShareFile()){shareTextOnly();return;}
   try{await navigator.share({files:[G.cardFile],text:shareText()});}
-  catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
 });
-$('textOnly').addEventListener('click',openIntent);
+$('textOnly').addEventListener('click',shareTextOnly);
 $('saveImg').addEventListener('click',()=>{
   if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
   const a=document.createElement('a');a.href=u;a.download='yugiri-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);

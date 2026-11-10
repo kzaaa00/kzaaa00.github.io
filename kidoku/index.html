@@ -106,9 +106,11 @@ body{font-family:var(--body);color:#fff;overflow:hidden;-webkit-tap-highlight-co
 #rRows dt{color:var(--muted)}
 #rRows dd{margin:0;font-variant-numeric:tabular-nums}
 #card{width:100%;border-radius:10px;border:1px solid #ddd6cc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
-#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:-4px 0 0}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
 #result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
 #result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
 #result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
 #mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
 #toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);z-index:50;background:var(--ink);color:#fff;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
@@ -147,12 +149,14 @@ body{font-family:var(--body);color:#fff;overflow:hidden;-webkit-tap-highlight-co
       <p id="rOut"></p>
       <p id="rTitle"></p>
       <dl id="rRows"></dl>
-      <img id="card" alt="既読がついた場面の画像">
-      <p class="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
       <div class="btns">
         <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
         <button class="btn ghost" id="retry" type="button">もう一回</button>
       </div>
+      <img id="card" alt="既読がついた場面の画像">
       <p class="fine">登場人物・アプリはすべて架空です。</p>
     </div>
   </div>
@@ -387,15 +391,47 @@ async function showResult(){
   const reached=G.fail?G.fail.stage+1:STAGES.length;
   $('rRows').innerHTML=`<dt>読んだ通知</dt><dd>${G.read} / ${G.total} 件</dd><dt>読めずに流れた</dt><dd>${G.missed} 件</dd><dt>既読</dt><dd>${G.fail?'1':'0'} 件</dd><dt>たどり着いた相手</dt><dd>${reached} / ${STAGES.length} 人</dd>`;
   $('result').hidden=false;$('mute').hidden=true;
-  try{const url=await drawCard();$('card').src=url;}catch(e){}
+  CARD_FILE=null;setShareUI();
+  try{const url=await drawCard();$('card').src=url;
+    const b=await (await fetch(url)).blob();CARD_FILE=new File([b],'kidoku-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
 }
 function shareText(){
   if(G.fail)return `${G.fail.who}に既読つけたら「${G.fail.ouch[G.fail.ouch.length-1]}」って来た。【${rank()}】`;
   return G.missed?`既読ゼロで逃げ切った（${G.missed}件は読めず）。でも母には「読んでるのわかってるよ」って言われた`:'既読ゼロで全部読んだ。でも母には「読んでるのわかってるよ」って言われた';
 }
-$('shareX').addEventListener('click',()=>{
+/* Phones: everything goes through the share sheet, so picking X opens the post inside the X app
+   (also from X's own in-app browser) with the result image attached. Only where there is no share sheet
+   at all (PCs, some in-app browsers) do we open the X post page. */
+let CARD_FILE=null;
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function sheetText(){return shareText()+' #'+HASHTAG+'\n'+SHARE_URL;}
+function canShareFile(){try{return TOUCH&&!!CARD_FILE&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[CARD_FILE],text:'x'});}catch(e){return false;}}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!CARD_FILE;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
   const url='https://x.com/intent/post?text='+encodeURIComponent(shareText())+'&hashtags='+encodeURIComponent(HASHTAG)+'&url='+encodeURIComponent(SHARE_URL);
   const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:sheetText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[CARD_FILE],text:sheetText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!CARD_FILE)return;const u=URL.createObjectURL(CARD_FILE);
+  const a=document.createElement('a');a.href=u;a.download='kidoku-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
 });
 $('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
 
