@@ -168,8 +168,8 @@ function newGame(){
      ang:0,target:0,vel:0,water:1,hole:1,weak:1,stress:0,fallen:0,popped:false,rare:false,leak:0,
      drag:null,tilted:false,done:false,t:0,lift:0,
      drops:[],strands:[],sink:[],steam:[],lid:null,block:null,shownHint:false,endAt:0,
-     /* each cup is filled a little differently: more water is heavier and needs a harder flick. It shows as more steam. */
-     need:.88+Math.random()*.24};
+     /* every cup is the same (a cup that changed each time felt unfair) */
+     need:1};
 }
 function fill(){return G?(G.need-.88)/.24:.5;}
 /* steam rising from a point; how much depends on how full the cup is */
