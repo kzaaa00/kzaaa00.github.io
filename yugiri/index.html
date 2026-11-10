@@ -558,16 +558,17 @@ function feedback(){
   const r=(F.A-F.z.best)/F.z.best;
   const how=Math.abs(r)<.01?'ほんの少し':Math.abs(r)<.05?'少し':'';
   if(G.popped)flick=F.A<=F.z.best*(1+.0012)?'強くなかったのに、弱ったフタが飛んだ':`${how?how+'強すぎて':'強すぎて'}、フタが飛んだ`;
-  else if(F.A<F.z.lo)flick=`${how}弱い（お湯が${Math.max(1,Math.round(G.water*100))}%残った）`;
+  else if(F.A<F.z.lo)flick=`${how}弱い（お湯が${waterPct()}%残った）`;
   else if(F.A>F.z.hi)flick=`${how}強い（麺が${G.fallen}本逃げた）`;
   else flick='ぴったり';
   return ['めくり：'+peel,'はじき：'+flick];
 }
-function waterPct(){return Math.round(Math.max(0,G.water)*100);}
+/* under 1% shows one decimal (never 0 while some water is left), so the count line and the feedback line always agree */
+function waterPct(){const w=Math.max(0,G.water)*100;if(G.water<1e-4)return '0';if(w<1)return Math.max(.1,Math.round(w*10)/10).toFixed(1);return String(Math.round(w));}
 function detailText(){
   const lost=G.rare?'シンクにひとかたまり':`シンクに${G.fallen}本`;
   const w=waterPct();
-  return w>0?`${lost}・お湯${w}%残り`:lost;
+  return w!=='0'?`${lost}・お湯${w}%残り`:lost;
 }
 function shareText(){
   return `湯切りで麺を1本も落とすな　完成度${pctText()}%【${titleOf()}】\n${SHARE_URL}`;
