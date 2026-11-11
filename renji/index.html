@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>電子レンジを、チンと鳴らさずに止めろ。</title>
+<meta name="description" content="深夜の台所。家族は寝ている。ダイヤル式の電子レンジを、針が0に着く直前で止めるだけ。0からのずれが結果になります。登場するものはすべて架空です。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="電子レンジを、チンと鳴らさずに止めろ。">
+<meta property="og:description" content="深夜の台所。家族は寝ている。">
+<meta property="og:url" content="https://kzaaa00.github.io/renji/">
+<meta property="og:image" content="https://kzaaa00.github.io/renji/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* A dark kitchen at night, a dial microwave winding down, and a family asleep down the hall.
+   Stop it as close to zero as you can without letting the bell ring; the result zooms in on the gap. */
+:root{
+  --ink:#24201c; --muted:#7a7068; --paper:#fbf6ee; --red:#d8332f; --red-d:#9e1f1c; --gold:#ffd23f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0f1219}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#171b26;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app.shake{animation:shake .5s}
+@keyframes shake{15%{transform:translate(-9px,3px)}30%{transform:translate(8px,-3px)}45%{transform:translate(-6px,2px)}60%{transform:translate(4px,-1px)}75%{transform:translate(-2px,0)}}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:linear-gradient(#1f2433,#121520);color:#f3eee4}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,8.2vw,40px);line-height:1.4;margin:0 0 30px;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #cfc6ba}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:#a9a39a}
+
+#result{background:#f6f1e8;justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:64px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:14px;font-weight:900;margin:0;line-height:1.6;color:var(--muted)}
+#rCount b{font-family:var(--display);font-weight:400;font-size:18px;color:var(--ink);margin:0 2px;font-variant-numeric:tabular-nums}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:13px;font-weight:700;color:var(--muted);margin:0}
+#card{width:100%;border-radius:10px;border:1px solid #ddd3c4;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#e9e4da;border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-label="深夜の台所でダイヤル式の電子レンジが動いている画面"></canvas>
+
+  <div id="title" class="panel">
+    <h1>電子レンジを、チンと鳴らさずに止めろ。</h1>
+    <button class="btn" id="startBtn" type="button">はじめる</button>
+    <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+  </div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>結果</h2>
+      <p id="rScore"></p>
+      <p id="rCount"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <div class="btns">
+        <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
+        <button class="btn ghost" id="retry" type="button">もう一回</button>
+      </div>
+      <img id="card" alt="0からのずれと、拡大したダイヤルの画像">
+      <p class="fine">登場するものはすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='電子レンジを、チンと鳴らさずに止めろ。';
+const SHORT='電子レンジをチンと鳴らさずに止めろ';
+const CREATOR='@ordwxjhj';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/renji/';})();
+const DISHES=['ごはん','みそ汁','からあげ'];
+const DEG_PER_SEC=10;                 /* the dial: 10 degrees per second, 0 at the top, 30 seconds at most */
+const TH=DEG_PER_SEC*Math.PI/180;     /* radians per second */
+const UNIT=.001;                      /* the smallest unit: one millisecond. Inside it counts as exactly zero. */
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('renji-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*1;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,vol,freq,delay=0,type='bandpass',q=1){
+  if(muted||!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=nbuf();f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur+.02);
+}
+function tone(f,dur,type='sine',vol=.05,delay=0,f2){
+  if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+}
+/* the running hum: a low buzz and a fan, steady all the way to zero (it gives nothing away) */
+const hum={nodes:null};
+function humOn(){
+  if(!ac()||hum.nodes)return;const t=AC.currentTime;
+  const o=AC.createOscillator(),f=AC.createBiquadFilter(),g=AC.createGain();o.type='sawtooth';o.frequency.value=100;f.type='lowpass';f.frequency.value=260;g.gain.value=0;
+  const s=AC.createBufferSource(),f2=AC.createBiquadFilter(),g2=AC.createGain();s.buffer=nbuf();s.loop=true;f2.type='bandpass';f2.frequency.value=500;f2.Q.value=.6;g2.gain.value=0;
+  o.connect(f).connect(g).connect(AC.destination);s.connect(f2).connect(g2).connect(AC.destination);o.start();s.start();
+  g.gain.setTargetAtTime(muted?0:.05,t,.05);g2.gain.setTargetAtTime(muted?0:.035,t,.05);
+  hum.nodes={o,s,g,g2};
+}
+function humOff(){if(!hum.nodes)return;const {o,s}=hum.nodes;try{o.stop();s.stop();}catch(e){}hum.nodes=null;}
+/* the zoom: a rising whoosh that runs as long as the zoom does */
+const zs={nodes:null};
+function zoomOn(){if(!ac()||zs.nodes||muted)return;const t=AC.currentTime;const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.setValueAtTime(140,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+.2);o.connect(g).connect(AC.destination);o.start();zs.nodes={o,g};}
+function zoomPitch(k){if(zs.nodes&&AC)zs.nodes.o.frequency.setTargetAtTime(140+k*160,AC.currentTime,.05);}
+function zoomOff(){if(!zs.nodes)return;const {o,g}=zs.nodes;const t=AC.currentTime;g.gain.setTargetAtTime(0,t,.04);try{o.stop(t+.2);}catch(e){}zs.nodes=null;}
+const SFX={
+  latch(){noise(.05,.3,2400,0,'highpass');tone(160,.08,'triangle',.07);},
+  close(){tone(90,.12,'sine',.12);noise(.06,.15,600,0,'bandpass',1.5);},
+  wind(){for(let i=0;i<7;i++)noise(.025,.12,3000,i*.07,'highpass');},
+  /* the bell: loud and bright, it is the thing you are trying not to hear */
+  chin(){tone(2093,1.4,'sine',.32);tone(3136,.9,'sine',.12);tone(4186,.6,'sine',.06);tone(2093*2.76,.3,'sine',.04);},
+  stir(){noise(.5,.08,300,0,'lowpass');},
+  thump(){tone(70,.25,'sine',.25);noise(.12,.2,400,0,'lowpass');},
+  zero(){tone(70,.35,'sine',.3);tone(55,.5,'sine',.2,.05);noise(.2,.25,300,0,'lowpass');}
+};
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));if(hum.nodes){const t=AC.currentTime;hum.nodes.g.gain.setTargetAtTime(muted?0:.05,t,.03);hum.nodes.g2.gain.setTargetAtTime(muted?0:.035,t,.03);}if(muted)zoomOff();}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('renji-mute',muted?'1':'0');}catch(err){}syncMute();});
+$('mute').addEventListener('pointerdown',e=>e.stopPropagation());
+
+/* ---------- canvas ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=360,H=640,SC=1,DPR=1;
+function resize(){
+  const r=$('app').getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);
+  SC=r.width/360;W=360;H=r.height/SC;
+  cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+}
+addEventListener('resize',resize);try{visualViewport.addEventListener('resize',resize);}catch(e){}
+try{new ResizeObserver(resize).observe($('app'));}catch(e){}
+resize();
+function L(){
+  const mh=214,mw=344,mx=8;
+  const my=Math.max(160,Math.min(H*.44-mh/2,H-mh-170));
+  const dw=128;
+  return {mx,my,mw,mh,dw,counter:my+mh,dial:{x:mx+12+dw+10+(mw-24-dw-10)/2,y:my+mh/2+4,r:80}};
+}
+
+/* ---------- state ---------- */
+let G=null,played=false,wake=0,best=null;
+try{played=localStorage.getItem('renji-played')==='1';}catch(e){}
+try{const b=localStorage.getItem('renji-best');if(b!==null&&b!=='')best=+b;}catch(e){}
+function newGame(){
+  G={phase:'load',t:0,ph:0,start:0,end:0,n:2+Math.random(),intro:played?0:1.8,introT:0,door:1,dish:Math.floor(Math.random()*3),spin:Math.random()*6.28,
+     stopAt:0,gap:null,rang:false,shown:false,done:false,Z:1,zoomT:0,zoomDur:0,target:1,revealed:false,isBest:false,prevBest:best,wound:0};
+}
+function startRun(){G.phase='run';G.start=performance.now();G.end=G.start+G.n*1000;humOn();}
+/* seconds left on the dial right now */
+function left(now){return G.phase==='run'?Math.max(0,(G.end-now)/1000):G.phase==='load'?G.n*G.wound:G.gap!=null?G.gap:0;}
+
+/* ---------- drawing ---------- */
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+const FB=()=>getComputedStyle(document.body).getPropertyValue('--body');
+const FD=()=>getComputedStyle(document.body).getPropertyValue('--display');
+
+/* The dial, drawn so that it can be magnified around the zero mark without losing sharpness.
+   (ox,oy) is where the zero mark lands on screen, Z the magnification, t the seconds the needle shows. */
+function dialView(x,o){
+  const {ox,oy,R,Z,t,face='#f3eee3',ink='#2a2622',showNumbers=true,minSpace=7,labelSmall=false}=o;
+  const C={x:ox,y:oy+R*Z};                       /* the dial centre on screen */
+  const P=(a,rho)=>[C.x+Math.sin(a)*rho*Z,C.y-Math.cos(a)*rho*Z];
+  /* face */
+  x.save();
+  x.fillStyle=face;if(Z<50){x.beginPath();x.arc(C.x,C.y,R*Z,0,7);x.fill();}else x.fillRect(-10,oy,Math.max(W,H)*2,Math.max(W,H)*2);
+  /* the part of the scale that can be seen */
+  const half=Z<3?Math.PI*2:Math.min(Math.PI,(Math.max(W,H)*.8)/(R*Z));
+  const tMin=Math.max(0,-half/TH),tMax=Math.min(30,half/TH);
+  const levels=[5,1,.1,.01,.001,.0001];
+  const px=L=>L*TH*R*Z;                          /* screen distance between ticks of this level */
+  const drawn=[];
+  for(const Lv of levels){
+    const sp=px(Lv);if(sp<minSpace)break;
+    const alpha=Math.min(1,(sp-minSpace)/12);
+    const len=Z<3?(Lv>=5?R*.2:R*.11):Math.min(40,Math.max(6,sp*.5))*(Lv>=5?1.6:1);
+    x.strokeStyle=ink;x.globalAlpha=alpha;x.lineWidth=Lv>=5?3:Lv>=1?2:1.5;
+    const k0=Math.ceil(tMin/Lv-1e-9),k1=Math.floor(tMax/Lv+1e-9);
+    if(k1-k0>800)continue;
+    for(let k=k0;k<=k1;k++){
+      const tt=k*Lv;if(drawn.some(D=>Math.abs(tt/D-Math.round(tt/D))<1e-6))continue;
+      const a=tt*TH;const r1=R,r2=R-len/Z;const [x1,y1]=P(a,r1),[x2,y2]=P(a,r2);
+      x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();
+    }
+    /* numbers on the level that has room for them */
+    if(showNumbers&&sp>=(labelSmall?40:60)&&(Lv>=5||Z>=3)){
+      x.fillStyle=ink;x.font=`${Lv>=1?400:700} ${Lv>=5&&Z<3?Math.round(R*.15):12}px ${Lv>=1?FD():FB()}`;x.textAlign='center';x.textBaseline='middle';
+      const dec=Lv>=1?0:Math.round(-Math.log10(Lv));
+      for(let k=k0;k<=k1;k++){const tt=k*Lv;if(tt===0||(Lv<1&&k%10===0))continue;const a=tt*TH;const [lx,ly]=P(a,Z<3?R*.66:R-(len+12)/Z);x.fillText(tt.toFixed(dec),lx,ly);}
+    }
+    x.globalAlpha=1;drawn.push(Lv);
+  }
+  /* zero mark: red */
+  const [z1x,z1y]=P(0,R+4/Z),[z2x,z2y]=P(0,R-(Z<3?22:60)/Z);
+  x.strokeStyle='#d8332f';x.lineWidth=Z<3?3.5:4;x.beginPath();x.moveTo(z1x,z1y);x.lineTo(z2x,z2y);x.stroke();
+  if(Z<3&&showNumbers){x.fillStyle='#d8332f';x.font=`400 ${Math.round(R*.15)}px ${FD()}`;x.textAlign='center';x.textBaseline='middle';const [lx,ly]=P(0,R*.66);x.fillText('0',lx,ly);}
+  /* needle (the pointer on the knob) */
+  const a=t*TH;
+  if(Z<3){
+    x.fillStyle='#cfc8bb';x.beginPath();x.arc(C.x,C.y,R*.36,0,7);x.fill();
+    x.fillStyle='#e6e0d4';x.beginPath();x.arc(C.x,C.y,R*.3,0,7);x.fill();
+    const [nx,ny]=P(a,R-4),[bx1,by1]=P(a-.12,R*.3),[bx2,by2]=P(a+.12,R*.3);
+    x.fillStyle=ink;x.beginPath();x.moveTo(nx,ny);x.lineTo(bx1,by1);x.lineTo(bx2,by2);x.closePath();x.fill();
+  }else{
+    const [nx,ny]=P(a,R+2/Z),[bx,by]=P(a,R-400/Z);
+    x.strokeStyle=ink;x.lineWidth=6;x.beginPath();x.moveTo(nx,ny);x.lineTo(bx,by);x.stroke();
+    x.strokeStyle='#d8332f';x.lineWidth=2.5;x.beginPath();x.moveTo(z1x,z1y);x.lineTo(z2x,z2y);x.stroke();
+  }
+  x.restore();
+  return {C,P};
+}
+/* dishes, seen through the window */
+function dish(x,X,Y,s,k){
+  x.save();x.translate(X,Y);x.scale(s,s);
+  if(k===0){x.fillStyle='#f4f1ea';x.beginPath();x.ellipse(0,-4,26,13,0,Math.PI,0);x.fill();
+    x.fillStyle='#d5d9e2';x.beginPath();x.moveTo(-30,-4);x.quadraticCurveTo(0,26,30,-4);x.closePath();x.fill();x.fillStyle='#4b6a9c';x.fillRect(-28,1,56,3);}
+  else if(k===1){x.fillStyle='#7c2c22';x.beginPath();x.moveTo(-28,-6);x.quadraticCurveTo(0,26,28,-6);x.closePath();x.fill();
+    x.fillStyle='#5c1f18';x.beginPath();x.ellipse(0,-7,28,6,0,0,7);x.fill();x.fillStyle='#8f3a2e';x.beginPath();x.ellipse(0,-11,8,3,0,0,7);x.fill();}
+  else{x.fillStyle='#eef0f2';x.beginPath();x.ellipse(0,6,34,8,0,0,7);x.fill();
+    for(const [a,b] of [[-16,-2],[0,-6],[15,-1],[-7,-12],[9,-13]]){x.fillStyle='#b9772f';x.beginPath();x.arc(a,b,9,0,7);x.fill();x.fillStyle='rgba(255,220,150,.35)';x.beginPath();x.arc(a-3,b-3,3,0,7);x.fill();}}
+  x.restore();
+}
+function drawMicrowave(x,M,st){
+  const {mx,my,mw,mh,dw}=M;
+  x.fillStyle='rgba(0,0,0,.35)';rr(x,mx+4,my+8,mw,mh,16);x.fill();
+  const gb=x.createLinearGradient(0,my,0,my+mh);gb.addColorStop(0,'#ebe7df');gb.addColorStop(1,'#cfcac0');x.fillStyle=gb;rr(x,mx,my,mw,mh,16);x.fill();
+  const dx=mx+12,dy=my+14,dh=mh-28;
+  const lit=st.running||st.door>0;
+  x.fillStyle=lit?'#f2d9a6':'#3b3a37';rr(x,dx+4,dy+4,dw-8,dh-8,8);x.fill();
+  const tx=dx+dw/2,ty=dy+dh-30;
+  x.fillStyle='rgba(255,255,255,.55)';x.beginPath();x.ellipse(tx,ty,dw*.4,9,0,0,7);x.fill();
+  if(st.dish!=null)dish(x,tx+Math.cos(st.spin)*7,ty-10+Math.sin(st.spin)*2,.85,st.dish);
+  const o=st.door;
+  if(o<.98){
+    const w2=dw*(1-o),sk=o*24;
+    x.save();
+    x.beginPath();x.moveTo(dx,dy-sk*.2);x.lineTo(dx+w2,dy);x.lineTo(dx+w2,dy+dh);x.lineTo(dx,dy+dh+sk*.2);x.closePath();
+    x.fillStyle='#e2ded6';x.fill();x.strokeStyle='rgba(0,0,0,.15)';x.lineWidth=1.5;x.stroke();
+    const wx=dx+w2*.1,wy=dy+12,ww=w2*.78,wh=dh-24;
+    x.beginPath();x.rect(wx,wy,ww,wh);x.clip();
+    x.fillStyle='rgba(20,20,22,.88)';x.fillRect(wx,wy,ww,wh);
+    if(st.running){x.globalAlpha=.85;x.fillStyle='#f0c886';x.fillRect(wx,wy,ww,wh);x.globalAlpha=1;
+      x.fillStyle='rgba(255,255,255,.5)';x.beginPath();x.ellipse(tx,ty,dw*.4,9,0,0,7);x.fill();
+      if(st.dish!=null)dish(x,tx+Math.cos(st.spin)*7,ty-10+Math.sin(st.spin)*2,.85,st.dish);}
+    x.fillStyle='rgba(0,0,0,.28)';for(let yy=wy;yy<wy+wh;yy+=4)for(let xx=wx+((yy/4)%2)*2;xx<wx+ww;xx+=4)x.fillRect(xx,yy,1.4,1.4);
+    x.fillStyle='rgba(255,255,255,.08)';x.beginPath();x.moveTo(wx,wy);x.lineTo(wx+ww*.4,wy);x.lineTo(wx+ww*.1,wy+wh);x.lineTo(wx,wy+wh);x.closePath();x.fill();
+    x.restore();
+    x.fillStyle='#b9b4aa';rr(x,dx+w2-11,dy+30,6,dh-60,3);x.fill();
+  }
+  /* panel with the dial */
+  const px=dx+dw+10,pw=mx+mw-12-px;
+  x.fillStyle='#d9d4ca';rr(x,px,dy,pw,dh,8);x.fill();
+  const D=M.dial;
+  x.fillStyle='rgba(0,0,0,.18)';x.beginPath();x.arc(D.x+2,D.y+4,D.r+5,0,7);x.fill();
+  x.fillStyle='#c9c3b7';x.beginPath();x.arc(D.x,D.y,D.r+5,0,7);x.fill();
+  dialView(x,{ox:D.x,oy:D.y-D.r,R:D.r,Z:1,t:st.t});
+  /* a small lamp that is on while it runs */
+  x.fillStyle=st.running?'#ff9a3c':'#8a847a';x.beginPath();x.arc(px+pw-14,dy+12,3.5,0,7);x.fill();
+  if(st.running){x.fillStyle='rgba(255,154,60,.35)';x.beginPath();x.arc(px+pw-14,dy+12,8,0,7);x.fill();}
+}
+/* the hallway: a bedroom door. The bell wakes the family in steps. */
+function drawHall(x,X,Y,w,h,wk){
+  x.fillStyle='#0e1018';x.fillRect(X-8,Y-8,w+16,h+8);
+  const open=wk>=2?Math.min(1,.35+(wk-2)*.35):0;
+  x.fillStyle=wk>=1?'rgba(255,214,120,.95)':'#0b0c12';x.fillRect(X,Y,w,h);
+  if(wk>=3){x.fillStyle='#14151d';x.beginPath();x.arc(X+w*.62,Y+h*.3,13,0,7);x.fill();rr(x,X+w*.62-17,Y+h*.3+12,34,h,10);x.fill();}
+  const dw2=w*(1-open);
+  x.fillStyle='#2b3142';x.fillRect(X,Y,dw2,h);x.strokeStyle='rgba(255,255,255,.06)';x.lineWidth=2;x.strokeRect(X+6,Y+8,Math.max(0,dw2-12),h*.4);x.strokeRect(X+6,Y+h*.5,Math.max(0,dw2-12),h*.45);
+  x.fillStyle='#8a8f9c';x.beginPath();x.arc(X+dw2-10,Y+h*.55,3,0,7);x.fill();
+  if(wk>=1&&open===0){x.fillStyle='rgba(255,214,120,.9)';x.fillRect(X-2,Y+h-3,w+4,3);
+    const g=x.createLinearGradient(0,Y+h,0,Y+h+30);g.addColorStop(0,'rgba(255,214,120,.35)');g.addColorStop(1,'rgba(255,214,120,0)');x.fillStyle=g;x.beginPath();x.moveTo(X-2,Y+h);x.lineTo(X+w+2,Y+h);x.lineTo(X+w+30,Y+h+30);x.lineTo(X-30,Y+h+30);x.closePath();x.fill();}
+}
+function drawNight(x,w,h,top){
+  const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1d2231');g.addColorStop(1,'#141822');x.fillStyle=g;x.fillRect(0,0,w,h);
+  x.fillStyle='#0c1020';rr(x,232,top,96,84,6);x.fill();x.fillStyle='#e9e3c8';x.beginPath();x.arc(296,top+28,11,0,7);x.fill();x.fillStyle='#0c1020';x.beginPath();x.arc(301,top+24,10,0,7);x.fill();
+  x.strokeStyle='#2e3445';x.lineWidth=4;x.strokeRect(232,top,96,84);x.beginPath();x.moveTo(280,top);x.lineTo(280,top+84);x.stroke();
+}
+function drawKitchen(){
+  const M=L();const top=Math.max(18,M.my-150);
+  drawNight(cx,W,H,top);
+  drawHall(cx,34,top-6,78,Math.max(90,M.my-top-30),wake);
+  cx.fillStyle='#2c2823';cx.fillRect(0,M.counter,W,H-M.counter);cx.fillStyle='#3d3730';cx.fillRect(0,M.counter,W,10);
+}
+function pill(label,lx,ly,bg,fg,size=15){cx.save();cx.font=`900 ${size}px `+FB();cx.textAlign='center';cx.textBaseline='middle';
+  const w=cx.measureText(label).width+size*1.5,h=size*2;cx.fillStyle=bg;rr(cx,lx-w/2,ly-h/2,w,h,h/2);cx.fill();cx.fillStyle=fg;cx.fillText(label,lx,ly+1);cx.restore();}
+function lesson(M){
+  const t=(G.t%1.4)/1.4,fx=M.dial.x,fy=M.dial.y+M.dial.r+44;
+  const press=t>.45&&t<.6;
+  cx.save();cx.globalAlpha=.9;
+  if(t>.45){const r=(t-.45)/.55;cx.strokeStyle=`rgba(255,255,255,${.7*(1-r)})`;cx.lineWidth=2.5;cx.beginPath();cx.arc(fx,fy,16+r*20,0,7);cx.stroke();}
+  cx.fillStyle='rgba(255,255,255,.85)';cx.strokeStyle='#24201c';cx.lineWidth=2.5;cx.beginPath();cx.arc(fx,fy+(press?2:0),press?13:15,0,7);cx.fill();cx.stroke();
+  cx.restore();
+  pill('針が0に着く直前で、タップして止める',180,M.counter+84,'rgba(255,255,255,.92)','#24201c',14);
+  pill('0を過ぎると鳴る。家族が起きる',180,M.counter+120,'rgba(255,255,255,.92)','#24201c',14);
+}
+
+/* ---------- the zoom ---------- */
+/* How far in to go: until the gap between the needle and zero is plain to see.
+   Exactly zero goes one step past the smallest unit and holds, so you can see there is no gap at all. */
+const ZR=150;                       /* dial radius in the zoom view */
+function zoomTarget(g){
+  if(g===0)return 70/(UNIT*TH*ZR);  /* one unit spread over 70 px */
+  return Math.max(1.5,46/(g*TH*ZR));
+}
+function zoomDuration(Z){const dec=Math.log10(Z);return .8+dec*1.15;}
+function drawZoom(){
+  const now=performance.now();
+  const e=Math.min(1,G.zoomT/G.zoomDur);
+  /* ease in, then a long pull: the closer it was, the longer it runs */
+  const k=(e<.2?e*e/.4:e-.1)/.9;
+  const Z=Math.pow(10,Math.log10(G.target)*Math.min(1,k));G.Z=Z;
+  cx.fillStyle='#141822';cx.fillRect(0,0,W,H);
+  const oy=H*.42;
+  const t=G.gap===0?0:G.gap;
+  dialView(cx,{ox:180,oy,R:ZR,Z,t,minSpace:8});
+  /* magnification */
+  cx.save();cx.fillStyle='rgba(255,255,255,.9)';cx.font=`400 22px ${FD()}`;cx.textAlign='center';cx.textBaseline='middle';
+  cx.fillText('×'+Math.round(Z).toLocaleString('en-US'),180,Math.max(40,oy-200));
+  cx.font=`700 12px ${FB()}`;cx.fillStyle='rgba(255,255,255,.6)';cx.fillText('0のところを拡大',180,Math.max(40,oy-200)+26);cx.restore();
+  if(G.revealed){
+    const A=G.revealT;const a=Math.min(1,A*4);
+    cx.save();cx.globalAlpha=a;
+    if(G.gap===0){
+      pill('ぴったり 0.000秒',180,oy+150,'#d8332f','#fff',22);
+      cx.fillStyle='#7a7068';cx.font=`700 13px ${FB()}`;cx.textAlign='center';cx.fillText('0.001秒の目盛りでも、ずれなし',180,oy+196);
+    }else{
+      /* bracket between zero and the needle, along the rim */
+      const gx=t*TH*ZR*Z;const y=oy+18;
+      cx.strokeStyle='#ffd23f';cx.lineWidth=2.5;cx.beginPath();cx.moveTo(180,y);cx.lineTo(180+gx,y);cx.stroke();
+      cx.beginPath();cx.moveTo(180,y-8);cx.lineTo(180,y+8);cx.moveTo(180+gx,y-8);cx.lineTo(180+gx,y+8);cx.stroke();
+      pill(`0まで あと ${fmt(G.gap)}秒`,180,oy+150,'rgba(255,255,255,.95)','#24201c',22);
+    }
+    cx.restore();
+  }
+}
+
+/* ---------- loop ---------- */
+function stateNow(){
+  const now=performance.now();
+  return {t:left(now),running:G.phase==='run',door:G.door,dish:G.dish,spin:G.spin};
+}
+function step(dt){
+  G.t+=dt;G.ph+=dt;
+  if(G.phase==='load'&&G.introT<G.intro){G.introT+=dt;G.ph=0;return;}
+  if(G.phase==='load'){
+    G.door=Math.max(0,1-Math.max(0,G.ph-.2)/.3);if(G.ph>.5&&!G.closed){G.closed=true;SFX.close();}
+    if(G.ph>.6&&!G.windS){G.windS=true;SFX.wind();}
+    G.wound=Math.min(1,Math.max(0,(G.ph-.6)/.5));G.wound=1-(1-G.wound)*(1-G.wound);
+    if(G.ph>1.35)startRun();
+  }
+  if(G.phase==='run'){G.spin+=dt*.6;if(performance.now()>=G.end)ring();}
+  if(G.phase==='stopped'){G.door=Math.min(1,G.door+dt*4);if(G.ph>.8){G.phase='zoom';G.ph=0;G.zoomT=0;G.target=zoomTarget(G.gap);G.zoomDur=zoomDuration(G.target);zoomOn();}}
+  if(G.phase==='zoom'){
+    G.zoomT+=dt;zoomPitch(Math.log10(Math.max(1,G.Z)));
+    if(!G.revealed&&G.zoomT>=G.zoomDur+(G.gap===0?.7:0)){G.revealed=true;G.revealT=0;zoomOff();G.gap===0?SFX.zero():SFX.thump();}
+    if(G.revealed){G.revealT+=dt;if(G.revealT>(G.gap===0?2.2:1.6)&&!G.shown){G.shown=true;showResult();}}
+  }
+  if(G.phase==='rang'){if(G.ph>2.4&&!G.shown){G.shown=true;showResult();}}
+}
+function render(){
+  cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
+  if(!G){drawNight(cx,W,H,Math.max(18,L().my-150));return;}
+  if(G.phase==='zoom'){drawZoom();return;}
+  drawKitchen();
+  const M=L();
+  drawMicrowave(cx,M,stateNow());
+  pill(DISHES[G.dish]+'を温め中',M.mx+12+M.dw/2,M.my-20,'rgba(255,255,255,.12)','#efe9de',12);
+  if(best!=null)pill('自己ベスト '+fmt(best)+'秒',M.dial.x,M.my-20,'rgba(255,255,255,.12)','#efe9de',12);
+  if(!played&&(G.phase==='run'||(G.phase==='load'&&G.introT>=G.intro)))lesson(M);
+  if(G.phase==='load'&&G.introT<G.intro)intro();
+}
+/* the first time only: one line, big, then out of the way */
+function intro(){
+  const t=G.introT,a=Math.min(1,t/.2)*Math.min(1,(G.intro-t)/.3);
+  cx.save();cx.globalAlpha=a;cx.fillStyle='rgba(10,12,18,.86)';cx.fillRect(0,0,W,H);
+  cx.shadowColor='rgba(0,0,0,.6)';cx.shadowBlur=10;cx.fillStyle='#fff';cx.textAlign='center';cx.textBaseline='middle';
+  cx.font=`400 30px ${FD()}`;const y=H*.42,s=1+.06*(1-Math.min(1,t/.25));
+  cx.translate(180,y);cx.scale(s,s);
+  cx.fillText('ちょうど0で、',0,-24);cx.fillStyle='#ffd23f';cx.fillText('タップして止めろ',0,24);
+  cx.restore();
+}
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(G)step(dt);render();}
+requestAnimationFrame(loop);
+
+/* ---------- input ---------- */
+function stamp(e){const n=performance.now();const ts=e&&e.timeStamp;return (ts&&ts<=n+1&&n-ts<1000)?ts:n;}
+function tap(e){
+  if(!G||G.phase!=='run')return;
+  const at=stamp(e);
+  if(at>=G.end){ring();return;}
+  G.stopAt=at;
+  /* the gap in seconds, cut to the smallest unit: anything under one millisecond is exactly zero */
+  G.gap=Math.floor((G.end-at)/1000/UNIT)*UNIT;G.gap=+G.gap.toFixed(3);
+  humOff();SFX.latch();G.phase='stopped';G.ph=0;
+  if(!played){played=true;try{localStorage.setItem('renji-played','1');}catch(err){}}
+  wake=0;
+}
+function ring(){
+  if(G.phase!=='run')return;
+  humOff();SFX.chin();anim($('app'),'shake');try{navigator.vibrate&&navigator.vibrate([60,40,60]);}catch(e){}
+  wake=Math.min(3,wake+1);setTimeout(()=>SFX.stir(),700);
+  G.rang=true;G.gap=null;G.phase='rang';G.ph=0;
+  if(!played){played=true;try{localStorage.setItem('renji-played','1');}catch(err){}}
+}
+cv.addEventListener('pointerdown',e=>{if(!G)return;e.preventDefault();ac();tap(e);});
+addEventListener('keydown',e=>{if((e.code==='Space'||e.code==='Enter')&&G&&G.phase==='run'){e.preventDefault();tap(e);}});
+
+/* ---------- result ---------- */
+function fmt(g){return g.toFixed(3);}
+function titleOf(){
+  if(G.rang)return wake>=3?'家族に見つかった人':wake===2?'家族をまた起こした人':'家族を起こした人';
+  const g=G.gap;
+  if(g===0)return 'ぴったり0の人';
+  if(g<.01)return '寸止めの達人';
+  if(g<.05)return '寸止め職人';
+  if(g<.2)return 'ちょっと手前の人';
+  if(g<1)return '早めに開ける人';
+  return 'ぬるくても平気な人';
+}
+function subOf(){
+  if(G.rang)return '0を過ぎて、鳴ってしまった。';
+  if(G.gap===0)return '0.001秒の目盛りでも、ずれなし。';
+  return `針は0まで、あと${fmt(G.gap)}秒のところで止まった。`;
+}
+function resultLine(){return G.rang?'チンが鳴った':`0からのずれ${fmt(G.gap)}秒`;}
+function shareText(){return `${SHORT}　${resultLine()}【${titleOf()}】\n${SHARE_URL}`;}
+async function showResult(){
+  humOff();zoomOff();
+  /* the personal best is only updated once the result is shown, so nothing on screen gives the gap away early */
+  G.isBest=false;if(!G.rang&&(best==null||G.gap<best)){G.isBest=true;best=G.gap;try{localStorage.setItem('renji-best',String(best));}catch(err){}}
+  if(G.rang)$('rScore').innerHTML=`0からのずれ<b style="font-size:46px">鳴った</b>`;
+  else $('rScore').innerHTML=`0からのずれ<b>${fmt(G.gap)}<small>秒</small></b>`;
+  $('rCount').innerHTML=best==null?'自己ベスト まだなし':`自己ベスト <b>${fmt(best)}</b>秒`+(!G.rang&&G.isBest&&G.prevBest!=null?'　更新！':'');
+  $('rTitle').textContent='【'+titleOf()+'】';
+  $('rSub').textContent=subOf();
+  $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(r=>G.cardCanvas.toBlob(r,'image/png'));if(b)G.cardFile=new File([b],'renji-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+/* On phones, hand the image and the text to the share sheet together, so picking X opens a post with the picture attached.
+   Where that is not possible (PCs, some in-app browsers) fall back to the X post link plus a save button. */
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+/* Phones: everything goes through the share sheet, so picking X opens the post inside the X app
+   (also from X's own in-app browser) instead of jumping out to a web page. Only where there is no share sheet
+   at all (PCs, some in-app browsers) do we open the X post page. */
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='renji-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
+
+function wrap(x,text,maxW){const out=[];let cur='';for(const ch of text){if(x.measureText(cur+ch).width>maxW&&cur){if('、。？！…」）'.includes(ch)){cur+=ch;continue;}out.push(cur);cur=ch;}else cur+=ch;}if(cur)out.push(cur);return out;}
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  const Wc=1200,Hc=675,c=document.createElement('canvas');c.width=Wc;c.height=Hc;const x=c.getContext('2d');
+  const F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  /* left: the zoomed dial as it ended, or the kitchen with the light on */
+  x.save();x.beginPath();x.rect(0,0,640,Hc);x.clip();
+  if(G.rang){
+    x.save();x.scale(1.7,1.7);drawNight(x,380,400,20);drawHall(x,30,14,74,110,wake);x.restore();
+    x.save();x.translate(26,300);x.scale(1.7,1.7);
+    drawMicrowave(x,{mx:0,my:0,mw:344,mh:214,dw:128,counter:214,dial:{x:12+128+10+(344-24-128-10)/2,y:111,r:80}},{t:0,running:false,door:0,dish:G.dish,spin:0});
+    x.restore();
+  }else{
+    x.fillStyle='#141822';x.fillRect(0,0,640,Hc);
+    const Wsave=W,Hsave=H;W=640;H=Hc;
+    x.save();x.translate(0,0);
+    const oy=300,s=1.6;x.scale(s,s);
+    const Z=G.target||zoomTarget(G.gap);
+    W=640/s;H=Hc/s;
+    dialView(x,{ox:200,oy:oy/s,R:ZR,Z,t:G.gap,minSpace:8});
+    if(G.gap>0){const gx=G.gap*TH*ZR*Z;const y=oy/s+18;x.strokeStyle='#ffd23f';x.lineWidth=2.5;x.beginPath();x.moveTo(200,y);x.lineTo(200+gx,y);x.stroke();x.beginPath();x.moveTo(200,y-8);x.lineTo(200,y+8);x.moveTo(200+gx,y-8);x.lineTo(200+gx,y+8);x.stroke();}
+    x.restore();W=Wsave;H=Hsave;
+    x.fillStyle='rgba(255,255,255,.92)';x.font=`400 34px ${D}`;x.textAlign='left';x.textBaseline='alphabetic';x.fillText('×'+Math.round(Z).toLocaleString('en-US'),36,70);
+    x.fillStyle='rgba(255,255,255,.6)';x.font=`700 20px ${F}`;x.fillText('0のところを拡大',38,102);
+  }
+  x.restore();
+  /* right */
+  x.fillStyle='#fbf6ee';x.fillRect(640,0,Wc-640,Hc);x.fillStyle='#24201c';x.fillRect(640,0,6,Hc);
+  x.textBaseline='alphabetic';x.textAlign='left';
+  x.fillStyle='#7a7068';x.font=`900 28px ${F}`;x.fillText('0からのずれ',690,96);
+  x.fillStyle='#d8332f';
+  if(G.rang){x.font=`400 110px ${D}`;x.fillText('鳴った',684,220);}
+  else{x.font=`400 124px ${D}`;const t=fmt(G.gap);x.fillText(t,684,222);const tw=x.measureText(t).width;x.font=`400 50px ${D}`;x.fillText('秒',694+tw,222);}
+  x.fillStyle='#9e1f1c';x.font=`900 36px ${F}`;wrap(x,'【'+titleOf()+'】',Wc-640-90).forEach((l,k)=>x.fillText(l,684,300+k*46));
+  x.fillStyle='#7a7068';x.font=`700 22px ${F}`;wrap(x,subOf(),Wc-640-60).slice(0,3).forEach((l,k)=>x.fillText(l,690,366+k*32));
+  if(best!=null){x.fillStyle='#24201c';x.font=`900 24px ${F}`;x.fillText(`自己ベスト ${fmt(best)}秒`,690,470);}
+  x.fillStyle='#24201c';x.fillRect(646,Hc-110,Wc-646,110);
+  x.fillStyle='#fff';x.font=`400 22px ${D}`;wrap(x,GAME,Wc-646-60).forEach((l,k)=>x.fillText(l,676,Hc-68+k*32));
+  x.fillStyle='#ffd23f';x.font=`700 20px ${F}`;x.textAlign='right';x.fillText('作った人 '+CREATOR,Wc-30,Hc-24);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);}
+
+/* ---------- start ---------- */
+function begin(){newGame();resize();$('title').hidden=true;}
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+window.__renji={get G(){return G;},begin,tap,ring,shareText,showResult,zoomTarget,zoomDuration,get best(){return best;}};
+</script>
+</body>
+</html>
