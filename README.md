@@ -4,3 +4,4 @@
 - [kidoku](https://kzaaa00.github.io/kidoku/)
 - [yugiri](https://kzaaa00.github.io/yugiri/)
 - [renji](https://kzaaa00.github.io/renji/)
+- [omakase](https://kzaaa00.github.io/omakase/)
