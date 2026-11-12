@@ -233,6 +233,7 @@ const REEL_WHO=`部長が|w|2
 体育の先生が|s|1
 生徒会長が|s|1
 フォロワー3人のアカウントが|n|2
+淫夢厨が|n|2
 インフルエンサーが|n|1
 炎上中のアカウントが|n|1
 推しが|n|2
@@ -511,7 +512,7 @@ function sentenceOf(ws){return ws.map(w=>w.t).join('');}
 /* About one game in three (本人案 11/11) a bonus fourth reel appears after the third stops, and spins the endings
    people actually post with: 「〜したの草」「〜したのワロタ」… It does not change the predicted likes. */
 const BONUS=1/3;
-const ENDREEL=['の草','のワロタ','んだが？','件','の、じわる','ってマジ？','の優勝','んだけど','の、令和すぎる','の、意味わからん','の、親の顔より見た','のせいで眠れない','んだけど誰か説明して','ので寝ます','って話する？','の、今年いちばん笑った'].map(t=>({t,g:'',p:0}));
+const ENDREEL=['の草','のワロタ','んだが？','件','の、じわる','ってマジ？','の優勝','んだけど','の、令和すぎる','の、意味わからん','の、親の顔より見た','のせいで眠れない','んだけど誰か説明して','ので寝ます','って話する？','の、今年いちばん笑った','、続きはnoteで'].map(t=>({t,g:'',p:0}));
 const reelList=i=>i<3?REELS[i]:ENDREEL;
 function postText(){return sentenceOf(G.ws)+(G.end||'');}
 /* a tense scene (punch 2 in the first reel) with a spoken line in the last one is where the laughs usually are,
