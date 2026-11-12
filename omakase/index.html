@@ -495,8 +495,8 @@ if(typeof module!=='undefined')module.exports={REELS,THEME};
 const $=id=>document.getElementById(id);
 const GAME='ツイートおまかせ';
 const CREATOR='@ordwxjhj';
-/* posts made from the game link to /omakase/p/, a copy of this page without the link-card tags, so X shows no picture under them (本人 11/12) */
-const SHARE_URL='https://kzaaa00.github.io/omakase/p/';
+/* posts link to the main page, which has the link card (本人 11/12: 画像ありに戻す). /omakase/p/ stays up so links already posted keep working. */
+const SHARE_URL='https://kzaaa00.github.io/omakase/';
 const LABELS=['いつ・どこで','だれが','どうした','おまけ'];
 const AUTO_STOP=2.4;      /* a reel nobody stops stops by itself after this many seconds: it is "おまかせ" after all */
 const SPEED=11;           /* words per second while spinning */
