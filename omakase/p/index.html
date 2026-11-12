@@ -503,10 +503,10 @@ const LK={base:-.5,perPunch:.55,two:1.0,three:2.4,gap:.4,noise:1.5};
 function h32(str){let h=2166136261;for(const ch of str){h^=ch.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 function match(ws){let best=1,th='';for(const c of Object.keys(THEME)){const k=ws.filter(w=>w.g.includes(c)).length;if(k>best){best=k;th=c;}}return {n:best,th};}
 function sentenceOf(ws){return ws.map(w=>w.t).join('');}
-/* About one game in three (本人案 11/11) a bonus fourth reel appears after the third stops, and spins the endings
+/* About two games in five (本人案 11/11, 1/3から上げた 11/12) a bonus fourth reel appears after the third stops, and spins the endings
    people actually post with: 「〜したの草」「〜したのワロタ」… It does not change the predicted likes. */
-const BONUS=1/3;
-const ENDREEL=['の草','のワロタ','んだが？','件','の、じわる','ってマジ？','の優勝','の、令和すぎる','の、意味わからん','の、親の顔より見た','のせいで眠れない','ので寝ます','って話する？','の、今年いちばん笑った','、続きはnoteで',' #KAITO'].map(t=>({t,g:'',p:0}));
+const BONUS=.4;
+const ENDREEL=['の草','のワロタ','んだが？','件','の、じわる','ってマジ？','の優勝','の、令和すぎる','の、意味わからん','の、親の顔より見た','のせいで眠れない','ので寝ます','って話する？','の、今年いちばん笑った','。続きはnoteで',' #KAITO'].map(t=>({t,g:'',p:0}));
 const reelList=i=>i<3?REELS[i]:ENDREEL;
 function postText(){return sentenceOf(G.ws)+(G.end||'');}
 /* a tense scene (punch 2 in the first reel) with a spoken line in the last one is where the laughs usually are,
