@@ -124,7 +124,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
         <button class="btn ghost" id="retry" type="button">もう一回</button>
       </div>
       <div id="said"></div>
-      <img id="card" alt="聞き分けた人数と称号の画像">
+      <img id="card" alt="最後の場面と、聞き分けた人数と称号の画像">
       <p class="fine">声は読み上げAI（Kokoro）です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
     </div>
   </div>
@@ -182,6 +182,7 @@ async function playTogether(list,{solo=false}={}){
   ac();stopAll();
   const items=await Promise.all(list.map(sp=>getBuf(sp.p,sp.l).then(b=>({sp,b}))));
   const t0=AC.currentTime+.08;let end=t0;
+  if(window.__alog)window.__alog.push({t:performance.timeOrigin+performance.now()+80,solo,items:items.map(({sp})=>({p:sp.p,l:sp.l,pan:sp.pan,off:sp.off}))});
   const n=items.length;MASTER.gain.value=solo?1:Math.min(1,1.25/Math.sqrt(n));
   for(const {sp,b} of items){
     const src=AC.createBufferSource();src.buffer=b.buf;
@@ -310,7 +311,7 @@ function portrait(id,px=34){
 
 /* ---------- stage ---------- */
 const cv=$('cv'),cx=cv.getContext('2d');let W=0,H=0,DPR=1;
-function resize(){const r=$('stage').getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;}
+function resize(){const st=$('stage');DPR=Math.min(2,window.devicePixelRatio||1);W=st.offsetWidth;H=st.offsetHeight;cv.width=W*DPR;cv.height=H*DPR;}
 addEventListener('resize',resize);
 /* where each of n people stands: front row at the bottom, back row behind and a little smaller */
 function layout(n,w,h){
@@ -444,8 +445,8 @@ async function next(){
   if(G.n>=MAX){G.fail=null;return showResult();}
   G.n++;G.busy=false;await wait(200);playRound();
 }
-function begin(){
-  G.n=FIRST;G.cleared=0;G.fail=null;G.first=true;G.recent=[];G.lastLines=[];
+function begin(start=FIRST){
+  G.n=start;G.cleared=0;G.fail=null;G.first=true;G.recent=[];G.lastLines=[];
   $('title').hidden=true;$('result').hidden=true;resize();
   playRound();
 }
@@ -521,41 +522,42 @@ $('saveImg').addEventListener('click',()=>{
 $('retry').addEventListener('click',()=>{stopAll();begin();});
 
 function wrap(x,text,maxW){const out=[];let cur='';for(const ch of text){if(x.measureText(cur+ch).width>maxW&&cur){if('、。？！…」）'.includes(ch)){cur+=ch;continue;}out.push(cur);cur=ch;}else cur+=ch;}if(cur)out.push(cur);return out;}
+/* The share image is the play screen itself at the moment it ended (crowd, question, the wrong and the right answer),
+   drawn again at a fixed phone size (360 wide, 3x), with the result under it and a thin band for the game name and the creator. */
 async function drawCard(){
   try{await document.fonts.ready;}catch(e){}
-  const Wc=1200,Hc=675,c=document.createElement('canvas');c.width=Wc;c.height=Hc;const x=c.getContext('2d');
-  const F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
-  /* left: the last crowd, with what the asked person really said */
-  const LW=640;drawRoom(x,LW,Hc);
-  const rd=G.rd||R.round;
+  const k=3,w=360,sh=300,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const rd=G.rd||R.round,q=G.q,f=G.fail;
+  const optH=46,gap=9,qTop=sh+3,optTop=qTop+52,resTop=optTop+(q?q.opts.length:0)*(optH+gap)+8,band=40,bottom=resTop+112;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  /* stage: same people, same left-to-right order as on screen */
+  drawRoom(x,w,sh);
   if(rd){
-    const pos=layout(rd.n,LW-40,Hc*.92);const order=rd.sp.map((s,i)=>i).sort((a,b)=>rd.sp[a].pos.row-rd.sp[b].pos.row);
-    /* keep the same left-to-right order as on screen */
+    const pos=layout(rd.n,w,sh);
     const byX=rd.sp.map((s,i)=>i).sort((a,b)=>(rd.sp[a].pos.row-rd.sp[b].pos.row)||(rd.sp[a].pos.x-rd.sp[b].pos.x));
     const slots=pos.map((p,i)=>i).sort((a,b)=>(pos[a].row-pos[b].row)||(pos[a].x-pos[b].x));
-    const at={};byX.forEach((si,k)=>at[si]=pos[slots[k]]);
-    const heads={};
-    byX.forEach(si=>{const p=at[si];heads[si]=drawPerson(x,rd.sp[si].p,p.x+20,p.y+Hc*.06,p.s*1.55,0);});
-    const f=G.fail;
-    if(f){const ti=rd.sp.indexOf(f.target),g=heads[ti];
-      if(g){const text='「'+lineOf(f.target)+'」';x.font=`900 30px ${F}`;const lines=wrap(x,text,420);const bw=Math.max(...lines.map(l=>x.measureText(l).width))+36,bh=lines.length*40+24;
-        let bx=Math.max(16,Math.min(LW-bw-16,g.cx-bw/2)),by=Math.max(16,g.top-bh-26);
-        x.fillStyle='#fff';x.strokeStyle='#24201c';x.lineWidth=4;rr(x,bx,by,bw,bh,16);x.fill();x.stroke();
-        x.beginPath();x.moveTo(g.cx-12,by+bh-2);x.lineTo(g.cx,by+bh+20);x.lineTo(g.cx+12,by+bh-2);x.fill();x.beginPath();x.moveTo(g.cx-12,by+bh);x.lineTo(g.cx,by+bh+20);x.lineTo(g.cx+12,by+bh);x.stroke();
-        x.fillStyle='#24201c';x.textAlign='left';x.textBaseline='alphabetic';lines.forEach((l,k)=>x.fillText(l,bx+18,by+46+k*40));}}
+    byX.forEach((si,j)=>{const p=pos[slots[j]];const g=drawPerson(x,rd.sp[si].p,p.x,p.y,p.s,0);
+      if(f&&rd.sp[si]===f.target){x.strokeStyle='#2f7d4f';x.lineWidth=3;x.beginPath();x.ellipse(g.cx,g.cy,g.bw*.62,(g.by-g.top)*.58,0,0,Math.PI*2);x.stroke();}});
+    x.fillStyle='rgba(36,32,28,.8)';x.font=`400 22px ${D}`;x.textAlign='left';x.textBaseline='alphabetic';x.fillText(rd.n+'人',14,34);
   }
-  /* right */
-  x.fillStyle='#fbf6ee';x.fillRect(LW,0,Wc-LW,Hc);x.fillStyle='#24201c';x.fillRect(LW,0,6,Hc);
-  x.textBaseline='alphabetic';x.textAlign='left';
-  x.fillStyle='#7a7068';x.font=`900 28px ${F}`;x.fillText('同時に話す人の話を',690,90);
-  const n=String(G.cleared);x.fillStyle='#d8332f';x.font=`400 150px ${D}`;x.fillText(n,684,236);const nw=x.measureText(n).width;
-  x.font=`400 56px ${D}`;x.fillText('人',694+nw,236);
-  x.fillStyle='#24201c';x.font=`900 30px ${F}`;x.fillText('聞き分けた',690,290);
-  x.fillStyle='#9e1f1c';x.font=`900 36px ${F}`;wrap(x,'【'+titleOf()+'】',Wc-LW-90).forEach((l,k)=>x.fillText(l,684,356+k*46));
-  if(G.fail){x.fillStyle='#7a7068';x.font=`700 21px ${F}`;wrap(x,failText(),Wc-LW-70).slice(0,3).forEach((l,k)=>x.fillText(l,690,440+k*30));}
-  x.fillStyle='#24201c';x.fillRect(LW+6,Hc-96,Wc-LW-6,96);
-  x.fillStyle='#fff';x.font=`400 30px ${D}`;x.fillText(GAME,676,Hc-42);
-  x.fillStyle='#ffd23f';x.font=`700 20px ${F}`;x.textAlign='right';x.fillText('作った人 '+CREATOR,Wc-30,Hc-22);
+  /* question panel */
+  x.fillStyle='#24201c';x.fillRect(0,sh,w,3);x.fillStyle='#fbf6ee';x.fillRect(0,qTop,w,bottom-qTop);
+  x.fillStyle='#24201c';x.font=`900 18px ${F}`;x.textAlign='left';x.textBaseline='middle';x.fillText('実際に聞こえたのは、どれ？',16,qTop+28);
+  if(q)q.opts.forEach((o,i)=>{
+    const y=optTop+i*(optH+gap),right=o===q.right,wrong=f&&o===f.chosen;
+    x.fillStyle='#cfc6ba';rr(x,16,y+3,w-32,optH,12);x.fill();
+    x.fillStyle=right?'#e2f1e6':wrong?'#fbe1df':'#fff';x.strokeStyle=right?'#2f7d4f':wrong?'#d8332f':'#24201c';x.lineWidth=2;rr(x,16,y,w-32,optH,12);x.fill();x.stroke();
+    x.fillStyle='#24201c';x.font=`900 15px ${F}`;let t='「'+o+'」';while(x.measureText(t).width>w-60&&t.length>4)t=t.slice(0,-2)+'」';x.fillText(t,28,y+optH/2);
+  });
+  /* result */
+  x.strokeStyle='#d6ccbd';x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(16,resTop);x.lineTo(w-16,resTop);x.stroke();x.setLineDash([]);
+  x.textBaseline='alphabetic';const n=String(G.cleared);x.fillStyle='#d8332f';x.font=`400 52px ${D}`;x.fillText(n,16,resTop+62);let nx=16+x.measureText(n).width+4;
+  x.font=`400 24px ${D}`;x.fillText('人',nx,resTop+62);nx+=x.measureText('人').width+6;
+  x.fillStyle='#24201c';x.font=`900 16px ${F}`;x.fillText('の話を聞き分けた',nx,resTop+60);
+  x.fillStyle='#9e1f1c';x.font=`900 17px ${F}`;x.fillText('【'+titleOf()+'】',12,resTop+94);
+  x.fillStyle='#1d2430';x.fillRect(0,bottom,w,band);
+  x.textBaseline='middle';x.textAlign='left';x.fillStyle='#fff';x.font=`400 14px ${D}`;x.fillText(GAME,14,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 10px ${F}`;x.fillText('作った人 '+CREATOR,w-14,bottom+band/2);
   G.cardCanvas=c;
   return c.toDataURL('image/png');
 }
@@ -565,7 +567,7 @@ $('startBtn').addEventListener('click',()=>{ac();warm();begin();});
 resize();
 /* idle crowd behind the title */
 R.round=newRound(5);
-window.__shotoku={G,R,PEOPLE,begin,newRound,makeQuestion,showResult,shareText,titleOf,drawPerson,layout,ask,next,get rd(){return R.round;}};
+window.__shotoku={startVideo:n=>{ac();warm();begin(n);},G,R,PEOPLE,begin,newRound,makeQuestion,showResult,shareText,titleOf,drawPerson,layout,ask,next,get rd(){return R.round;}};
 </script>
 </body>
 </html>
