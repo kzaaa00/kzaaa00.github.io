@@ -31,6 +31,10 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #count[hidden]{display:none}
 #flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:64px;color:var(--ink);pointer-events:none;opacity:0;text-shadow:0 3px 0 #fff}
 #flash.on{animation:flash 1.1s ease-out forwards}
+#mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;z-index:5}
+#mark svg{width:min(56%,210px);height:auto;filter:drop-shadow(0 3px 0 rgba(255,255,255,.9))}
+#mark.on{animation:mark .25s ease-out forwards}
+@keyframes mark{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:scale(1)}}
 @keyframes flash{0%{opacity:0;transform:scale(.7)}15%{opacity:1;transform:scale(1.05)}70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
 #hint{position:absolute;left:0;right:0;top:calc(46px + env(safe-area-inset-top,0px));text-align:center;font-weight:900;font-size:14px;color:var(--ink);opacity:0;transition:opacity .3s;pointer-events:none;text-shadow:0 1px 0 #fff}
 #hint.on{opacity:.85}
@@ -95,6 +99,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
     <canvas id="cv" aria-label="同時に話す人たち"></canvas>
     <div id="count" hidden></div>
     <div id="flash"></div>
+    <div id="mark" aria-live="polite"></div>
     <div id="hint"></div>
   </div>
   <div id="q">
@@ -421,13 +426,35 @@ function ask(rd){
   qt.textContent='実際に聞こえたのは、どれ？';
   q.opts.forEach(o=>{const b=document.createElement('button');b.type='button';b.className='opt';b.textContent='「'+o+'」';b.addEventListener('click',()=>answerWhat(o,b));$('opts').appendChild(b);});
 }
+/* right: "pinpon" and a big circle. wrong: a buzzer and a big cross. */
+function sfx(kind){
+  if(!AC)return;
+  if(window.__alog)window.__alog.push({t:performance.timeOrigin+performance.now()+20,sfx:kind});
+  const t=AC.currentTime+.02,out=AC.createGain();out.gain.value=.5;out.connect(AC.destination);
+  if(kind==='pinpon'){
+    [[1318.5,0,.16],[1046.5,.17,.75]].forEach(([f,a,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+a);g.gain.linearRampToValueAtTime(.55,t+a+.01);g.gain.exponentialRampToValueAtTime(.001,t+a+d);o.connect(g);g.connect(out);o.start(t+a);o.stop(t+a+d+.05);});
+  }else{
+    const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.connect(out);
+    [130,136].forEach(f=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32,t+.02);g.gain.setValueAtTime(.32,t+.6);g.gain.linearRampToValueAtTime(0,t+.7);o.connect(g);g.connect(lp);o.start(t);o.stop(t+.75);});
+  }
+}
+function showMark(ok){
+  const m=$('mark');
+  m.innerHTML=ok?'<svg viewBox="0 0 100 100" aria-label="正解"><circle cx="50" cy="50" r="36" fill="none" stroke="#d8332f" stroke-width="13"/></svg>'
+    :'<svg viewBox="0 0 100 100" aria-label="不正解"><path d="M18 18L82 82M82 18L18 82" stroke="#2457c5" stroke-width="14" stroke-linecap="round"/></svg>';
+  m.classList.remove('on');void m.offsetWidth;m.classList.add('on');
+}
+function hideMark(){$('mark').classList.remove('on');$('mark').innerHTML='';}
 async function answerWhat(o,btn){
   if(G.busy||!G.q||G.q.type!=='what')return;G.busy=true;
   const q=G.q;[...document.querySelectorAll('.opt')].forEach(b=>b.disabled=true);
-  if(o===q.right){btn.classList.add('chosen');await wait(450);return next();}
+  if(o===q.right){btn.classList.add('right');sfx('pinpon');showMark(true);await wait(950);hideMark();return next();}
+  sfx('boo');showMark(false);
   btn.classList.add('wrong');[...document.querySelectorAll('.opt')].find(b=>b.textContent==='「'+q.right+'」').classList.add('right');
   G.fail={type:'what',n:G.n,target:G.rd.sp[q.ti],chosen:o};
-  await wait(1700);showResult();
+  await wait(1900);hideMark();showResult();
 }
 cv.addEventListener('pointerdown',async e=>{
   if(!R.pickable||G.busy||!G.q||G.q.type!=='who')return;
@@ -446,6 +473,7 @@ async function next(){
   G.n++;G.busy=false;await wait(200);playRound();
 }
 function begin(start=FIRST){
+  hideMark();
   G.n=start;G.cleared=0;G.fail=null;G.first=true;G.recent=[];G.lastLines=[];
   $('title').hidden=true;$('result').hidden=true;resize();
   playRound();
