@@ -554,11 +554,22 @@ function wrap(x,text,maxW){const out=[];let cur='';for(const ch of text){if(x.me
    drawn again at a fixed phone size (360 wide, 3x), with the result under it and a thin band for the game name and the creator. */
 async function drawCard(){
   try{await document.fonts.ready;}catch(e){}
-  const k=3,w=360,sh=300,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const k=3,w=360,sh=280,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
   const rd=G.rd||R.round,q=G.q,f=G.fail;
-  const optH=46,gap=9,qTop=sh+3,optTop=qTop+52,resTop=optTop+(q?q.opts.length:0)*(optH+gap)+8,band=40,bottom=resTop+112;
+  /* the number of people comes first, as big as it fits */
+  const hd=184,optH=42,gap=8,top0=hd,qTop=top0+sh+3,optTop=qTop+46,band=40,bottom=optTop+(q?q.opts.length:0)*(optH+gap)+10;
   const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#fbf6ee';x.fillRect(0,0,w,hd);
+  const n=String(G.cleared);x.textBaseline='alphabetic';x.textAlign='left';
+  let fs=112;x.font=`400 ${fs}px ${D}`;const unit=()=>x.font=`400 ${Math.round(fs*.42)}px ${D}`;
+  while(true){x.font=`400 ${fs}px ${D}`;const nw=x.measureText(n).width;unit();const uw=x.measureText('人').width;if(nw+uw+6<=w-24||fs<40)break;fs-=4;}
+  x.font=`400 ${fs}px ${D}`;const nw=x.measureText(n).width;unit();const uw=x.measureText('人').width;const sx=(w-(nw+uw+6))/2,base=fs*.9+8;
+  x.fillStyle='#d8332f';x.font=`400 ${fs}px ${D}`;x.fillText(n,sx,base);unit();x.fillText('人',sx+nw+6,base);
+  x.textAlign='center';x.fillStyle='#24201c';x.font=`900 19px ${F}`;x.fillText('の話を聞き分けた',w/2,base+30);
+  x.fillStyle='#9e1f1c';x.font=`900 17px ${F}`;x.fillText('【'+titleOf()+'】',w/2,base+56);
   /* stage: same people, same left-to-right order as on screen */
+  x.save();x.translate(0,top0);
+  x.fillStyle='#24201c';x.fillRect(0,-3,w,3);
   drawRoom(x,w,sh);
   if(rd){
     const pos=layout(rd.n,w,sh);
@@ -566,23 +577,17 @@ async function drawCard(){
     const slots=pos.map((p,i)=>i).sort((a,b)=>(pos[a].row-pos[b].row)||(pos[a].x-pos[b].x));
     byX.forEach((si,j)=>{const p=pos[slots[j]];const g=drawPerson(x,rd.sp[si].p,p.x,p.y,p.s,0);
       if(f&&rd.sp[si]===f.target){x.strokeStyle='#2f7d4f';x.lineWidth=3;x.beginPath();x.ellipse(g.cx,g.cy,g.bw*.62,(g.by-g.top)*.58,0,0,Math.PI*2);x.stroke();}});
-    x.fillStyle='rgba(36,32,28,.8)';x.font=`400 22px ${D}`;x.textAlign='left';x.textBaseline='alphabetic';x.fillText(rd.n+'人',14,34);
   }
+  x.restore();
   /* question panel */
-  x.fillStyle='#24201c';x.fillRect(0,sh,w,3);x.fillStyle='#fbf6ee';x.fillRect(0,qTop,w,bottom-qTop);
-  x.fillStyle='#24201c';x.font=`900 18px ${F}`;x.textAlign='left';x.textBaseline='middle';x.fillText('実際に聞こえたのは、どれ？',16,qTop+28);
+  x.fillStyle='#24201c';x.fillRect(0,qTop-3,w,3);x.fillStyle='#fbf6ee';x.fillRect(0,qTop,w,bottom-qTop);
+  x.fillStyle='#24201c';x.font=`900 16px ${F}`;x.textAlign='left';x.textBaseline='middle';x.fillText('実際に聞こえたのは、どれ？',16,qTop+24);
   if(q)q.opts.forEach((o,i)=>{
     const y=optTop+i*(optH+gap),right=o===q.right,wrong=f&&o===f.chosen;
     x.fillStyle='#cfc6ba';rr(x,16,y+3,w-32,optH,12);x.fill();
     x.fillStyle=right?'#e2f1e6':wrong?'#fbe1df':'#fff';x.strokeStyle=right?'#2f7d4f':wrong?'#d8332f':'#24201c';x.lineWidth=2;rr(x,16,y,w-32,optH,12);x.fill();x.stroke();
-    x.fillStyle='#24201c';x.font=`900 15px ${F}`;let t='「'+o+'」';while(x.measureText(t).width>w-60&&t.length>4)t=t.slice(0,-2)+'」';x.fillText(t,28,y+optH/2);
+    x.fillStyle='#24201c';x.font=`900 14px ${F}`;let t='「'+o+'」';while(x.measureText(t).width>w-60&&t.length>4)t=t.slice(0,-2)+'」';x.fillText(t,28,y+optH/2);
   });
-  /* result */
-  x.strokeStyle='#d6ccbd';x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(16,resTop);x.lineTo(w-16,resTop);x.stroke();x.setLineDash([]);
-  x.textBaseline='alphabetic';const n=String(G.cleared);x.fillStyle='#d8332f';x.font=`400 52px ${D}`;x.fillText(n,16,resTop+62);let nx=16+x.measureText(n).width+4;
-  x.font=`400 24px ${D}`;x.fillText('人',nx,resTop+62);nx+=x.measureText('人').width+6;
-  x.fillStyle='#24201c';x.font=`900 16px ${F}`;x.fillText('の話を聞き分けた',nx,resTop+60);
-  x.fillStyle='#9e1f1c';x.font=`900 17px ${F}`;x.fillText('【'+titleOf()+'】',12,resTop+94);
   x.fillStyle='#1d2430';x.fillRect(0,bottom,w,band);
   x.textBaseline='middle';x.textAlign='left';x.fillStyle='#fff';x.font=`400 14px ${D}`;x.fillText(GAME,14,bottom+band/2);
   x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 10px ${F}`;x.fillText('作った人 '+CREATOR,w-14,bottom+band/2);
