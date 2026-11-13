@@ -5,3 +5,4 @@
 - [yugiri](https://kzaaa00.github.io/yugiri/)
 - [renji](https://kzaaa00.github.io/renji/)
 - [omakase](https://kzaaa00.github.io/omakase/)
+- [shueki](https://kzaaa00.github.io/shueki/)
