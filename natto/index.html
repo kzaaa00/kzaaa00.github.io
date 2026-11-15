@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>納豆のタレを、手につけずに開けろ。</title>
-<meta name="description" content="タレの袋を切って、しごいて、納豆にかけるだけ。指についたタレの滴の数が結果になります。商品・登場するものはすべて架空です。">
+<meta name="description" content="タレの袋をしごいて、納豆にかけるだけ。指についたタレの滴の数が結果になります。商品・登場するものはすべて架空です。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="納豆のタレを、手につけずに開けろ。">
-<meta property="og:description" content="タレの袋を切って、しごいて、納豆にかけるだけ。">
+<meta property="og:description" content="タレの袋をしごいて、納豆にかけるだけ。">
 <meta property="og:url" content="https://kzaaa00.github.io/natto/">
 <meta property="og:image" content="https://kzaaa00.github.io/natto/play.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-/* A breakfast table, a pack of natto (made up), and its little pouch of sauce.
-   Tear the pouch open, then squeeze it out in one stroke. Tear into the sauce or squeeze too hard and it ends up on your fingers. */
+/* A breakfast table, a pack of natto (made up), and its little pouch of sauce, already torn open.
+   Squeeze it out in one stroke: too soft leaves sauce in the pouch, too hard splashes it onto your fingers. */
 :root{
   --ink:#2a221c; --muted:#7a6e62; --paper:#fbf6ee; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f;
   --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
@@ -156,7 +156,7 @@ addEventListener('resize',resize);try{visualViewport.addEventListener('resize',r
 resize();
 /* layout, in a 360-wide space. Rt is the top of the natto cup's rim. */
 function L(){
-  const Rt=Math.max(H*.62,H-150);
+  const Rt=Math.min(H-80,H*.42+128);
   const tearY=Math.min(Math.max(150,H*.33),Rt-200);
   return {Rt,tearY,cupX:180};
 }
@@ -177,7 +177,7 @@ function pouchPt(lx,ly,P=pouchPose()){const c=Math.cos(P.r),s=Math.sin(P.r);retu
 /* ---------- state ---------- */
 let G=null;
 function newGame(){
-  G={phase:'tear',t:0,tearDrag:null,cut:null,sauce:1,spill:0,hand:0,handT:0,handS:0,squirt:false,burst:false,rare:false,
+  G={phase:'squeeze',t:0,cut:{y:-PH/2+30,l:1,u:30},sauce:1,spill:0,hand:0,handT:0,handS:0,squirt:false,burst:false,rare:false,
      fly:[],spots:[],inNatto:0,flick:null,drag:null,done:false,shown:false,strip:null,fingers:{L:[],R:[]},rpos:null,splash:0,squeeze:0,nudge:0};
 }
 
@@ -341,45 +341,6 @@ function updateFly(dt){
   G.fly=G.fly.filter(d=>!d.dead);
 }
 
-/* ---------- tear input ---------- */
-function tearDown(e){
-  const P=pt(e),{tearY}=L();const right=180+PW/2,top=tearY-PH/2;
-  if(P.x<right-60||P.x>right+50||P.y<top-30||P.y>top+TEAR_MAX+30)return;
-  const u=Math.max(TEAR_MIN,Math.min(TEAR_MAX,P.y-top));
-  G.tearDrag={u,x0:Math.max(P.x,right),l:0,t0:0,t1:0,steps:0};G.rpos={x:P.x,y:top+u};
-}
-function tearMove(e){
-  const D=G.tearDrag;if(!D)return;const P=pt(e),right=180+PW/2,{tearY}=L(),top=tearY-PH/2;
-  const l=Math.max(0,Math.min(1,(right-P.x)/PW));
-  const now=performance.now();
-  if(l>D.l){if(D.l===0)D.t0=now;D.l=l;D.t1=now;const st=Math.floor(l*20);if(st>D.steps){D.steps=st;SFX.rip();}}
-  G.rpos={x:Math.min(right+10,P.x),y:top+D.u+Math.max(-12,Math.min(26,(P.y-top-D.u)*.4))};
-}
-function tearUp(){
-  const D=G.tearDrag;if(!D)return;G.tearDrag=null;
-  if(D.l<.06){if(D.l<.01)G.rpos=null;return;}
-  const l=D.l>.97?1:D.l;
-  const v=l/Math.max(.016,(D.t1-D.t0)/1000);   /* pouch widths per second */
-  G.cut={y:-PH/2+D.u,l,u:D.u};G.tearV=v;G.phase='torn';G.t=0;
-  /* the torn-off strip falls away */
-  const {tearY}=L();G.strip={x:180+PW/2-l*PW/2,y:tearY-PH/2+D.u/2,w:l*PW,h:D.u,vx:40,vy:-30,a:0,va:2.5};
-  const [ox,oy]=pouchPt(PW/2-l*PW/2,G.cut.y);
-  /* into the sauce: what is above the cut comes out over the fingers and the table */
-  if(D.u>SAUCE_U){
-    const lost=Math.min(.6,(D.u-SAUCE_U)/(PH-14-SAUCE_U)*1.1);G.sauce-=lost;G.spill+=lost;
-    const n=2+Math.round(lost*60);for(let i=0;i<n;i++)flyToHand(ox+(Math.random()-.5)*40,oy,i%3?'R':'L',i*.03);
-    for(let i=0;i<4+lost*40;i++)flyToTable(ox,oy,i*.02);
-    G.tearHand=n;SFX.squish();
-  }else if(D.u>SAUCE_U-WET){flyToHand(ox,oy,'R',.05);G.tearHand=1;G.wet=true;}
-  /* too fast: the pinch squeezes a squirt out of the fresh cut */
-  if(v>FAST){
-    G.squirt=true;const n=Math.min(8,1+Math.floor((v-FAST)*.8));
-    for(let i=0;i<n;i++)flyToHand(ox,oy,i%2?'R':'L',.02+i*.03);
-    G.sauce-=n*.004;G.spill+=n*.004;G.tearHand=(G.tearHand||0)+n;
-    SFX.squirt();anim($('app'),'shake');try{navigator.vibrate&&navigator.vibrate(30);}catch(err){}
-  }
-}
-
 /* ---------- squeeze input ---------- */
 /* One stroke down the pouch. Its speed sets how hard you squeeze: too soft leaves sauce in, too hard splashes it back on your fingers. */
 const V_PER=8;   /* logical px per second of stroke for each unit of squeeze */
@@ -404,9 +365,9 @@ function squeeze(v){
   const S=Math.min(320,v/V_PER);G.flick={v,S,t:0,z:zone(),s0:G.sauce,out:0};SFX.squish();
 }
 function pt(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/SC,y:(e.clientY-r.top)/SC};}
-cv.addEventListener('pointerdown',e=>{if(!G)return;ac();try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();if(G.phase==='tear')tearDown(e);else if(G.phase==='squeeze')sqDown(e);});
-cv.addEventListener('pointermove',e=>{if(!G)return;if(G.phase==='tear')tearMove(e);else sqMove(e);});
-const up=()=>{if(!G)return;if(G.phase==='tear')tearUp();else sqUp();};
+cv.addEventListener('pointerdown',e=>{if(!G)return;ac();try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();if(G.phase==='squeeze')sqDown(e);});
+cv.addEventListener('pointermove',e=>{if(!G)return;sqMove(e);});
+const up=()=>{if(!G)return;sqUp();};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 
 /* ---------- step ---------- */
@@ -496,8 +457,6 @@ function render(){
     if(s.h>SAUCE_U){cx.fillStyle='#5b2a0c';cx.fillRect(-s.w/2+4,-s.h/2+SAUCE_U,s.w-8,s.h-SAUCE_U);}cx.strokeStyle='rgba(0,0,0,.15)';cx.strokeRect(-s.w/2,-s.h/2,s.w,s.h);cx.restore();}
   drawFingers();
   for(const d of G.fly){if(d.t<0||d.x===undefined)continue;cx.fillStyle='#4a220a';cx.beginPath();cx.arc(d.x,d.y,d.r,0,Math.PI*2);cx.fill();}
-  if(G.phase==='tear'&&!G.tearDrag){const {tearY}=L();const top=tearY-PH/2,yy=top+34;
-    guide(180+PW/2+18,yy,180+PW/2-PW*.8,yy);pill('右の端をつまんで、左へ引いて切る',180,Math.max(26,top-30));}
   if(G.phase==='squeeze'&&!G.flick&&!G.drag)sqGuide();
 }
 let last=performance.now();
@@ -528,15 +487,8 @@ function titleOf(){
 }
 /* under 1% shows one decimal (never 0 while some is left), so every line agrees */
 function leftPct(){const w=Math.max(0,G.sauce)*100;if(G.sauce<1e-4)return '0';if(w<1)return Math.max(.1,Math.round(w*10)/10).toFixed(1);return String(Math.round(w));}
-/* Two lines of feedback, one for the tear and one for the squeeze, so the next try knows which way to go. */
+/* One line of feedback on the squeeze, so the next try knows which way to go. */
 function feedback(){
-  const u=G.cut?G.cut.u:0;let tear;
-  const low=u>SAUCE_U,deep=u>SAUCE_U+20;
-  if(low&&G.squirt)tear='低くて速い（タレごとピュッ）';
-  else if(low)tear=deep?'低すぎ（タレごと切った）':'少し低い（タレに届いた）';
-  else if(G.squirt)tear='速く切りすぎて、ピュッと飛んだ';
-  else if(G.wet)tear='ほんの少し低い（切り口がぬれた）';
-  else tear='きれい';
   const F=G.flick||{S:0,z:{best:1,lo:0,hi:0,burst:0}};
   const r=(F.S-F.z.best)/F.z.best;
   const how=Math.abs(r)<.01?'ほんの少し':Math.abs(r)<.05?'少し':'';
@@ -545,7 +497,7 @@ function feedback(){
   else if(F.S<F.z.lo)sq=`${how}弱い（袋に${leftPct()}%残った）`;
   else if(F.S>F.z.hi)sq=`${how}強い（指に${G.splash}滴はねた）`;
   else sq='ぴったり';
-  return ['切り：'+tear,'しぼり：'+sq];
+  return ['しぼり：'+sq];
 }
 function shareText(){
   return `納豆のタレを手につけずに開けろ　完成度${pctText()}%（指に${G.hand}滴）【${titleOf()}】\n${SHARE_URL}`;
@@ -626,7 +578,7 @@ async function drawCard(){
 }
 
 /* ---------- start ---------- */
-function begin(){newGame();resize();$('title').hidden=true;}
+function begin(){newGame();resize();$('title').hidden=true;pourOn();}
 $('startBtn').addEventListener('click',()=>{ac();begin();});
 window.__natto={get G(){return G;},begin,L,pouchPose,squeeze,zone,score,shareText,showResult,PW,PH,SAUCE_U};
 </script>
