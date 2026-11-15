@@ -6,3 +6,4 @@
 - [renji](https://kzaaa00.github.io/renji/)
 - [omakase](https://kzaaa00.github.io/omakase/)
 - [shotoku](https://kzaaa00.github.io/shotoku/)
+- [natto](https://kzaaa00.github.io/natto/)
