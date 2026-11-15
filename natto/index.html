@@ -89,7 +89,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
         <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
         <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
       </div>
-      <img id="card" alt="タレがけ完成度と、指についたタレの画像">
+      <img id="card" alt="タレがけ完成度と、終わった瞬間の画面">
       <p class="fine">商品はすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
     </div>
   </div>
@@ -550,29 +550,40 @@ $('saveImg').addEventListener('click',()=>{
 $('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
 
 function wrap(x,text,maxW){const out=[];let cur='';for(const ch of text){if(x.measureText(cur+ch).width>maxW&&cur){if('、。？！…」）'.includes(ch)){cur+=ch;continue;}out.push(cur);cur=ch;}else cur+=ch;}if(cur)out.push(cur);return out;}
+/* The share image is the play screen itself at the moment it ended (the pouch, your fingers with the sauce on them, the natto),
+   cut from the game canvas, with the result above it and a thin band for the game name and the creator. Portrait, 360 wide at 3x. */
 async function drawCard(){
   try{await document.fonts.ready;}catch(e){}
-  const Wc=1200,Hc=675,c=document.createElement('canvas');c.width=Wc;c.height=Hc;const x=c.getContext('2d');
-  const F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
-  /* left: the natto and your two fingers, up close */
-  x.save();x.beginPath();x.rect(0,0,640,Hc);x.clip();
-  drawTable(x,640,Hc,[],1.8);
-  for(const s of G.spots.slice(0,40)){x.fillStyle='rgba(74,34,10,.85)';x.beginPath();x.ellipse(40+(s.x/360)*560,30+((s.y/H)*Hc*.9),s.r*2.2,s.r*1.5,s.a,0,Math.PI*2);x.fill();}
-  drawNatto(x,320,470,1.75,G.inNatto,G.rare?{cut:G.cut}:null);
-  drawFinger(x,300,120,.08,300,30,G.fingers.L,2.3);
-  drawFinger(x,350,262,Math.PI-.08,300,30,G.fingers.R,2.3);
-  x.restore();
-  /* right side */
-  x.fillStyle='#fbf6ee';x.fillRect(640,0,Wc-640,Hc);x.fillStyle='#2a221c';x.fillRect(640,0,6,Hc);
-  x.textBaseline='alphabetic';x.textAlign='left';
-  x.fillStyle='#7a6e62';x.font=`900 28px ${F}`;x.fillText('タレがけ完成度',690,96);
-  x.fillStyle='#c8402c';x.font=`400 132px ${D}`;const t=pctText();x.fillText(t,684,226);const tw=x.measureText(t).width;x.font=`400 58px ${D}`;x.fillText('%',694+tw,226);
-  x.fillStyle='#2a221c';x.font=`900 26px ${F}`;x.fillText(`指についたタレ ${G.hand}滴　袋に ${leftPct()}%残り`,690,282);
-  x.fillStyle='#8f2a1b';x.font=`900 36px ${F}`;wrap(x,'【'+titleOf()+'】',Wc-640-90).forEach((l,k)=>x.fillText(l,684,348+k*46));
-  x.fillStyle='#7a6e62';x.font=`700 22px ${F}`;feedback().slice(0,2).forEach((l,k)=>wrap(x,l,Wc-640-60).slice(0,1).forEach(t=>x.fillText(t,690,420+k*34)));
-  x.fillStyle='#2a221c';x.fillRect(646,Hc-110,Wc-646,110);
-  x.fillStyle='#fff';x.font=`400 22px ${D}`;wrap(x,GAME,Wc-646-60).forEach((l,k)=>x.fillText(l,676,Hc-68+k*32));
-  x.fillStyle='#ffd23f';x.font=`700 20px ${F}`;x.textAlign='right';x.fillText('作った人 '+CREATOR,Wc-30,Hc-24);
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  /* the part of the screen to keep: from just above the pouch to just below the natto */
+  const {Rt}=L(),P=pouchPose();
+  const y0=Math.max(0,P.y-PH/2-46),y1=Math.min(H,Rt+92),sh=y1-y0;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  /* the result first, big */
+  x.fillStyle='#fbf6ee';x.fillRect(0,0,w,hd);
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#7a6e62';x.font=`900 16px ${F}`;x.fillText('タレがけ完成度',w/2,32);
+  const t=pctText();let fs=96;x.font=`400 ${fs}px ${D}`;let tw=x.measureText(t).width;
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;const pw=x.measureText('%').width;
+  const sx=(w-(tw+pw+4))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${D}`;x.fillText(t,sx,124);
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;x.fillText('%',sx+tw+4,124);
+  x.textAlign='center';x.fillStyle='#2a221c';x.font=`900 17px ${F}`;x.fillText(`指についたタレ ${G.hand}滴　袋に ${leftPct()}%残り`,w/2,160);
+  x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('【'+titleOf()+'】',w/2,192);
+  /* the play screen, as it was */
+  x.fillStyle='#2a221c';x.fillRect(0,top0-3,w,3);
+  const r=SC*DPR;
+  try{x.drawImage(cv,0,y0*r,cv.width,sh*r,0,top0,w,sh);}catch(e){x.fillStyle='#c99d6c';x.fillRect(0,top0,w,sh);}
+  /* how the squeeze went */
+  x.fillStyle='#2a221c';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#fbf6ee';x.fillRect(0,fbTop,w,fbH);
+  x.fillStyle='#7a6e62';x.font=`700 14px ${F}`;x.textBaseline='middle';x.fillText(feedback()[0],w/2,fbTop+fbH/2);
+  /* game name and the creator */
+  x.fillStyle='#2a221c';x.fillRect(0,bottom,w,band);
+  x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${D}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>9){gs-=.5;x.font=`400 ${gs}px ${D}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,bottom+band/2);
   G.cardCanvas=c;
   return c.toDataURL('image/png');
 }
