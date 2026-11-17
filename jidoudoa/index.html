@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>自動ドアに気づいてもらえ。</title>
+<meta name="description" content="押しているあいだ歩いて、離すと止まる。自動ドアに気づいてもらえるか。登場するものはすべて架空です。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="自動ドアに気づいてもらえ。">
+<meta property="og:description" content="押しているあいだ歩いて、離すと止まる。">
+<meta property="og:url" content="https://kzaaa00.github.io/jidoudoa/">
+<meta property="og:image" content="https://kzaaa00.github.io/jidoudoa/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* A shop entrance seen from the side. Hold to walk, let go to stop.
+   This automatic door is dull: it only notices you when your nose is almost on the glass. */
+:root{
+  --ink:#24262b; --muted:#6f7480; --paper:#f7f6f2; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1f2228}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#cfe3f0;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app.shake{animation:shake .45s}
+@keyframes shake{15%{transform:translate(-9px,3px)}30%{transform:translate(8px,-3px)}45%{transform:translate(-6px,2px)}60%{transform:translate(4px,-1px)}75%{transform:translate(-2px,0)}}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:linear-gradient(#eef3f6,#dde6ec)}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,8.2vw,40px);line-height:1.4;margin:0 0 30px;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
+
+#result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:64px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#card{width:100%;border-radius:10px;border:1px solid #d6d8dc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-label="店の入口の自動ドアに向かって歩く人を横から見た画面"></canvas>
+
+  <div id="title" class="panel">
+    <h1>自動ドアに気づいてもらえ。</h1>
+    <button class="btn" id="startBtn" type="button">はじめる</button>
+    <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+  </div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>自動ドアの結果</h2>
+      <p id="rScore"></p>
+      <p id="rCount"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <div class="btns">
+        <button class="btn" id="retry" type="button">もう一回</button>
+        <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
+      </div>
+      <img id="card" alt="結果と、そのときの自動ドアの前の画面">
+      <p class="fine">登場するものはすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='自動ドアに気づいてもらえ。';
+const CREATOR='@ordwxjhj';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/jidoudoa/';})();
+const DISP=fontVar('--display'),BODY=fontVar('--body');
+function fontVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n);}
+
+/* ---------- the rules, in cm and seconds (sim.js uses the same numbers) ---------- */
+const V=150;          /* walking speed */
+const RAMP=.2;        /* time to get up to speed after pressing */
+const BRAKE=20;       /* how far you slide after letting go, always the same */
+const DEC=V*V/(2*BRAKE);
+const Z0=170;         /* nose to glass at the start */
+const ZONE=10;        /* the door only notices a nose this close to the glass */
+const NOSE=15;        /* nose tip, in front of the body's centre line */
+const PX=1.25;        /* screen px per cm */
+const DV=[.5,-.28];   /* screen px for 1 cm of depth (along the door) */
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('jidoudoa-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*1;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,vol,freq,delay=0,type='bandpass',q=1){
+  if(muted||!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=nbuf();f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur+.02);
+}
+function tone(f,dur,type='sine',vol=.05,delay=0,f2){
+  if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+}
+function motor(){
+  if(muted||!AC)return;const t=AC.currentTime,o=AC.createOscillator(),f=AC.createBiquadFilter(),g=AC.createGain();
+  o.type='sawtooth';o.frequency.setValueAtTime(70,t);o.frequency.linearRampToValueAtTime(95,t+.5);o.frequency.linearRampToValueAtTime(60,t+.9);
+  f.type='lowpass';f.frequency.value=380;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.06,t+.12);g.gain.setValueAtTime(.06,t+.7);g.gain.exponentialRampToValueAtTime(.0001,t+.95);
+  o.connect(f).connect(g).connect(AC.destination);o.start(t);o.stop(t+1);
+  noise(.8,.04,900,0,'bandpass',.8);
+}
+const SFX={
+  step(){noise(.06,.09,260,0,'lowpass');},
+  knock(){tone(950,.06,'triangle',.07);noise(.04,.08,3000,0,'highpass');},
+  bonk(){tone(110,.22,'sine',.16,0,60);noise(.16,.25,500,0,'lowpass');tone(1900,.5,'triangle',.018,.01);tone(2650,.4,'sine',.012,.01);},
+  smash(){tone(90,.32,'sine',.22,0,45);noise(.25,.38,420,0,'lowpass');tone(1700,.8,'triangle',.03,.01);tone(2480,.7,'sine',.02,.01);tone(3300,.5,'sine',.01,.02);},
+  door:motor
+};
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('jidoudoa-mute',muted?'1':'0');}catch(err){}syncMute();});
+
+/* ---------- canvas ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=360,H=640,SC=1,DPR=1;
+function resize(){
+  const r=$('app').getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);
+  SC=r.width/360;W=360;H=r.height/SC;
+  cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+}
+addEventListener('resize',resize);try{visualViewport.addEventListener('resize',resize);}catch(e){}
+resize();
+/* Gy: the floor line under the man. Dx: where the glass is, on his line. */
+function L(){return {Gy:Math.min(H-110,H*.5+150),Dx:262};}
+/* a point by distance along the walk (xc, minus = outside), height h and depth d (along the door) */
+function P3(xc,h,d=0){const {Gy,Dx}=L();return [Dx+xc*PX+d*DV[0],Gy-h*PX+d*DV[1]];}
+/* draw in the plane of the door: u = depth, v = -height (cm) */
+function inDoorPlane(x,fn,base){const {Gy,Dx}=L();x.save();x.transform(DV[0],DV[1],0,PX,Dx,Gy);fn(x);x.restore();}
+function poly(x,pts){x.beginPath();x.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)x.lineTo(pts[i][0],pts[i][1]);x.closePath();}
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function ease(e){e=Math.max(0,Math.min(1,e));return e*e*(3-2*e);}
+function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);}
+
+/* ---------- state ---------- */
+let G=null;
+function newGame(){
+  G={phase:'ready',t:0,pressT:0,rel:null,s:0,stepN:0,res:null,resT:0,shown:false,doorOpen:0,lamp:0,print:null,stars:0,plan:undefined,releaseAt:0,snap:null};
+}
+/* distance walked and speed, t seconds after pressing (before letting go) */
+function walkS(t){return t<RAMP?.5*(V/RAMP)*t*t:.5*V*RAMP+V*(t-RAMP);}
+function walkV(t){return t<RAMP?(V/RAMP)*t:V;}
+/* where he is now (distance walked from the start) */
+function curS(now){
+  if(G.phase==='ready')return 0;
+  const t=(now-G.pressT)/1000;
+  if(!G.rel)return Math.min(Z0,walkS(t));
+  const {tr,sr,vr}=G.rel,tau=t-tr,stop=vr/DEC;
+  const s=tau<stop?sr+vr*tau-.5*DEC*tau*tau:sr+vr*vr/(2*DEC);
+  return Math.min(Z0,s);
+}
+
+/* ---------- input: hold to walk, let go to stop ---------- */
+function press(now=performance.now()){
+  if(!G||G.phase!=='ready')return;
+  ac();G.phase='walk';G.pressT=now;G.t=0;
+}
+function release(now=performance.now()){
+  if(!G||G.phase!=='walk'||G.rel)return;
+  const t=(now-G.pressT)/1000,sr=walkS(t),vr=walkV(t);
+  if(sr>=Z0){return;} /* already hit the glass; that is handled in step() */
+  G.rel={tr:t,sr,vr};
+  const end=sr+vr*vr/(2*DEC),d=Z0-end;
+  if(d<0){ /* will touch the glass while still sliding */
+    const vc=Math.sqrt(Math.max(0,vr*vr-2*DEC*(Z0-sr)));
+    const tc=t+(vr-vc)/DEC;G.bumpAt=G.pressT+tc*1000;G.pending={kind:'bump',d,vc,full:false};
+  }else{
+    G.stopAt=G.pressT+(t+vr/DEC)*1000;G.pending={kind:Math.round(d*10)/10<=ZONE?'open':'ignored',d};
+  }
+  G.phase='slide';
+}
+cv.addEventListener('pointerdown',e=>{if(!G)return;try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();press();});
+const up=()=>{if(!G)return;release();};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&G&&$('result').hidden&&$('title').hidden){e.preventDefault();press();}});
+addEventListener('keyup',e=>{if(e.code==='Space'&&G){e.preventDefault();release();}});
+
+/* ---------- step ---------- */
+function resolve(r,now){
+  G.res=r;G.resAt=now;G.phase='after';
+  if(r.kind==='bump'){
+    const kmh=r.vc*.036;
+    if(r.full){SFX.smash();G.print={a:1};anim($('app'),'shake');try{navigator.vibrate&&navigator.vibrate([60,40,120]);}catch(e){}}
+    else if(kmh<1.5)SFX.knock();else{SFX.bonk();anim($('app'),'shake');}
+    G.kb=r.full?9:Math.min(7,2+kmh*1.2);
+    G.endIn=r.full?3100:2800;
+  }else if(r.kind==='open'){G.endIn=2700;}
+  else{G.endIn=3300;}
+}
+function step(dt,now){
+  G.t+=dt;
+  /* scripted release (for recording): let go at exactly the right moment */
+  if(G.phase==='walk'&&G.plan!==undefined&&G.plan!==null){
+    const sr=Z0-BRAKE-G.plan,t=RAMP+(sr-.5*V*RAMP)/V,at=G.pressT+t*1000;
+    if(now>=at)release(at);
+  }
+  if(G.phase==='walk'){
+    const t=(now-G.pressT)/1000;
+    if(walkS(t)>=Z0){ /* walked straight into it */
+      resolve({kind:'bump',d:-BRAKE,vc:walkV(t),full:true},now);
+    }
+  }
+  if(G.phase==='slide'){
+    if(G.pending.kind==='bump'&&now>=G.bumpAt)resolve(G.pending,now);
+    else if(G.pending.kind!=='bump'&&now>=G.stopAt)resolve(G.pending,now);
+  }
+  /* footsteps */
+  const s=curS(now);const n=Math.floor(s/36);if(n>G.stepN&&G.phase!=='after'){G.stepN=n;SFX.step();}
+  if(G.phase==='after'){
+    const a=(now-G.resAt)/1000,r=G.res;
+    /* the door: opens if it noticed you (and, after a bump, it notices you anyway) */
+    const openAt=r.kind==='open'?.25:r.kind==='bump'?(r.full?1.3:1.0):null;
+    if(openAt!==null&&a>=openAt-.15)G.lamp=1;
+    if(openAt!==null&&a>=openAt){if(!G.doorSnd){G.doorSnd=true;SFX.door();}G.doorOpen=ease((a-openAt)/.8);}
+    if(r.kind==='open'&&a>1.15)G.enterS=(a-1.15)*V*.9;
+    if(!G.snapped&&a>=(r.kind==='open'?1.0:r.kind==='bump'?.45:1.4)){G.snapped=true;takeSnap();}
+    if(a*1000>=G.endIn&&!G.shown){G.shown=true;showResult();}
+  }
+}
+
+/* ---------- drawing ---------- */
+function drawOutside(x){
+  const {Gy}=L();
+  const g=x.createLinearGradient(0,0,0,Gy);g.addColorStop(0,'#9fc9e6');g.addColorStop(1,'#dcecf5');x.fillStyle=g;x.fillRect(0,0,W,Gy);
+  /* far buildings */
+  const hz=Gy-150;
+  for(let i=0;i<7;i++){const bx=-10+i*58,bw=50+rnd(i)*20,bh=60+rnd(i+9)*90;x.fillStyle=i%2?'#b7c6d3':'#a9b9c8';x.fillRect(bx,hz-bh,bw,bh+150);
+    x.fillStyle='rgba(255,255,255,.35)';for(let r=0;r<5;r++)for(let c=0;c<3;c++)if(rnd(i*31+r*7+c)>.35)x.fillRect(bx+6+c*15,hz-bh+10+r*18,8,9);}
+  /* street, then the pavement */
+  x.fillStyle='#8f969e';x.fillRect(0,hz+20,W,40);
+  x.fillStyle='#e8e4dc';x.fillRect(0,hz+58,W,6);
+  x.fillStyle='#cfcac0';x.fillRect(0,hz+64,W,H);
+  /* a tree on the left */
+  x.fillStyle='#7a6a5a';x.fillRect(118,hz-6,5,32);
+  x.fillStyle='#86ad74';for(const [tx,ty,tr] of [[120,hz-18,17],[108,hz-8,11],[133,hz-9,12]]){x.beginPath();x.arc(tx,ty,tr,0,Math.PI*2);x.fill();}
+  /* pavement tiles, along the depth and across */
+  x.strokeStyle='rgba(120,112,100,.25)';x.lineWidth=1;
+  for(let xc=-260;xc<=0;xc+=40){const a=P3(xc,0,-300),b=P3(xc,0,300);x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
+  for(let d=-300;d<=300;d+=40){const a=P3(-400,0,d),b=P3(0,0,d);x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
+}
+function drawInside(x){
+  const {Gy,Dx}=L();
+  /* inside floor: everything to the right of the door line, below the wall */
+  const a=P3(0,0,-400),b=P3(0,0,800);
+  x.fillStyle='#ddd3c0';poly(x,[a,b,[b[0]+400,H+400],[a[0]+400,H+400]]);x.fill();
+  x.strokeStyle='rgba(150,140,120,.22)';x.lineWidth=1;
+  for(let xc=0;xc<=300;xc+=45){const p=P3(xc,0,-400),q=P3(xc,0,800);x.beginPath();x.moveTo(p[0],p[1]);x.lineTo(q[0],q[1]);x.stroke();}
+  /* the shop front wall, beyond the door and above it */
+  x.fillStyle='#e6e1d6';poly(x,[P3(0,0,95),P3(0,0,900),P3(0,700,900),P3(0,700,95)]);x.fill();
+  poly(x,[P3(0,214,-95),P3(0,214,95),P3(0,700,95),P3(0,700,-95)]);x.fill();
+  /* the awning over the shop front */
+  x.fillStyle='#2f5d8c';poly(x,[P3(0,240,-95),P3(0,240,900),P3(0,268,900),P3(0,268,-95)]);x.fill();
+  x.fillStyle='#244a70';poly(x,[P3(0,240,-95),P3(0,268,-95),P3(-22,262,-95),P3(-22,244,-95)]);x.fill();
+  /* its edge (the wall is cut away on this side of the door) */
+  x.fillStyle='#d3cdbf';poly(x,[P3(0,214,-95),P3(0,700,-95),P3(14,700,-95),P3(14,214,-95)]);x.fill();
+  /* a doormat outside */
+  x.fillStyle='#5a5f66';poly(x,[P3(-62,0,-55),P3(-62,0,55),P3(-4,0,55),P3(-4,0,-55)]);x.fill();
+  x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=1;for(let i=1;i<6;i++){const p=P3(-62+i*10,0,-55),q=P3(-62+i*10,0,55);x.beginPath();x.moveTo(p[0],p[1]);x.lineTo(q[0],q[1]);x.stroke();}
+}
+/* one sliding glass panel, from depth d0 to d1, clipped to the doorway */
+function drawPanel(x,d0,d1,near){
+  const lo=Math.max(-90,d0),hi=Math.min(90,d1);if(hi-lo<.5)return;
+  inDoorPlane(x,p=>{
+    p.fillStyle=near?'rgba(170,215,235,.32)':'rgba(170,215,235,.42)';p.fillRect(lo,-210,hi-lo,210);
+    /* reflections */
+    p.save();p.beginPath();p.rect(lo,-210,hi-lo,210);p.clip();
+    p.fillStyle='rgba(255,255,255,.35)';for(const o of [d0+12,d0+30]){p.beginPath();p.moveTo(o,-200);p.lineTo(o+9,-200);p.lineTo(o-14,-20);p.lineTo(o-23,-20);p.closePath();p.fill();}
+    /* the sticker, in the middle of the panel */
+    const m=(d0+d1)/2;p.fillStyle='rgba(255,255,255,.9)';p.beginPath();p.ellipse(m,-118,26,10,0,0,Math.PI*2);p.fill();
+    p.fillStyle='#1d5fa8';p.font=`900 9px ${BODY}`;p.textAlign='center';p.textBaseline='middle';p.save();p.translate(m,-118);p.scale(1.9,.8);p.fillText('自動ドア',0,.5);p.restore();
+    p.restore();
+    /* frame of the panel */
+    p.strokeStyle='#9aa3ac';p.lineWidth=2.4;p.strokeRect(lo,-210,hi-lo,210);
+  });
+}
+function drawFrame(x,front){
+  /* transom and the sensor; posts at each end of the doorway */
+  inDoorPlane(x,p=>{
+    if(!front){
+      p.fillStyle='#b8bfc6';p.fillRect(-95,-224,190,14);
+      p.fillStyle='#8d959d';p.fillRect(90,-214,6,214);
+    }else{
+      p.fillStyle='#8d959d';p.fillRect(-96,-214,6,214);
+    }
+  });
+  if(!front){
+    /* the sensor box hangs under the transom, on the outside */
+    const [sx,sy]=P3(-6,210,0);
+    x.fillStyle='#3a3f46';rr(x,sx-12,sy,20,10,3);x.fill();
+    x.fillStyle=G&&G.lamp?'#4fe07a':'#d8473a';x.beginPath();x.arc(sx-6,sy+5,2.4,0,Math.PI*2);x.fill();
+    if(G&&G.lamp){x.fillStyle='rgba(79,224,122,.25)';x.beginPath();x.arc(sx-6,sy+5,6,0,Math.PI*2);x.fill();}
+  }
+}
+
+/* the man, side on, facing right; o = {ph, amp, wave, squish, dazed, look} */
+const SKIN='#f1c9a6';
+function drawMan(x,bx,o){
+  const {Gy}=L();
+  x.save();x.translate(bx,Gy);x.scale(PX,PX);
+  const sw=Math.sin(o.ph)*o.amp,bob=-Math.abs(Math.cos(o.ph))*1.6*(o.amp>0?1:0);
+  x.fillStyle='rgba(0,0,0,.16)';x.beginPath();x.ellipse(0,0,24,3.4,0,0,Math.PI*2);x.fill();
+  const leg=(a,c)=>{const hx=0,hy=-90+bob,fx=hx+Math.sin(a)*88,fy=hy+Math.cos(a)*88;x.strokeStyle=c;x.lineWidth=11;x.lineCap='round';x.beginPath();x.moveTo(hx,hy);x.lineTo(fx,fy);x.stroke();
+    x.fillStyle='#2b2724';x.beginPath();x.ellipse(fx+5,fy-2,10,4.6,0,0,Math.PI*2);x.fill();};
+  const arm=(a,c,front)=>{const sx=0,sy=-140+bob,ex=sx+Math.sin(a)*58,ey=sy+Math.cos(a)*58;x.strokeStyle=c;x.lineWidth=9;x.lineCap='round';x.beginPath();x.moveTo(sx,sy);x.lineTo(ex,ey);x.stroke();
+    x.fillStyle=SKIN;x.beginPath();x.arc(ex,ey,5,0,Math.PI*2);x.fill();};
+  arm(-sw*.8,'#2d5684');
+  leg(-sw,'#2f333b');
+  /* body */
+  x.fillStyle='#3a6ea5';rr(x,-13,-152+bob,27,66,9);x.fill();
+  x.fillStyle='#f4f4f0';poly(x,[[4,-150+bob],[12,-150+bob],[9,-138+bob]]);x.fill();
+  leg(sw,'#3b3f48');
+  /* head */
+  x.save();x.translate(0,-164+bob);
+  if(o.look)x.rotate(-o.look*.35);
+  if(o.dazed)x.rotate(Math.sin(o.dazed*14)*.08);
+  x.fillStyle=SKIN;x.fillRect(-4,8,8,8);
+  const sq=o.squish||0;
+  x.save();x.translate(12,0);x.scale(1-.12*sq,1+.04*sq);x.translate(-12,0);
+  x.fillStyle=SKIN;x.beginPath();x.arc(0,0,12,0,Math.PI*2);x.fill();
+  /* nose: squashed flat on the glass */
+  const nl=3*(1-sq*.85);x.beginPath();x.moveTo(11,-3.5);x.lineTo(12+nl,1.5);x.lineTo(11,3);x.closePath();x.fill();
+  x.restore();
+  /* hair */
+  x.fillStyle='#2b2420';x.beginPath();x.arc(0,-1,12.6,Math.PI*.98,Math.PI*1.95);x.lineTo(7,-7);x.quadraticCurveTo(-2,-9,-10,-2);x.closePath();x.fill();
+  x.fillRect(-12.4,-3,4,10);
+  /* ear */
+  x.fillStyle='#e7b48d';x.beginPath();x.ellipse(-2,1,2.6,3.6,0,0,Math.PI*2);x.fill();
+  /* eye and mouth */
+  x.strokeStyle='#24262b';x.fillStyle='#24262b';x.lineWidth=1.4;x.lineCap='round';
+  if(sq>.3||o.dazed){x.beginPath();x.moveTo(5,-4);x.lineTo(8,-2);x.lineTo(5,0);x.stroke();}
+  else{x.beginPath();x.arc(6.5,-2,1.4,0,Math.PI*2);x.fill();}
+  x.beginPath();if(o.wave||o.look){x.arc(8,6,1.6,0,Math.PI*2);x.stroke();}else{x.moveTo(6,6);x.lineTo(9.5,5.6);x.stroke();}
+  x.restore();
+  /* front arm: swinging, or waving at the sensor */
+  if(o.wave){const a=Math.PI+.55+Math.sin(o.wave*13)*.38;arm(a,'#3f78b3');}
+  else arm(sw*.8,'#3f78b3');
+  x.restore();
+}
+function manState(now){
+  const {Dx}=L();
+  let s=curS(now),o={ph:0,amp:0};
+  if(G.phase==='walk'||G.phase==='slide'){
+    o.ph=s/36*Math.PI;let v;const t=(now-G.pressT)/1000;
+    if(G.phase==='walk')v=walkV(t);else{const tau=t-G.rel.tr;v=Math.max(0,G.rel.vr-DEC*tau);}
+    o.amp=.42*Math.min(1,v/V)+.06*(v>0?1:0);
+  }
+  if(G.phase==='after'){
+    const r=G.res,a=(now-G.resAt)/1000;s=Math.min(Z0,s);
+    o.ph=0;o.amp=0;
+    if(r.kind==='bump'){
+      s=Z0;const k=ease(a/.25)*G.kb;s=Z0-k;
+      o.squish=a<.35?1-a/.35*.7:Math.max(0,.3-(a-.35));
+      if(a>.25)o.dazed=a;
+      if(a>.15&&a<2.2)G.stars=a;else G.stars=0;
+    }else if(r.kind==='ignored'){
+      if(a>.7&&a<2.3)o.wave=a;
+      if(a>=2.3)o.look=Math.min(1,(a-2.3)/.3);
+    }else if(r.kind==='open'&&G.enterS){
+      s+=G.enterS;o.ph=s/36*Math.PI;o.amp=.42;
+    }
+  }
+  return {bx:Dx+(-(Z0-s)-NOSE)*PX,o,s};
+}
+function drawStars(x,hx,hy,a){
+  for(let i=0;i<3;i++){const ang=a*5+i*2.09,px=hx+Math.cos(ang)*20,py=hy-24+Math.sin(ang)*6;
+    x.fillStyle='#ffd23f';x.strokeStyle='#b88a00';x.lineWidth=1;x.beginPath();for(let k=0;k<10;k++){const r=k%2?2.6:6,t=k*Math.PI/5-Math.PI/2;x.lineTo(px+Math.cos(t)*r,py+Math.sin(t)*r);}x.closePath();x.fill();x.stroke();}
+}
+function drawPrint(x){
+  /* where the face met the glass: forehead, nose, a bit of cheek */
+  inDoorPlane(x,p=>{
+    p.fillStyle='rgba(255,255,255,.55)';
+    p.beginPath();p.ellipse(0,-170,9,7,0,0,Math.PI*2);p.fill();
+    p.beginPath();p.ellipse(0,-162,4,3,0,0,Math.PI*2);p.fill();
+    p.fillStyle='rgba(255,255,255,.35)';p.beginPath();p.ellipse(0,-156,10,5,0,0,Math.PI*2);p.fill();
+  });
+}
+function pill(label,lx,ly){cx.save();cx.font='900 15px '+BODY;cx.textAlign='center';cx.textBaseline='middle';
+  const w=cx.measureText(label).width+22;cx.fillStyle='rgba(36,38,43,.86)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
+function holdGuide(){
+  const {Gy}=L();const T=1.6,t=(G.t%T)/T;const gx=150,gy=Math.min(H-34,Gy+62);
+  const pressed=t>.25&&t<.8;
+  cx.save();cx.fillStyle=pressed?'rgba(255,255,255,.95)':'rgba(255,255,255,.75)';cx.strokeStyle='#24262b';cx.lineWidth=2.5;
+  cx.beginPath();cx.arc(gx,gy,pressed?13:15,0,Math.PI*2);cx.fill();cx.stroke();
+  if(pressed){const r=(t-.25)/.55;cx.strokeStyle=`rgba(36,38,43,${.5*(1-r)})`;cx.beginPath();cx.arc(gx,gy,16+r*14,0,Math.PI*2);cx.stroke();}
+  cx.restore();
+  pill('押しているあいだ歩く。離すと止まる。',180,Math.max(24,gy-44));
+}
+
+function render(now){
+  cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
+  drawOutside(cx);drawInside(cx);
+  const op=G?G.doorOpen:0,sl=op*90;
+  drawPanel(cx,0+sl,90+sl,false);
+  drawFrame(cx,false);
+  if(G){
+    const m=manState(now);
+    drawMan(cx,m.bx,m.o);
+    drawPanel(cx,-90-sl,0-sl,true);
+    drawFrame(cx,true);
+    if(G.print)drawPrint(cx);
+    if(G.stars){const {Gy}=L();drawStars(cx,m.bx+2*PX,Gy-170*PX,G.stars);}
+    if(G.phase==='ready')holdGuide();
+  }else{
+    drawPanel(cx,-90,0,true);drawFrame(cx,true);
+  }
+}
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(G)step(dt,now);render(now);}
+requestAnimationFrame(loop);
+
+function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);}
+
+/* ---------- result ---------- */
+/* the part of the screen for the share image, kept at the moment that tells the story */
+function cropBox(){const {Gy}=L();return {y0:Math.max(0,Gy-262*PX-36),y1:Math.min(H,Gy+36)};}
+function takeSnap(){
+  try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
+    c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
+}
+function ddText(){return G.res.dd.toFixed(1);}
+function kmhText(){return G.res.kmh.toFixed(1);}
+function finalize(){
+  const r=G.res;
+  if(r.kind==='bump'){r.kmh=Math.max(.1,Math.round(r.vc*.036*10)/10);}
+  else{r.dd=Math.round(r.d*10)/10;}
+}
+function titleOf(){
+  const r=G.res;
+  if(r.kind==='bump'){if(r.full)return 'ガラスに顔拓をとった人';return r.kmh<1.5?'おでこでノックした人':'ガラスに鼻をつぶした人';}
+  if(r.kind==='ignored')return r.dd<20?'自動ドアに無視された人':'ドアの前で立ち尽くす人';
+  if(r.dd===0)return '鼻先で自動ドアを開けた人';
+  if(r.dd<1)return 'ガラスと紙一枚の人';
+  if(r.dd<4)return 'スマートに入店した人';
+  return 'ふつうに入れた人';
+}
+function feedback(){
+  const r=G.res;let s;
+  if(r.kind==='bump'&&r.full)return '最後まで離さなかった（止まらずに激突）';
+  if(r.kind==='bump')s=r.full?'':r.kmh<1.5?'ほんの少し遅い（ぶつかった）':r.kmh<3?'少し遅い（ぶつかった）':'遅い（ぶつかった）';
+  else if(r.kind==='ignored')s=r.dd<20?'少し早い（ドアが気づかない）':'早い（ドアが気づかない）';
+  else if(r.dd===0)s='ぴったり';
+  else s=r.dd<1?'ほんの少し早い':r.dd<4?'少し早い':'早い';
+  return '離すのが：'+s;
+}
+function statusLine(){const r=G.res;return r.kind==='open'?'ドアは開いた':r.kind==='ignored'?'ドアは気づかなかった':'ドアは、ぶつかってから開いた';}
+function bigLabel(){return G.res.kind==='bump'?'ガラスに激突（時速）':'ガラスまで';}
+function bigNum(){return G.res.kind==='bump'?[kmhText(),'km']:[ddText(),'cm'];}
+function shareText(){
+  const r=G.res,g='自動ドアに気づいてもらえ';
+  const what=r.kind==='bump'?`時速${kmhText()}kmで激突`:r.kind==='ignored'?`ガラスまで${ddText()}cmで気づかれず`:`ガラスまで${ddText()}cm`;
+  return `${g}　${what}【${titleOf()}】\n${SHARE_URL}`;
+}
+async function showResult(){
+  finalize();
+  const [n,u]=bigNum();
+  $('rScore').innerHTML=`${bigLabel()}<b>${n}<small>${u}</small></b>`;
+  $('rCount').textContent=statusLine();
+  $('rTitle').textContent='【'+titleOf()+'】';
+  $('rSub').textContent=feedback();
+  $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(r=>G.cardCanvas.toBlob(r,'image/png'));if(b)G.cardFile=new File([b],'jidoudoa-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='jidoudoa-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
+
+/* The share image: the result on top, the scene at the moment that tells the story in the middle, then a line on the timing,
+   and a band with the game name and the creator. Portrait, 360 wide at 3x. */
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  if(!G.snap)takeSnap();
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const {y0,y1}=cropBox(),sh=y1-y0;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#6f7480';x.font=`900 16px ${F}`;x.fillText(bigLabel(),w/2,32);
+  const [n,u]=bigNum();let fs=96;x.font=`400 ${fs}px ${D}`;let tw=x.measureText(n).width;
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;const pw=x.measureText(u).width;
+  const sx=(w-(tw+pw+4))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${D}`;x.fillText(n,sx,124);
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;x.fillText(u,sx+tw+4,124);
+  x.textAlign='center';x.fillStyle='#24262b';x.font=`900 17px ${F}`;x.fillText(statusLine(),w/2,160);
+  x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('【'+titleOf()+'】',w/2,192);
+  x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
+  try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#cfe3f0';x.fillRect(0,top0,w,sh);}
+  x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
+  x.fillStyle='#6f7480';x.font=`700 14px ${F}`;x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
+  x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
+  x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${D}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>9){gs-=.5;x.font=`400 ${gs}px ${D}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,bottom+band/2);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+
+/* ---------- start ---------- */
+function begin(){newGame();resize();$('title').hidden=true;}
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+/* for checks and recording: play(d) walks and lets go so he stops d cm before the glass (null = never let go) */
+function play(d){begin();G.plan=d;press();}
+window.__jidoudoa={get G(){return G;},begin,press,release,play,shareText,showResult,L,V,BRAKE,Z0,ZONE};
+</script>
+</body>
+</html>
