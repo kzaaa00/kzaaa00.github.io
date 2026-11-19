@@ -52,8 +52,9 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #story{margin:0;font-size:clamp(14.5px,calc(2.3vh + 2.4px),17px);font-weight:700;line-height:1.75;text-align:left}
 #ask{margin:2px 0 0;font-size:clamp(16px,calc(2.3vh + 4px),19px);font-weight:900;line-height:1.45;text-align:left;color:var(--red-d)}
 #opts[hidden],#ask[hidden]{display:none}
-#opts{display:flex;flex-direction:column;gap:10px;margin-top:2px}
-.opt{border:2px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);font:900 16.5px var(--body);padding:clamp(10px,1.8vh,14px) 12px;text-align:center;cursor:pointer;box-shadow:0 3px 0 #cfc6ba;line-height:1.35}
+#opts{display:grid;grid-template-columns:1fr;gap:9px;margin-top:2px}
+#opts.two{grid-template-columns:1fr 1fr}
+.opt{border:2px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);font:900 15.5px var(--body);padding:clamp(9px,1.6vh,13px) 10px;text-align:center;cursor:pointer;box-shadow:0 3px 0 #cfc6ba;line-height:1.35}
 .opt:active{transform:translateY(2px);box-shadow:0 1px 0 #cfc6ba}
 .opt:disabled{cursor:default}
 .opt.chosen{background:#f1ece2}
@@ -153,88 +154,112 @@ const N_Q=10;
 const CASES=[
 {id:'denki',name:'電気窃盗事件',era:'明治36年',
  story:'電気会社と契約せず、電線からこっそり電気を引いて使った男。当時の法律で「窃盗」は、他人の「物」を盗む罪。',
- ask:'形のない電気は「物」？ 窃盗になる？',opts:['窃盗で有罪','物じゃないから無罪'],a:0,
+ ask:'形のない電気。判決は？',opts:['窃盗で有罪','「物」じゃないから無罪','窃盗ではなく詐欺で有罪'],a:0,
  verdict:'有罪（窃盗罪）',
  why:'電気は形がなくても、管理したり持ち運んだりできるので「物」にあたる、とされた。今は刑法に「電気は財物とみなす」と書いてある。',
  src:'大審院 明治36年5月21日 判決'},
 {id:'tanuki',name:'たぬき・むじな事件',era:'大正14年',
  story:'たぬき狩りが禁止の時期に、「むじな」を2匹つかまえた男。地元では昔から、むじなとたぬきは別の動物だと思われていた。でも動物学上は同じ動物。',
- ask:'たぬきを捕った罪になる？',opts:['有罪','無罪'],a:1,
+ ask:'判決は？',opts:['罰金で有罪','懲役で有罪','有罪だが罰は免除','無罪'],a:3,
  verdict:'無罪',
  why:'当時は、たぬきとむじなを別の動物と考える人が多かった。男に「たぬきを捕る」つもりはなかったので罪にならない、とされた。',
  src:'大審院 大正14年6月9日 判決'},
 {id:'musasabi',name:'むささび・もま事件',era:'大正13年',
  story:'禁猟の「むささび」をつかまえた男。男は、地元で「もま」と呼ぶ動物を捕っただけで、もまとむささびが同じ動物だとは知らなかった。',
- ask:'むささびを捕った罪になる？',opts:['有罪','無罪'],a:0,
+ ask:'判決は？',opts:['有罪','無罪（知らなかったから）','無罪（地方の呼び名だから）'],a:0,
  verdict:'有罪',
  why:'「もま」はむささびの地方での呼び名で、同じ動物。もまだと分かって捕ったなら、むささびを捕ったのと同じ。知らなかったでは済まない、とされた。',
  src:'大審院 大正13年4月25日 判決'},
 {id:'ichirin',name:'一厘事件',era:'明治43年',
  story:'育てた葉たばこは全部国に納める決まりだった時代。農家が、そのうち約2グラム（値段は1厘＝1円の1000分の1）を手でもんで自分で吸った。二審は罰金10円。',
- ask:'大審院の判決は？',opts:['有罪','無罪'],a:1,
+ ask:'大審院の判決は？',opts:['罰金10円（二審どおり）','罰金1厘（吸った分だけ）','懲役1か月','無罪'],a:3,
  verdict:'無罪',
  why:'ごくわずかで、特に悪い事情もない違反は、罰するほどの害がない、とされた。二審の罰金10円は、被害の1万倍だった。',
  src:'大審院 明治43年10月11日 判決'},
 {id:'unazuki',name:'宇奈月温泉事件',era:'昭和10年',
  story:'温泉に湯を引く管が、他人の小さな土地を許可なく通っていた。その土地を買った人が「管をどけろ。嫌ならこの土地と周りの土地を高値で買い取れ」と温泉側に迫った。',
- ask:'「管をどけろ」は通る？',opts:['通る','通らない'],a:1,
- verdict:'通らない',
+ ask:'判決は？',opts:['管をどけろ','温泉側が土地を買い取れ','訴えを退ける'],a:2,
+ verdict:'訴えを退ける',
  why:'管をどけるのはとても大変。それにつけこんで土地を買い、不当な値段で買い取りを迫るのは「権利の濫用」で許されない、とされた。',
  src:'大審院 昭和10年10月5日 判決'},
 {id:'shingen',name:'信玄公旗掛松事件',era:'大正8年',
  story:'武田信玄が旗を掛けたと伝わる松。線路から1.8mもない所に立っていて、蒸気機関車の煙で枯れてしまった。持ち主は鉄道側に賠償を求めた。',
- ask:'汽車を走らせるのは正当な権利。賠償は？',opts:['払わなくていい','払うべき'],a:1,
- verdict:'鉄道側は賠償すべき',
+ ask:'汽車を走らせるのは正当な権利。判決は？',opts:['賠償しなくていい','鉄道側が賠償する','賠償＋線路を移す'],a:1,
+ verdict:'鉄道側が賠償する',
  why:'汽車の煙は、ふつうは沿線の人が我慢するもの。でも線路のすぐそばで、煙を防ぐ方法もあったのに何もしなかったのは、我慢の限度を超える、とされた。',
  src:'大審院 大正8年3月3日 判決'},
 {id:'golf',name:'ロストボール事件',era:'昭和62年',
  story:'ゴルフ場の池の底に沈んでいるボール。客が打ち込んで、あきらめて置いていったもの。男たちは池にもぐって、それを拾って持ち去った。',
- ask:'置いていかれたボール。罪になる？',opts:['窃盗で有罪','捨てた物だから無罪'],a:0,
- verdict:'有罪（窃盗罪）',
+ ask:'何の罪になる？',opts:['窃盗罪','落とし物を自分のものにする罪（軽い）','捨てた物だから無罪'],a:0,
+ verdict:'窃盗罪',
  why:'ボールはゴルフ場のものになっていて、ゴルフ場が管理していた。ゴルフ場もいずれ回収して使うつもりだった、とされた。',
  src:'最高裁 昭和62年4月10日 決定'},
 {id:'pochette',name:'置き忘れポシェット事件',era:'平成16年',
  story:'公園のベンチにポシェットを置き忘れて、歩いていった人。まだ27mほどしか離れていないうちに、別の人がそのポシェットを持ち去った。',
- ask:'何の罪になる？',opts:['窃盗罪','落とし物を自分のものにする罪（もっと軽い）'],a:0,
+ ask:'何の罪になる？',opts:['窃盗罪','落とし物を自分のものにする罪（軽い）','拾っただけなので無罪'],a:0,
  verdict:'窃盗罪',
  why:'持ち主はまだ27mしか離れていない。置き忘れに気づいていなくても、ポシェットはまだ持ち主のものとして管理されていた、とされた。',
  src:'最高裁 平成16年8月25日 決定'},
 {id:'furikomi',name:'誤振込事件',era:'平成15年',
  story:'自分の口座に、知らない人から間違ってお金が振り込まれた。気づいたけれど黙って、銀行の窓口で引き出した。',
- ask:'自分の口座のお金。罪になる？',opts:['詐欺罪','罪にならない'],a:0,
- verdict:'有罪（詐欺罪）',
+ ask:'何の罪になる？',opts:['詐欺罪','横領罪','自分の口座だから無罪'],a:0,
+ verdict:'詐欺罪',
  why:'間違いの振込だと知ったら、銀行に伝える義務がある。黙って払い戻しを頼むのは、窓口の人をだますことになる、とされた。',
  src:'最高裁 平成15年3月12日 決定'},
 {id:'pachislo',name:'パチスロ体感器事件',era:'平成19年',
  story:'メダルを不正に取るための機械（体感器）を体につけて、パチスロを打った男。出たメダルは約1500枚。全部が機械のおかげで出たとは限らない。',
- ask:'窃盗になるのは？',opts:['機械で取れた分だけ','出たメダル全部'],a:1,
+ ask:'窃盗になるのは？',opts:['機械で取れた分だけ','出たメダル全部','どのメダルも窃盗ではない'],a:1,
  verdict:'出たメダル全部',
  why:'不正のための機械をつけて打つこと自体が、店の許さない遊び方。機械のおかげかどうかに関係なく、全部が窃盗、とされた。',
  src:'最高裁 平成19年4月13日 決定'},
 {id:'tattoo',name:'タトゥー事件',era:'令和2年',
- story:'医師免許のない彫り師が、店でお客さんにタトゥーを入れた。針で皮膚に色を入れるのは、医師しかしてはいけない「医業」なのか。一審は有罪。',
- ask:'最高裁の判断は？',opts:['医師法違反で有罪','無罪'],a:1,
+ story:'医師免許のない彫り師が、店でお客さんにタトゥーを入れた。針で皮膚に色を入れるのは、医師しかしてはいけない「医業」なのか。一審は罰金15万円。',
+ ask:'最高裁の判断は？',opts:['罰金15万円（一審どおり）','罰金50万円','懲役1年・執行猶予3年','無罪'],a:3,
  verdict:'無罪',
- why:'タトゥーは医療ではなく、美術的な面もある社会の風俗。医師だけができる「医行為」にはあたらない、とされた。',
+ why:'タトゥーは医療ではなく、美術的な面もある社会の風俗。医師だけができる「医行為」にはあたらない、とされた（二審で逆転無罪、最高裁で確定）。',
  src:'最高裁 令和2年9月16日 決定'},
 {id:'mining',name:'Webマイニング事件',era:'令和4年',
  story:'自分のWebサイトに、見に来た人のパソコンで仮想通貨の計算（マイニング）をさせるプログラムを、断りなく置いた。二審は「ウイルス罪」で罰金10万円。',
- ask:'最高裁の判断は？',opts:['有罪','無罪'],a:1,
+ ask:'最高裁の判断は？',opts:['罰金10万円（二審どおり）','罰金50万円','懲役1年・執行猶予3年','無罪'],a:3,
  verdict:'無罪',
  why:'断りなしではあるが、パソコンへの影響は広告と大きく変わらない。社会的に許されないとまでは言えない、とされた。',
  src:'最高裁 令和4年1月20日 判決'},
 {id:'p2p',name:'ファイル共有ソフト事件',era:'平成23年',
  story:'ファイル共有ソフトを作って、ネットで公開した開発者。それを使って他人の作品を違法に流す人が出て、開発者は「著作権侵害の手助け」で起訴された。一審は罰金150万円。',
- ask:'最高裁の判断は？',opts:['有罪','無罪'],a:1,
+ ask:'最高裁の判断は？',opts:['罰金150万円（一審どおり）','懲役1年・執行猶予3年','懲役3年（実刑）','無罪'],a:3,
  verdict:'無罪',
- why:'具体的な違法行為を知りながら配ったのではなく、違法に使わないよう警告もしていた。手助けするつもりがあったとは言えない、とされた。',
+ why:'具体的な違法行為を知りながら配ったのではなく、違法に使わないよう警告もしていた。手助けするつもりがあったとは言えない、とされた（二審で逆転無罪）。',
  src:'最高裁 平成23年12月19日 決定'},
 {id:'wifi',name:'Wi-Fiただ乗り事件',era:'平成29年',
  story:'隣の家のWi-Fiのパスワードを解読して、勝手にネットを使った男。電波法の「無線通信の秘密を盗んで使う罪」でも起訴された。',
- ask:'この罪は？',opts:['有罪','無罪'],a:1,
+ ask:'この罪の判決は？',opts:['有罪','罰金だけで有罪','無罪'],a:2,
  verdict:'無罪（この罪は）',
- why:'Wi-Fiのパスワードは、暗号を読むための鍵にすぎず「無線通信の秘密」にあたらない、とされた。※男は不正アクセスなど別の罪で有罪。',
- src:'東京地裁 平成29年4月27日 判決'}
+ why:'Wi-Fiのパスワードは、暗号を読むための鍵にすぎず「無線通信の秘密」にあたらない、とされた。※男は不正アクセスなど別の罪で懲役8年。',
+ src:'東京地裁 平成29年4月27日 判決'},
+{id:'kaizoku',name:'海賊版漫画サイト事件',era:'令和3年',
+ story:'人気漫画を無断でネットに上げて、誰でもタダで読めるサイトを運営した男。広告で稼いだ約6257万円を、海外の口座などに移して隠していた。',
+ ask:'判決は？',opts:['罰金1000万円','懲役3年・執行猶予5年','懲役3年＋罰金1000万円（実刑）','懲役10年'],a:2,
+ verdict:'懲役3年（実刑）・罰金1000万円',
+ why:'著作権法違反と、犯罪で得たお金を隠した罪で有罪。さらに広告収入など約6257万円の追徴（取り上げ）も命じられ、そのまま確定した。',
+ src:'福岡地裁 令和3年6月2日 判決'},
+{id:'fast',name:'ファスト映画事件',era:'令和3年',
+ story:'映画を無断で10分ほどに編集し、ナレーションをつけて動画サイトに上げた3人。広告収入を得ていた。全国で初めての裁判。',
+ ask:'主犯の判決は？',opts:['罰金200万円だけ','懲役2年・執行猶予4年＋罰金200万円','懲役2年（実刑）','無罪（紹介動画だから）'],a:1,
+ verdict:'懲役2年・執行猶予4年、罰金200万円',
+ why:'著作権法違反で有罪。ほかの2人も懲役1年6月（執行猶予つき）と罰金。このあと映画会社などからの民事裁判も起こされた。',
+ src:'仙台地裁 令和3年11月16日 判決'},
+{id:'fast5',name:'ファスト映画の賠償額',era:'令和4年',
+ story:'映画54本を無断で10分ほどにまとめた動画は、合わせて約1000万回再生された。映画会社など13社が、投稿した人に賠償を求めた。',
+ ask:'いくら払えと命じられた？',opts:['500万円','5000万円','5億円','50億円'],a:2,keep:true,
+ verdict:'5億円',
+ why:'1回の再生につき200円の損害と認められた。会社側の計算では損害は約20億円で、そのうち5億円を求め、全額が認められた。',
+ src:'東京地裁 令和4年11月17日 判決'},
+{id:'ikatako',name:'イカタコウイルス事件',era:'平成23年',
+ story:'動画のふりをしたファイルをネットで配り、開いたパソコンのファイルをイカやタコの絵に置き換えて、使えなくした男。当時はウイルスを作る罪がまだなかった。',
+ ask:'判決は？',opts:['罰する法律がないので無罪','罰金50万円','懲役1年・執行猶予3年','懲役2年6月（実刑）'],a:3,
+ verdict:'懲役2年6月（実刑）',
+ why:'パソコンのハードディスクを使えなくしたことが、物を壊す罪（器物損壊罪）にあたるとされた。執行猶予はつかなかった。',
+ src:'東京地裁 平成23年7月20日 判決'}
 ];
 
 /* ---------- audio ---------- */
@@ -274,8 +299,11 @@ function pick(){
   const a=CASES.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
   let q=a.slice(0,N_Q);
   /* the two animal cases look alike and end the other way round: when both come up, the musasabi follows the tanuki */
-  const ti=q.findIndex(c=>c.id==='tanuki'),mi=q.findIndex(c=>c.id==='musasabi');
-  if(ti>=0&&mi>=0){const m=q.splice(mi,1)[0];q.splice(q.findIndex(c=>c.id==='tanuki')+1,0,m);}
+  /* same for the two fast-movie cases (the criminal one, then the damages) */
+  for(const [f,g] of [['tanuki','musasabi'],['fast','fast5']]){
+    const fi=q.findIndex(c=>c.id===f),gi=q.findIndex(c=>c.id===g);
+    if(fi>=0&&gi>=0){const m=q.splice(gi,1)[0];q.splice(q.findIndex(c=>c.id===f)+1,0,m);}
+  }
   return q;
 }
 function begin(){
@@ -289,13 +317,16 @@ function show(){
   $('era').textContent=c.era+'の裁判';
   $('story').textContent=c.story;$('ask').textContent=c.ask;$('ask').hidden=false;
   const o=$('opts');o.innerHTML='';o.hidden=false;
-  c.opts.forEach((t,k)=>{const b=document.createElement('button');b.type='button';b.className='opt';b.textContent=t;b.addEventListener('click',()=>answer(k));o.appendChild(b);});
+  o.className=c.opts.length%2===0&&c.opts.every(t=>t.length<=6)?'two':'';
+  /* the choices come in a new order every time (amounts stay in order) */
+  const ord=c.opts.map((_,k)=>k);if(!c.keep)for(let i=ord.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ord[i],ord[j]]=[ord[j],ord[i]];}
+  ord.forEach(k=>{const b=document.createElement('button');b.type='button';b.className='opt';b.dataset.k=k;b.textContent=c.opts[k];b.addEventListener('click',()=>answer(k));o.appendChild(b);});
   $('verdict').hidden=true;$('mark').className='';$('mark').innerHTML='';
 }
 async function answer(k,fast){
   if(!G||G.busy)return;G.busy=true;
   const c=G.qs[G.i],ok=k===c.a;G.res.push({id:c.id,name:c.name,ok,chose:k});
-  const bs=[...document.querySelectorAll('.opt')];bs.forEach(b=>b.disabled=true);bs[k]&&bs[k].classList.add('chosen');
+  const bs=[...document.querySelectorAll('.opt')];bs.forEach(b=>b.disabled=true);const cb=bs.find(b=>+b.dataset.k===k);cb&&cb.classList.add('chosen');
   if(!fast){ac();knock();knock(.16);await wait(520);}
   /* the judgment replaces the question */
   $('ask').hidden=true;$('opts').hidden=true;
@@ -426,8 +457,9 @@ async function drawCard(){
 
 /* for checks and the promo video: play(n) answers n of the ten right and goes to the result */
 window.__hanketsu={get G(){return G;},CASES,begin,answer,nextQ,shareText,titleOf,
+  showCase(id){begin();G.qs[0]=CASES.find(c=>c.id===id);G.i=0;show();},
   play(n){begin();const right=new Set();while(right.size<n)right.add(Math.floor(Math.random()*N_Q));
-    for(let i=0;i<N_Q;i++){const c=G.qs[G.i];answer(right.has(i)?c.a:1-c.a,true);nextQ();}}};
+    for(let i=0;i<N_Q;i++){const c=G.qs[G.i];answer(right.has(i)?c.a:(c.a+1)%c.opts.length,true);nextQ();}}};
 </script>
 </body>
 </html>
