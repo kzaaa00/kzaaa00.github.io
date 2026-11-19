@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>六法を見ずに、判決を当てろ。</title>
+<meta name="description" content="本当にあった裁判の判決を当てるクイズ。10問中、何問当てられるか。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="六法を見ずに、判決を当てろ。">
+<meta property="og:description" content="本当にあった裁判の判決を当てるクイズ。">
+<meta property="og:url" content="https://kzaaa00.github.io/hanketsu/">
+<meta property="og:image" content="https://kzaaa00.github.io/hanketsu/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* Real court cases, told in a few lines. Guess the judgment. Ten questions. */
+:root{
+  --ink:#2a221c; --muted:#7a6e62; --paper:#fbf6ee; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f; --blue:#2457c5; --ok:#2f7d4f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#2a2622}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#5b3b25;touch-action:manipulation}
+/* the bench: dark wood with a little grain */
+#app::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(176deg,rgba(0,0,0,.06) 0 3px,transparent 3px 19px),linear-gradient(#6a4529,#4d311f);pointer-events:none}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:linear-gradient(#f7efe2,#eadfcd)}
+#title svg{width:96px;height:auto;margin:0 0 14px}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,8.2vw,40px);line-height:1.4;margin:0 0 30px;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #cfc6ba}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,.opt:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:var(--muted);line-height:1.7}
+
+/* the play screen */
+#play{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;justify-content:center;padding:calc(10px + env(safe-area-inset-top,0px)) 14px calc(12px + env(safe-area-inset-bottom,0px))}
+#play[hidden]{display:none}
+#bar{display:flex;justify-content:space-between;align-items:baseline;color:#f3e6d2;margin:0 76px 8px 4px;font-weight:900}
+#qn{font-family:var(--display);font-weight:400;font-size:20px;font-variant-numeric:tabular-nums}
+#qn small{font-size:13px;opacity:.75;margin-left:2px}
+#era{font-size:13px;opacity:.85}
+#cardEl{position:relative;background:var(--paper);border-radius:6px;padding:16px 16px 14px;box-shadow:0 6px 0 rgba(0,0,0,.25);max-height:calc(100% - 34px);display:flex;flex-direction:column;gap:10px}
+#cardEl::before{content:"";position:absolute;inset:6px;border:1.5px solid rgba(42,34,28,.18);border-radius:3px;pointer-events:none}
+#dia{background:#f0e6d4;border-radius:8px;padding:8px 4px 6px;position:relative}
+.drow{display:flex;align-items:flex-start;justify-content:center;gap:3px}
+.dn{display:flex;flex-direction:column;align-items:center;flex:0 1 auto;min-width:0}
+.dn .em{font-size:clamp(24px,calc(3.6vh + 4px),34px);line-height:1.15}
+.dn .lb{font-size:10.5px;font-weight:900;line-height:1.25;text-align:center;margin-top:2px;white-space:nowrap}
+.da{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;color:var(--red-d);padding-top:calc(clamp(24px,calc(3.6vh + 4px),34px)*.18)}
+.da .ar{font-size:20px;line-height:1;font-weight:900}
+.da .al{font-size:9.5px;font-weight:900;line-height:1.2;text-align:center;margin-top:2px;white-space:nowrap}
+.da.eq{color:var(--blue)}
+.dnote{margin:5px 0 0;font-size:11px;font-weight:900;color:var(--muted);text-align:center;line-height:1.35}
+#story{margin:0;font-size:clamp(14.5px,calc(2.3vh + 2.4px),17px);font-weight:700;line-height:1.75;text-align:left}
+#ask{margin:2px 0 0;font-size:clamp(16px,calc(2.3vh + 4px),19px);font-weight:900;line-height:1.45;text-align:left;color:var(--red-d)}
+#opts[hidden],#ask[hidden]{display:none}
+#opts{display:grid;grid-template-columns:1fr;gap:9px;margin-top:2px}
+#opts.two{grid-template-columns:1fr 1fr}
+#opts.two .opt{font-size:14px;line-height:1.3;padding-left:6px;padding-right:6px;display:flex;align-items:center;justify-content:center}
+.opt{border:2px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);font:900 15.5px var(--body);padding:clamp(9px,1.6vh,13px) 10px;text-align:center;cursor:pointer;box-shadow:0 3px 0 #cfc6ba;line-height:1.35}
+.opt:active{transform:translateY(2px);box-shadow:0 1px 0 #cfc6ba}
+.opt:disabled{cursor:default}
+.opt.chosen{background:#f1ece2}
+/* the judgment, once you've answered */
+#verdict{display:flex;flex-direction:column;gap:6px;text-align:left;border-top:2px solid var(--ink);padding-top:10px}
+#verdict[hidden]{display:none}
+#vHead{display:flex;align-items:center;gap:10px;margin:0}
+#vHead .lab{font-family:var(--display);font-weight:400;font-size:15px;background:var(--ink);color:#fff;border-radius:4px;padding:3px 8px 4px;flex:none}
+#vText{font-family:var(--display);font-weight:400;font-size:clamp(19px,calc(2.4vh + 6px),24px);color:var(--red);line-height:1.25}
+#vMine{margin:0;font-size:13px;font-weight:900;color:var(--muted)}
+#vMine b.ok{color:var(--red)}#vMine b.ng{color:var(--blue)}
+#vWhy{margin:0;font-size:clamp(13.5px,calc(1.9vh + 2.4px),15.5px);font-weight:700;line-height:1.65}
+#vSrc{margin:0;font-size:11.5px;color:var(--muted);font-weight:700}
+#next{margin:6px auto 0;width:100%}
+#mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;z-index:5}
+#mark svg{width:min(60%,220px);height:auto;filter:drop-shadow(0 3px 0 rgba(255,255,255,.9))}
+#mark.on{animation:mark 1s ease-out forwards}
+@keyframes mark{0%{opacity:0;transform:scale(1.5)}18%{opacity:1;transform:scale(1)}70%{opacity:1}100%{opacity:0}}
+
+#result{background:#f6f1e8;justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:64px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:28px;margin-left:4px}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#card{width:100%;border-radius:10px;border:1px solid #ddd3c4;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px;line-height:1.7}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#mark.on{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="title" class="panel">
+    <svg viewBox="0 0 120 90" aria-hidden="true"><g transform="rotate(-28 60 45)"><rect x="18" y="20" width="56" height="26" rx="5" fill="#8a5a2b"/><rect x="14" y="17" width="10" height="32" rx="3" fill="#6b4220"/><rect x="68" y="17" width="10" height="32" rx="3" fill="#6b4220"/><rect x="42" y="44" width="8" height="46" rx="3" fill="#a06a35"/></g><rect x="60" y="74" width="50" height="12" rx="4" fill="#6b4220"/></svg>
+    <h1>六法を見ずに、判決を当てろ。</h1>
+    <button class="btn" id="startBtn" type="button">はじめる</button>
+    <p class="fine">出てくるのは、すべて本当にあった裁判です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+  </div>
+
+  <div id="play" hidden>
+    <div id="bar"><span id="qn"></span><span id="era"></span></div>
+    <div id="cardEl">
+      <div id="dia" aria-hidden="true"></div>
+      <p id="story"></p>
+      <p id="ask"></p>
+      <div id="opts"></div>
+      <div id="verdict" hidden>
+        <p id="vHead"><span class="lab">判決</span><span id="vText"></span></p>
+        <p id="vMine"></p>
+        <p id="vWhy"></p>
+        <p id="vSrc"></p>
+        <button class="btn" id="next" type="button">次へ</button>
+      </div>
+      <div id="mark"></div>
+    </div>
+  </div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>判決の結果</h2>
+      <p id="rScore"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <div class="btns">
+        <button class="btn" id="retry" type="button">もう一回</button>
+        <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
+      </div>
+      <img id="card" alt="正解数と、10問の事件名と○×">
+      <p class="fine">すべて本当にあった裁判です。説明はわかりやすく短くしています。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='六法を見ずに、判決を当てろ。';
+const CREATOR='@ordwxjhj';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/hanketsu/';})();
+const N_Q=10;
+
+/* ---------- the cases (all real; sources in BRIEF.md) ---------- */
+const CASES=[
+{id:'denki',name:'電気窃盗事件',era:'明治36年',
+ story:'電気会社と契約せず、電線からこっそり電気を引いて使った男。当時の法律で「窃盗」は、他人の「物」を盗む罪。',
+ ask:'大審院の判決は？',opts:['窃盗で有罪','「物」じゃないから無罪','窃盗ではなく詐欺で有罪'],a:0,
+ verdict:'有罪（窃盗罪）',
+ why:'電気は形がなくても、管理したり持ち運んだりできるので「物」にあたる、とされた。今は刑法に「電気は財物とみなす」と書いてある。',
+ src:'大審院 明治36年5月21日 判決'},
+{id:'tanuki',name:'たぬき・むじな事件',era:'大正14年',
+ story:'たぬき狩りが禁止の時期に、「むじな」を2匹つかまえた男。地元では昔から、むじなとたぬきは別の動物だと思われていた。でも動物学上は同じ動物。',
+ ask:'大審院の判決は？',opts:['罰金で有罪','懲役で有罪','有罪だが罰は免除','無罪'],a:3,
+ verdict:'無罪',
+ why:'当時は、たぬきとむじなを別の動物と考える人が多かった。男に「たぬきを捕る」つもりはなかったので罪にならない、とされた。',
+ src:'大審院 大正14年6月9日 判決'},
+{id:'musasabi',name:'むささび・もま事件',era:'大正13年',
+ story:'禁猟の「むささび」をつかまえた男。男は、地元で「もま」と呼ぶ動物を捕っただけで、もまとむささびが同じ動物だとは知らなかった。',
+ ask:'大審院の判決は？',opts:['有罪','無罪（知らなかったから）','無罪（地方の呼び名だから）'],a:0,
+ verdict:'有罪',
+ why:'「もま」はむささびの地方での呼び名で、同じ動物。もまだと分かって捕ったなら、むささびを捕ったのと同じ。知らなかったでは済まない、とされた。',
+ src:'大審院 大正13年4月25日 判決'},
+{id:'ichirin',name:'一厘事件',era:'明治43年',
+ story:'育てた葉たばこは全部国に納める決まりだった時代。農家が、そのうち約2グラム（値段は1厘＝1円の1000分の1）を手でもんで自分で吸った。二審は罰金10円。',
+ ask:'大審院の判決は？',opts:['罰金10円（二審どおり）','罰金1厘（吸った分だけ）','懲役1か月','無罪'],a:3,
+ verdict:'無罪',
+ why:'ごくわずかで、特に悪い事情もない違反は、罰するほどの害がない、とされた。二審の罰金10円は、被害の1万倍だった。',
+ src:'大審院 明治43年10月11日 判決'},
+{id:'unazuki',name:'宇奈月温泉事件',era:'昭和10年',
+ story:'温泉に湯を引く管が、他人の小さな土地を許可なく通っていた。その土地を買った人が「管をどけろ。嫌ならこの土地と周りの土地を高値で買い取れ」と温泉側に迫った。',
+ ask:'大審院の判決は？',opts:['管をどけろ','温泉側が土地を買い取れ','訴えを退ける'],a:2,
+ verdict:'訴えを退ける',
+ why:'管をどけるのはとても大変。それにつけこんで土地を買い、不当な値段で買い取りを迫るのは「権利の濫用」で許されない、とされた。',
+ src:'大審院 昭和10年10月5日 判決'},
+{id:'shingen',name:'信玄公旗掛松事件',era:'大正8年',
+ story:'武田信玄が旗を掛けたと伝わる松。線路から1.8mもない所に立っていて、蒸気機関車の煙で枯れてしまった。持ち主は鉄道側に賠償を求めた。',
+ ask:'「汽車を走らせるのは正当な権利」と鉄道側。大審院の判決は？',opts:['賠償しなくていい','鉄道側が賠償する','賠償＋線路を移す'],a:1,
+ verdict:'鉄道側が賠償する',
+ why:'汽車の煙は、ふつうは沿線の人が我慢するもの。でも線路のすぐそばで、煙を防ぐ方法もあったのに何もしなかったのは、我慢の限度を超える、とされた。',
+ src:'大審院 大正8年3月3日 判決'},
+{id:'golf',name:'ロストボール事件',era:'昭和62年',
+ story:'ゴルフ場の池の底に沈んでいるボール。客が打ち込んで、あきらめて置いていったもの。男たちは池にもぐって、それを拾って持ち去った。',
+ ask:'最高裁は何罪と判断した？',opts:['窃盗罪','落とし物を自分のものにする罪','捨てた物だから無罪'],a:0,
+ verdict:'窃盗罪',
+ why:'ボールはゴルフ場のものになっていて、ゴルフ場が管理していた。ゴルフ場もいずれ回収して使うつもりだった、とされた。',
+ src:'最高裁 昭和62年4月10日 決定'},
+{id:'pochette',name:'置き忘れポシェット事件',era:'平成16年',
+ story:'公園のベンチにポシェットを置き忘れて、歩いていった人。まだ27mほどしか離れていないうちに、別の人がそのポシェットを持ち去った。',
+ ask:'最高裁は何罪と判断した？',opts:['窃盗罪','落とし物を自分のものにする罪','拾っただけなので無罪'],a:0,
+ verdict:'窃盗罪',
+ why:'持ち主はまだ27mしか離れていない。置き忘れに気づいていなくても、ポシェットはまだ持ち主のものとして管理されていた、とされた。',
+ src:'最高裁 平成16年8月25日 決定'},
+{id:'furikomi',name:'誤振込事件',era:'平成15年',
+ story:'自分の口座に、知らない人から間違ってお金が振り込まれた。気づいたけれど黙って、銀行の窓口で引き出した。',
+ ask:'最高裁は何罪と判断した？',opts:['詐欺罪','横領罪','自分の口座だから無罪'],a:0,
+ verdict:'詐欺罪',
+ why:'間違いの振込だと知ったら、銀行に伝える義務がある。黙って払い戻しを頼むのは、窓口の人をだますことになる、とされた。',
+ src:'最高裁 平成15年3月12日 決定'},
+{id:'pachislo',name:'パチスロ体感器事件',era:'平成19年',
+ story:'メダルを不正に取るための機械（体感器）を体につけて、パチスロを打った男。出たメダルは約1500枚。全部が機械のおかげで出たとは限らない。',
+ ask:'最高裁は、どのメダルを窃盗と判断した？',opts:['機械で取れた分だけ','出たメダル全部','どのメダルも窃盗ではない'],a:1,
+ verdict:'出たメダル全部',
+ why:'不正のための機械をつけて打つこと自体が、店の許さない遊び方。機械のおかげかどうかに関係なく、全部が窃盗、とされた。',
+ src:'最高裁 平成19年4月13日 決定'},
+{id:'tattoo',name:'タトゥー事件',era:'令和2年',
+ story:'医師免許のない彫り師が、店でお客さんにタトゥーを入れた。針で皮膚に色を入れるのは、医師しかしてはいけない「医業」なのか。一審は罰金15万円。',
+ ask:'最高裁の判断は？',opts:['罰金15万円（一審どおり）','罰金50万円','懲役1年・執行猶予3年','無罪'],a:3,
+ verdict:'無罪',
+ why:'タトゥーは医療ではなく、美術的な面もある社会の風俗。医師だけができる「医行為」にはあたらない、とされた（二審で逆転無罪、最高裁で確定）。',
+ src:'最高裁 令和2年9月16日 決定'},
+{id:'mining',name:'Webマイニング事件',era:'令和4年',
+ story:'自分のWebサイトに、見に来た人のパソコンで仮想通貨の計算（マイニング）をさせるプログラムを、断りなく置いた。二審は「ウイルス罪」で罰金10万円。',
+ ask:'最高裁の判断は？',opts:['罰金10万円（二審どおり）','罰金50万円','懲役1年・執行猶予3年','無罪'],a:3,
+ verdict:'無罪',
+ why:'断りなしではあるが、パソコンへの影響は広告と大きく変わらない。社会的に許されないとまでは言えない、とされた。',
+ src:'最高裁 令和4年1月20日 判決'},
+{id:'p2p',name:'ファイル共有ソフト事件',era:'平成23年',
+ story:'ファイル共有ソフトを作って、ネットで公開した開発者。それを使って他人の作品を違法に流す人が出て、開発者は「著作権侵害の手助け」で起訴された。一審は罰金150万円。',
+ ask:'最高裁の判断は？',opts:['罰金150万円（一審どおり）','懲役1年・執行猶予3年','懲役3年（実刑）','無罪'],a:3,
+ verdict:'無罪',
+ why:'具体的な違法行為を知りながら配ったのではなく、違法に使わないよう警告もしていた。手助けするつもりがあったとは言えない、とされた（二審で逆転無罪）。',
+ src:'最高裁 平成23年12月19日 決定'},
+{id:'wifi',name:'Wi-Fiただ乗り事件',era:'平成29年',
+ story:'隣の家のWi-Fiのパスワードを解読して、勝手にネットを使った男。このただ乗りが、電波法の「無線通信の秘密を盗んで使う罪」にあたるとして起訴された。',
+ ask:'東京地裁は、Wi-Fiのただ乗りをどう判断した？',opts:['電波法違反で有罪','罪にあたらない（無罪）','罰金だけの有罪'],a:1,
+ verdict:'ただ乗りは無罪',
+ why:'Wi-Fiのパスワードは、暗号を読むための鍵にすぎず「無線通信の秘密」にあたらない、とされた。※男は、別にした不正アクセスなどの罪で懲役8年。',
+ src:'東京地裁 平成29年4月27日 判決'},
+{id:'kaizoku',name:'海賊版漫画サイト事件',era:'令和3年',
+ story:'人気漫画を無断でネットに上げて、誰でもタダで読めるサイトを運営した男。広告で稼いだ約6257万円を、海外の口座などに移して隠していた。',
+ ask:'福岡地裁の判決は？',opts:['罰金1000万円','懲役3年・執行猶予5年','懲役3年＋罰金1000万円（実刑）','懲役10年'],a:2,
+ verdict:'懲役3年（実刑）・罰金1000万円',
+ why:'著作権法違反と、犯罪で得たお金を隠した罪で有罪。さらに広告収入など約6257万円の追徴（取り上げ）も命じられ、そのまま確定した。',
+ src:'福岡地裁 令和3年6月2日 判決'},
+{id:'fast',name:'ファスト映画事件',era:'令和3年',
+ story:'映画を無断で10分ほどに編集し、ナレーションをつけて動画サイトに上げた3人。広告収入を得ていた。全国で初めての裁判。',
+ ask:'仙台地裁が主犯に言い渡した判決は？',opts:['罰金200万円だけ','懲役2年・執行猶予4年＋罰金200万円','懲役2年（実刑）','無罪（紹介動画だから）'],a:1,
+ verdict:'懲役2年・執行猶予4年、罰金200万円',
+ why:'著作権法違反で有罪。ほかの2人も懲役1年6月（執行猶予つき）と罰金。このあと映画会社などからの民事裁判も起こされた。',
+ src:'仙台地裁 令和3年11月16日 判決'},
+{id:'fast5',name:'ファスト映画の賠償額',era:'令和4年',
+ story:'映画54本を無断で10分ほどにまとめた動画は、合わせて約1000万回再生された。映画会社など13社が、投稿した人に賠償を求めた。',
+ ask:'東京地裁はいくら払えと命じた？',opts:['500万円','5000万円','5億円','50億円'],a:2,keep:true,
+ verdict:'5億円',
+ why:'1回の再生につき200円の損害と認められた。会社側の計算では損害は約20億円で、そのうち5億円を求め、全額が認められた。',
+ src:'東京地裁 令和4年11月17日 判決'},
+{id:'ikatako',name:'イカタコウイルス事件',era:'平成23年',
+ story:'動画のふりをしたファイルをネットで配り、開いたパソコンのファイルをイカやタコの絵に置き換えて、使えなくした男。当時はウイルスを作る罪がまだなかった。',
+ ask:'東京地裁の判決は？',opts:['罰する法律がないので無罪','罰金50万円','懲役1年・執行猶予3年','懲役2年6月（実刑）'],a:3,
+ verdict:'懲役2年6月（実刑）',
+ why:'パソコンのハードディスクを使えなくしたことが、物を壊す罪（器物損壊罪）にあたるとされた。執行猶予はつかなかった。',
+ src:'東京地裁 平成23年7月20日 判決'}
+];
+
+/* the little picture above each case: n=thing (emoji:label), a=arrow (label), e=equals (label), x=both ways (label). "/" = line break */
+const DIA={
+ denki:['n:⚡:電気会社/の電線|a:こっそり/引く|n:💡:男の家','契約なし。当時の窃盗は「物」を盗む罪'],
+ tanuki:['n:🦝:たぬき/（禁猟）|e:動物学上は/同じ|n:🦡:むじな/（男が捕った）','地元では「別の動物」と思われていた'],
+ musasabi:['n:🐿️:むささび/（禁猟）|e:地方の/呼び名|n:🐿️:もま/（男が捕った）','男は「同じ動物」だと知らなかった'],
+ ichirin:['n:🌿:育てた/葉たばこ|a:全部/納める|n:🏛️:国','そのうち約2g（1厘）を自分で吸った🚬'],
+ unazuki:['n:♨️:温泉|a:湯を/引く管|n:🟫:小さな/他人の土地|x:どけろ！|n:🧍:土地を/買った人',''],
+ shingen:['n:🚂:蒸気/機関車|a:煙|n:🌲:信玄公/の松','線路から1.8mもない所で、枯れた'],
+ golf:['n:⛳:ゴルフ場/の池|a:沈んだ/ボール|n:🤿:もぐって/拾った男たち','客が打ち込んで置いていったボール'],
+ pochette:['n:👛:ベンチに/置き忘れ|x:約27m|n:🚶:持ち主','離れたすきに、別の人が持ち去った'],
+ furikomi:['n:👤:知らない人|a:間違って/振込|n:🏦:自分の/口座|a:黙って/引き出す|n:💴:現金',''],
+ pachislo:['n:📟:体感器を/体に|a:つけて/打つ|n:🎰:パチスロ|a:出た|n:🪙:約1500枚',''],
+ tattoo:['n:🧑‍🎨:彫り師/（免許なし）|a:針で色を/入れる|n:💪:お客さん','これは医師だけができる「医業」？'],
+ mining:['n:🌐:自分の/サイト|a:断りなく|n:💻:見た人/のPC|a:計算/させる|n:🪙:仮想通貨',''],
+ p2p:['n:👨‍💻:開発者|a:公開|n:📦:共有ソフト|a:悪用|n:🏴‍☠️:違法に/流す人',''],
+ wifi:['n:📶:隣の家の/Wi-Fi|a:パスワード/解読|n:💻:男','このただ乗りが、電波法違反で起訴された'],
+ kaizoku:['n:📚:人気漫画|a:無断で|n:🌐:タダ読み/サイト|a:広告|n:💰:約6257/万円','お金は海外の口座などへ移して隠した'],
+ fast:['n:🎬:映画|a:10分に/編集|n:📱:動画サイト|a:広告|n:💰:収入','3人で投稿。全国で初めての裁判'],
+ fast5:['n:🎬:映画54本|a:10分に/まとめ|n:▶️:約1000万/回再生|x:賠償/して！|n:🏢:映画会社/など13社',''],
+ ikatako:['n:📁:動画のふり/のファイル|a:開くと|n:💻:パソコン|a:置き換え|n:🐙:タコ・イカ/の絵','ファイルが使えなくなった']
+};
+
+function diaHTML(id){
+  const d=DIA[id];if(!d)return '';
+  const esc=t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])).replace(/\//g,'<br>');
+  const parts=d[0].split('|').map(p=>{const [k,...r]=p.split(':');
+    if(k==='n')return `<div class="dn"><span class="em">${r[0]}</span><span class="lb">${esc(r.slice(1).join(':'))}</span></div>`;
+    const sym=k==='e'?'＝':k==='x'?'⇄':'→';
+    return `<div class="da${k==='e'?' eq':''}"><span class="ar">${sym}</span><span class="al">${esc(r.join(':'))}</span></div>`;}).join('');
+  return `<div class="drow">${parts}</div>`+(d[1]?`<p class="dnote">${esc(d[1])}</p>`:'');
+}
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('hanketsu-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*.5;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function knock(delay=0){
+  if(muted||!AC)return;const t=AC.currentTime+delay;
+  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nbuf();f.type='bandpass';f.frequency.value=900;f.Q.value=2;
+  g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.0001,t+.09);s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+.1);
+  const o=AC.createOscillator(),h=AC.createGain();o.type='sine';o.frequency.setValueAtTime(240,t);o.frequency.exponentialRampToValueAtTime(140,t+.1);
+  h.gain.setValueAtTime(.22,t);h.gain.exponentialRampToValueAtTime(.0001,t+.13);o.connect(h).connect(AC.destination);o.start(t);o.stop(t+.15);
+}
+/* right: "pinpon". wrong: a buzzer. (as in the Shotoku game) */
+function sfx(kind){
+  if(muted||!AC)return;
+  const t=AC.currentTime+.02,out=AC.createGain();out.gain.value=.4;out.connect(AC.destination);
+  if(kind==='pinpon'){
+    [[1318.5,0,.16],[1046.5,.17,.75]].forEach(([f,a,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+a);g.gain.linearRampToValueAtTime(.55,t+a+.01);g.gain.exponentialRampToValueAtTime(.001,t+a+d);o.connect(g);g.connect(out);o.start(t+a);o.stop(t+a+d+.05);});
+  }else{
+    const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.connect(out);
+    [130,136].forEach(f=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32,t+.02);g.gain.setValueAtTime(.32,t+.6);g.gain.linearRampToValueAtTime(0,t+.7);o.connect(g);g.connect(lp);o.start(t);o.stop(t+.75);});
+  }
+}
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('hanketsu-mute',muted?'1':'0');}catch(err){}syncMute();});
+
+/* ---------- game ---------- */
+let G=null;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function pick(){
+  const a=CASES.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  let q=a.slice(0,N_Q);
+  /* the two animal cases look alike and end the other way round: when both come up, the musasabi follows the tanuki */
+  /* same for the two fast-movie cases (the criminal one, then the damages) */
+  for(const [f,g] of [['tanuki','musasabi'],['fast','fast5']]){
+    const fi=q.findIndex(c=>c.id===f),gi=q.findIndex(c=>c.id===g);
+    if(fi>=0&&gi>=0){const m=q.splice(gi,1)[0];q.splice(q.findIndex(c=>c.id===f)+1,0,m);}
+  }
+  return q;
+}
+function begin(){
+  G={qs:pick(),i:0,res:[],busy:false,cardFile:null};
+  $('title').hidden=true;$('result').hidden=true;$('play').hidden=false;$('mute').hidden=false;
+  show();
+}
+function show(){
+  const c=G.qs[G.i];G.busy=false;
+  $('qn').innerHTML=`${G.i+1}<small>/ ${N_Q}</small>`;
+  $('era').textContent=c.era+'の裁判';
+  $('dia').innerHTML=diaHTML(c.id);$('story').textContent=c.story;$('ask').textContent=c.ask;$('ask').hidden=false;
+  const o=$('opts');o.innerHTML='';o.hidden=false;
+  o.className=c.opts.length%2===0&&c.opts.every(t=>t.length<=9)?'two':'';
+  /* the choices come in a new order every time (amounts stay in order) */
+  const ord=c.opts.map((_,k)=>k);if(!c.keep)for(let i=ord.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ord[i],ord[j]]=[ord[j],ord[i]];}
+  ord.forEach(k=>{const b=document.createElement('button');b.type='button';b.className='opt';b.dataset.k=k;b.textContent=c.opts[k];b.addEventListener('click',()=>answer(k));o.appendChild(b);});
+  $('verdict').hidden=true;$('mark').className='';$('mark').innerHTML='';
+}
+async function answer(k,fast){
+  if(!G||G.busy)return;G.busy=true;
+  const c=G.qs[G.i],ok=k===c.a;G.res.push({id:c.id,name:c.name,ok,chose:k});
+  const bs=[...document.querySelectorAll('.opt')];bs.forEach(b=>b.disabled=true);const cb=bs.find(b=>+b.dataset.k===k);cb&&cb.classList.add('chosen');
+  if(!fast){ac();knock();knock(.16);await wait(520);}
+  /* the judgment replaces the question */
+  $('ask').hidden=true;$('opts').hidden=true;
+  $('vText').textContent=c.verdict;
+  $('vMine').innerHTML=`あなた：${c.opts[k]}　<b class="${ok?'ok':'ng'}">${ok?'○ 正解':'× 不正解'}</b>`;
+  $('vWhy').textContent=c.why;$('vSrc').textContent=c.src;
+  $('next').textContent=G.i+1>=N_Q?'結果を見る':'次へ';
+  $('verdict').hidden=false;
+  if(!fast){showMark(ok);sfx(ok?'pinpon':'boo');}
+}
+function showMark(ok){
+  const m=$('mark');
+  m.innerHTML=ok?'<svg viewBox="0 0 100 100" aria-label="正解"><circle cx="50" cy="50" r="36" fill="none" stroke="#d8332f" stroke-width="13"/></svg>'
+    :'<svg viewBox="0 0 100 100" aria-label="不正解"><path d="M18 18L82 82M82 18L18 82" stroke="#2457c5" stroke-width="14" stroke-linecap="round"/></svg>';
+  m.classList.remove('on');void m.offsetWidth;m.classList.add('on');
+}
+function nextQ(){
+  if(!G||!G.busy||$('verdict').hidden)return;
+  G.i++;
+  if(G.i>=N_Q){showResult();return;}
+  show();
+}
+$('next').addEventListener('click',nextQ);
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+
+/* ---------- result ---------- */
+function correct(){return G.res.filter(r=>r.ok).length;}
+function titleOf(){
+  const n=correct();
+  return n>=10?'裁判官いらずの人':n===9?'ほぼ最高裁':n===8?'六法いらずの人':n===7?'傍聴席の常連':n===6?'法学部の1年生':n===5?'五分五分の人':n===4?'常識で考えた人':n===3?'常識を信じすぎた人':n>=1?'判決の逆を行く人':'全部逆を当てた人';
+}
+function missLine(){
+  const m=G.res.filter(r=>!r.ok).map(r=>r.name);
+  if(!m.length)return '外した判決：なし';
+  return '外した判決：'+m.slice(0,2).join('、')+(m.length>2?` ほか${m.length-2}件`:'');
+}
+function shareText(){
+  return `${GAME}　${N_Q}問中${correct()}問正解【${titleOf()}】\n${SHARE_URL}`;
+}
+async function showResult(){
+  $('play').hidden=true;
+  $('rScore').innerHTML=`${N_Q}問中<b>${correct()}<small>問正解</small></b>`;
+  $('rTitle').textContent='【'+titleOf()+'】';
+  $('rSub').textContent=missLine();
+  $('card').style.visibility='hidden';$('result').hidden=false;$('result').scrollTop=0;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(r=>G.cardCanvas.toBlob(r,'image/png'));if(b)G.cardFile=new File([b],'hanketsu-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+/* Phones: everything goes through the share sheet, so picking X opens the post inside the X app
+   (also from X's own in-app browser) with the result image attached. Only where there is no share sheet
+   at all (PCs, some in-app browsers) do we open the X post page and offer to save the image. */
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='hanketsu-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{begin();});
+
+/* The share image: the score big on top, then the ten cases as they were played, each with its ○ or ×
+   (the case names only, not the judgments, so the post does not give the answers away),
+   and a thin band for the game name and the creator. Portrait, 360 wide at 3x. */
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const hd=200,row=31,lt=hd+14,lh=row*G.res.length+14,band=46,bottom=lt+lh+10;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#fbf6ee';x.fillRect(0,0,w,bottom);
+  /* the score */
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#7a6e62';x.font=`900 16px ${F}`;x.fillText(`${N_Q}問中`,w/2,34);
+  const t=String(correct());const fs=92;x.font=`400 ${fs}px ${D}`;const tw=x.measureText(t).width;
+  x.font=`400 30px ${D}`;const pw=x.measureText('問正解').width;
+  const sx=(w-(tw+pw+6))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${D}`;x.fillText(t,sx,124);
+  x.font=`400 30px ${D}`;x.fillText('問正解',sx+tw+6,124);
+  x.textAlign='center';x.fillStyle='#8f2a1b';x.font=`900 20px ${F}`;x.fillText('【'+titleOf()+'】',w/2,166);
+  x.fillStyle='#2a221c';x.fillRect(0,hd-3,w,3);
+  /* the docket: the ten cases, in the order they came, on wood */
+  x.fillStyle='#5b3b25';x.fillRect(0,hd,w,bottom-hd);
+  x.fillStyle='#fbf6ee';x.fillRect(14,lt,w-28,lh);
+  x.strokeStyle='rgba(42,34,28,.18)';x.lineWidth=1.2;x.strokeRect(19,lt+5,w-38,lh-10);
+  G.res.forEach((r,i)=>{
+    const y=lt+7+i*row+row/2;
+    if(i)x.fillStyle='rgba(42,34,28,.1)',x.fillRect(30,y-row/2,w-60,1);
+    x.textAlign='left';x.textBaseline='middle';x.fillStyle='#7a6e62';x.font=`700 11px ${F}`;x.fillText(String(i+1),34,y+1);
+    const mx=62;x.lineWidth=3.2;x.lineCap='round';
+    if(r.ok){x.strokeStyle='#d8332f';x.beginPath();x.arc(mx,y,9,0,Math.PI*2);x.stroke();}
+    else{x.strokeStyle='#2457c5';x.beginPath();x.moveTo(mx-8,y-8);x.lineTo(mx+8,y+8);x.moveTo(mx+8,y-8);x.lineTo(mx-8,y+8);x.stroke();}
+    x.fillStyle='#2a221c';x.font=`900 15px ${F}`;x.fillText(r.name,84,y+1);
+    const cs=CASES.find(cc=>cc.id===r.id);x.textAlign='right';x.fillStyle='#7a6e62';x.font=`700 11px ${F}`;x.fillText(cs?cs.era:'',w-32,y+1);
+  });
+  /* game name and the creator */
+  x.fillStyle='#2a221c';x.fillRect(0,bottom,w,band);
+  x.textBaseline='middle';x.textAlign='left';x.fillStyle='#fff';let gs=15;x.font=`400 ${gs}px ${D}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>9){gs-=.5;x.font=`400 ${gs}px ${D}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,bottom+band/2);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+
+/* for checks and the promo video: play(n) answers n of the ten right and goes to the result */
+window.__hanketsu={get G(){return G;},CASES,begin,answer,nextQ,shareText,titleOf,
+  showCase(id){begin();G.qs[0]=CASES.find(c=>c.id===id);G.i=0;show();},
+  play(n){begin();const right=new Set();while(right.size<n)right.add(Math.floor(Math.random()*N_Q));
+    for(let i=0;i<N_Q;i++){const c=G.qs[G.i];answer(right.has(i)?c.a:(c.a+1)%c.opts.length,true);nextQ();}}};
+</script>
+</body>
+</html>
