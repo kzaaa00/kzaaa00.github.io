@@ -307,6 +307,8 @@ function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(
 /* ---------- result ---------- */
 function cropBox(){const {Y}=L();return {y0:Math.max(0,Y-R-110),y1:Math.min(H,Y+R+24)};}
 function takeSnap(){
+  /* a resize (the phone's address bar moving) clears the canvas between frames; draw it again so the picture is never blank */
+  try{render(performance.now());}catch(e){}
   try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
     c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
 }
