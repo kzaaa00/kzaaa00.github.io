@@ -106,10 +106,13 @@ function fontVar(n){return getComputedStyle(document.documentElement).getPropert
 
 
 /* ---------- the rules (sim.js uses the same numbers) ---------- */
-const BEST=1150;      /* flick speed (px/s, 360-wide space) that cracks it just right */
-const OK=.0004;       /* 100% only within this fraction of BEST (same as natto) */
-const NOCRACK=-.30;   /* this much weaker and it does not crack at all */
-const CRUSH=.25;      /* this much harder and you crush it in your hand */
+/* 11/20: the speed is the average over the whole downward stroke (what the hand feels as "how hard"),
+   not the last instant before the finger lifts, and the score drops 1 point per 1% off instead of 2.5. */
+const BEST=900;       /* average speed of the stroke (px/s, 360-wide space) that cracks it just right */
+const OK=.0006;       /* 100% only within this fraction of BEST */
+const NOCRACK=-.45;   /* this much weaker and it does not crack at all */
+const CRUSH=.45;      /* this much harder and you crush it in your hand */
+let PREV=null;        /* the last try, shown on the result so you can adjust */
 
 /* ---------- audio ---------- */
 let AC=null,muted=false;
@@ -160,12 +163,22 @@ function newGame(){G={phase:'aim',t:0,drag:null,res:null,shown:false,snap:null,s
 
 /* ---------- input: one quick flick down ---------- */
 function pt(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/SC,y:(e.clientY-r.top)/SC};}
-cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='aim')return;ac();try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();const P=pt(e);G.drag={pts:[[performance.now(),P.y]],y0:P.y};});
-cv.addEventListener('pointermove',e=>{if(!G||!G.drag)return;const P=pt(e),now=performance.now();G.drag.pts.push([now,P.y]);while(G.drag.pts.length>2&&now-G.drag.pts[0][0]>90)G.drag.pts.shift();G.nudge=Math.max(0,Math.min(14,(P.y-G.drag.y0)*.12));});
+cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='aim')return;ac();try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();const P=pt(e);G.drag={pts:[[e.timeStamp||performance.now(),P.y]],y0:P.y};});
+cv.addEventListener('pointermove',e=>{if(!G||!G.drag)return;
+  let evs=[e];try{const c=e.getCoalescedEvents&&e.getCoalescedEvents();if(c&&c.length)evs=c;}catch(err){}
+  for(const ev of evs){const P=pt(ev);G.drag.pts.push([ev.timeStamp||performance.now(),P.y]);}
+  const P=pt(e);G.nudge=Math.max(0,Math.min(14,(P.y-G.drag.y0)*.12));});
+/* the speed of the whole stroke: from when the finger starts moving down to the last move before it lifts */
+function strokeSpeed(pts,y0){
+  /* ends at the last point that still moved: resting the finger before lifting it does not count */
+  let k=pts.length-1;while(k>0&&pts[k][1]-pts[k-1][1]<1)k--;
+  const s=pts.find(p=>p[1]-y0>=6),e=pts[k];
+  if(!s||e[1]-y0<18||e[0]-s[0]<8)return 0;
+  return (e[1]-s[1])/(e[0]-s[0])*1000;
+}
 const up=()=>{if(!G||!G.drag)return;const d=G.drag;G.drag=null;G.nudge=0;
-  const now=performance.now();d.pts.push([now,d.pts[d.pts.length-1][1]]);
-  const a=d.pts[0],b=d.pts[d.pts.length-2];const dt=Math.max(16,b[0]-a[0]);const v=(b[1]-a[1])/dt*1000;
-  if(b[1]-d.y0<18||v<60)return; /* a tap or a stroke upwards: nothing happens */
+  const v=strokeSpeed(d.pts,d.y0);
+  if(v<60)return; /* a tap or a stroke upwards: nothing happens */
   flick(v);};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 
@@ -177,8 +190,8 @@ function flick(v){
   else if(r<NOCRACK)kind='nocrack';
   else if(r>CRUSH)kind='crush';
   else kind=r<0?'weak':'strong';
-  const pieces=kind==='clean'||kind==='nocrack'?0:Math.min(40,Math.max(1,Math.ceil(Math.abs(r)*100/.8)));
-  const yolkBroken=kind==='crush'||(kind==='strong'&&r>.15);
+  const pieces=kind==='clean'||kind==='nocrack'?0:Math.min(15,Math.max(1,Math.ceil(Math.abs(r)*100/3)));
+  const yolkBroken=kind==='crush'||(kind==='strong'&&r>.25);
   G.res={v,r,kind,pieces,yolkBroken};G.phase='hit';G.t=0;G.shells=[];
   /* where the shell bits land: inside the bowl's opening */
   const {X,Ry,rx,ry}=L();
@@ -323,8 +336,10 @@ function takeSnap(){
   try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
     c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
 }
-/* one number: 100 only for a clean crack; otherwise down by 2.5 points for each 1% off the right strength, at most 99.9 */
-function score(){const r=G.res;if(r.kind==='clean')return 100;if(r.kind==='nocrack')return 0;return Math.max(0,Math.min(99.9,Math.floor((100-Math.abs(r.r)*250)*10)/10));}
+/* how far off the right strength, in % (0.1 steps, rounded up so that a miss is never shown as 0) */
+function devOf(res){return res.kind==='clean'?0:Math.max(.1,Math.ceil(Math.abs(res.r)*1000-1e-9)/10);}
+/* one number: 100 only for a clean crack; otherwise 100 minus the % off (so "12.4% too strong" = 87.6%) */
+function score(){const r=G.res;if(r.kind==='clean')return 100;if(r.kind==='nocrack'||r.kind==='crush')return 0;return Math.max(0,Math.round((100-devOf(r))*10)/10);}
 function pctText(){const s=score();return s===100?'100':s.toFixed(1);}
 function finalize(){}
 function titleOf(){
@@ -337,12 +352,13 @@ function titleOf(){
   if(s>=50)return r.kind==='strong'?'殻入り卵かけご飯の人':'指でこじ開けた人';
   return '殻ごと割った人';
 }
+function devText(res){if(res.kind==='clean')return 'ぴったり';return `ぴったりより${devOf(res).toFixed(1)}%${res.r<0?'弱い':'強い'}`;}
 function feedback(){
-  const r=G.res,a=Math.abs(r.r),how=a<.01?'ほんの少し':a<.05?'少し':'';
+  const r=G.res,d=devText(r);
   if(r.kind==='clean')return '強さ：ぴったり';
-  if(r.kind==='nocrack')return '強さ：弱すぎ（割れなかった）';
-  if(r.kind==='crush')return '強さ：強すぎ（握りつぶした）';
-  return '強さ：'+how+(r.kind==='weak'?'弱い（割れが浅くてこじ開けた）':'強い（殻まで割れた）');
+  if(r.kind==='nocrack')return '強さ：'+d+'（割れなかった）';
+  if(r.kind==='crush')return '強さ：'+d+'（握りつぶした）';
+  return '強さ：'+d+(r.kind==='weak'?'（割れが浅くてこじ開けた）':'（殻まで割れた）');
 }
 function statusLine(){const r=G.res;if(r.kind==='nocrack')return '卵は割れなかった';if(r.kind==='clean')return '殻は1つも入らなかった';return `殻が${r.pieces}かけら入った`+(r.yolkBroken?'（黄身もつぶれた）':'');}
 function bigLabel(){return 'きれいさ';}
@@ -359,6 +375,8 @@ async function showResult(){
   $('rCount').textContent=statusLine();
   $('rTitle').textContent='【'+titleOf()+'】';
   $('rSub').textContent=feedback();
+  if(PREV){const b=document.createElement('span');b.style.display='block';b.textContent='前の回：'+devText(PREV);$('rSub').appendChild(b);}
+  PREV=G.res;
   $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
   G.cardFile=null;setShareUI();
   try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
@@ -435,7 +453,7 @@ function begin(){newGame();resize();$('title').hidden=true;$('result').hidden=tr
 $('startBtn').addEventListener('click',()=>{ac();begin();});
 /* for checks and recording: play(r) flicks at BEST*(1+r) after `at` seconds (r=0 is a clean crack) */
 function play(r,at){begin();G.plan=r;G.planAt=at||.6;}
-window.__tamago={get G(){return G;},begin,flick,play,shareText,showResult,score,L,BEST};
+window.__tamago={get G(){return G;},begin,flick,play,shareText,showResult,score,L,BEST,strokeSpeed,feedback};
 </script>
 </body>
 </html>
