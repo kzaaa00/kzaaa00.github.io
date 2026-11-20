@@ -106,9 +106,9 @@ function fontVar(n){return getComputedStyle(document.documentElement).getPropert
 
 
 /* ---------- the rules (sim.js uses the same numbers) ---------- */
-/* 11/20: the speed is the average over the whole downward stroke (what the hand feels as "how hard"),
-   not the last instant before the finger lifts, and the score drops 1 point per 1% off instead of 2.5. */
-const BEST=900;       /* average speed of the stroke (px/s, 360-wide space) that cracks it just right */
+/* 11/20: the egg follows the finger and cracks when it reaches the rim; the strength is how fast it was
+   moving then (what you see), not when the finger lifts. The score drops 1 point per 1% off. */
+const BEST=1000;      /* egg speed at the rim (px/s, 360-wide space) that cracks it just right */
 const OK=.0006;       /* 100% only within this fraction of BEST */
 const NOCRACK=-.45;   /* this much weaker and it does not crack at all */
 const CRUSH=.45;      /* this much harder and you crush it in your hand */
@@ -167,22 +167,23 @@ cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='aim')return;ac();try{cv.
 cv.addEventListener('pointermove',e=>{if(!G||!G.drag)return;
   let evs=[e];try{const c=e.getCoalescedEvents&&e.getCoalescedEvents();if(c&&c.length)evs=c;}catch(err){}
   for(const ev of evs){const P=pt(ev);G.drag.pts.push([ev.timeStamp||performance.now(),P.y]);}
-  const P=pt(e);G.nudge=Math.max(0,Math.min(14,(P.y-G.drag.y0)*.12));});
-/* the speed of the whole stroke: from when the finger starts moving down to the last move before it lifts */
-function strokeSpeed(pts,y0){
-  /* ends at the last point that still moved: resting the finger before lifting it does not count */
-  let k=pts.length-1;while(k>0&&pts[k][1]-pts[k-1][1]<1)k--;
-  const s=pts.find(p=>p[1]-y0>=6),e=pts[k];
-  if(!s||e[1]-y0<18||e[0]-s[0]<8)return 0;
-  return (e[1]-s[1])/(e[0]-s[0])*1000;
+  /* the egg follows the finger 1:1, and cracks the moment it reaches the rim */
+  const P=pt(e),{ey0,ehit}=L(),TR=ehit-ey0;G.nudge=Math.max(-30,Math.min(TR,P.y-G.drag.y0));
+  if(P.y-G.drag.y0>=TR){const v=impactSpeed(G.drag.pts,G.drag.y0,TR);G.drag=null;G.nudge=0;flick(v,true);}});
+/* how fast the egg was going when it reached the rim: over the last 60 ms before it touched (what you see on screen) */
+const WIN=60;
+function yAt(pts,t){if(t<=pts[0][0])return pts[0][1];for(let i=1;i<pts.length;i++)if(pts[i][0]>=t){const a=pts[i-1],b=pts[i];return a[1]+(b[1]-a[1])*((t-a[0])/Math.max(1e-6,b[0]-a[0]));}return pts[pts.length-1][1];}
+function impactSpeed(pts,y0,TR){
+  let i=pts.findIndex(p=>p[1]-y0>=TR);if(i<1)i=pts.length-1;
+  const a=pts[i-1],b=pts[i];const tc=a[0]+(b[0]-a[0])*((y0+TR-a[1])/Math.max(1e-6,b[1]-a[1]));
+  const t0=Math.max(pts[0][0],tc-WIN);if(tc-t0<8)return 0;
+  return (y0+TR-yAt(pts,t0))/(tc-t0)*1000;
 }
-const up=()=>{if(!G||!G.drag)return;const d=G.drag;G.drag=null;G.nudge=0;
-  const v=strokeSpeed(d.pts,d.y0);
-  if(v<60)return; /* a tap or a stroke upwards: nothing happens */
-  flick(v);};
+/* let go before the egg reaches the rim: it just goes back up, nothing happens */
+const up=()=>{if(!G||!G.drag)return;G.drag=null;G.nudge=0;};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 
-function flick(v){
+function flick(v,touched){
   if(!G||G.phase!=='aim')return;
   const r=v/BEST-1;
   let kind;
@@ -197,6 +198,7 @@ function flick(v){
   const {X,Ry,rx,ry}=L();
   for(let i=0;i<pieces;i++){const a=rnd(i*3.1+v)*Math.PI*2,rad=Math.sqrt(rnd(i*7.7+v))*.75;G.shells.push({x:X+12+Math.cos(a)*rx*rad*.7,y:Ry+6+Math.sin(a)*ry*rad*.8,s:2.5+rnd(i+v)*3.5,a:rnd(i*5+v)*6,d:.04*i});}
   G.endIn=kind==='nocrack'?1700:kind==='crush'?2600:2300;
+  if(touched)G.t=.1; /* the egg is already on the rim: skip the swing-in */
 }
 function step(dt,now){
   G.t+=dt;
@@ -453,7 +455,7 @@ function begin(){newGame();resize();$('title').hidden=true;$('result').hidden=tr
 $('startBtn').addEventListener('click',()=>{ac();begin();});
 /* for checks and recording: play(r) flicks at BEST*(1+r) after `at` seconds (r=0 is a clean crack) */
 function play(r,at){begin();G.plan=r;G.planAt=at||.6;}
-window.__tamago={get G(){return G;},begin,flick,play,shareText,showResult,score,L,BEST,strokeSpeed,feedback};
+window.__tamago={get G(){return G;},begin,flick,play,shareText,showResult,score,L,BEST,impactSpeed,feedback};
 </script>
 </body>
 </html>
