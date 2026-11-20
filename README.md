@@ -11,3 +11,4 @@
 - [tape](https://kzaaa00.github.io/tape/)
 - [tamago](https://kzaaa00.github.io/tamago/)
 - [hanketsu](https://kzaaa00.github.io/hanketsu/)
+- [label](https://kzaaa00.github.io/label/)
