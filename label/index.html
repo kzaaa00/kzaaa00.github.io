@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ペットボトルのラベルを、一回で全部はがせ。</title>
-<meta name="description" content="ミシン目にそって、ラベルを下へ引くだけ。途中でそれたら、ラベルが残ります。商品はすべて架空です。">
+<meta name="description" content="ミシン目にそって、ラベルを下へ引くだけ。途中でそれたら、ラベルが残ります。全部はがせたら、タイムで勝負。商品はすべて架空です。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="ペットボトルのラベルを、一回で全部はがせ。">
 <meta property="og:description" content="ミシン目にそって、ラベルを下へ引くだけ。">
@@ -33,7 +33,8 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 .panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
 .panel[hidden]{display:none}
 #title{background:linear-gradient(#eef5f8,#d9e7ee)}
-#title h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,8.2vw,40px);line-height:1.4;margin:0 0 30px;text-wrap:balance}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,8.2vw,40px);line-height:1.4;margin:0 0 14px;text-wrap:balance}
+#title .lead{margin:0 0 26px;font-size:15px;font-weight:900;line-height:1.6}
 .btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
 .btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
@@ -49,7 +50,9 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #rScore b small{font-size:30px;margin-left:2px}
 #rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
 #rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
-#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7;white-space:pre-line}
+#rPrev{font-size:13px;font-weight:700;color:var(--muted);margin:-6px 0 0;line-height:1.6;border-top:1px dashed #cfd2d8;padding-top:6px}
+#rPrev[hidden]{display:none}
 #card{width:100%;border-radius:10px;border:1px solid #d6d8dc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
 #result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
 #result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
@@ -70,6 +73,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 
   <div id="title" class="panel">
     <h1>ペットボトルの<br>ラベルを、<br>一回で全部はがせ。</h1>
+    <p class="lead">全部はがせたら、次はタイム勝負。<br>速く引くほど、ミシン目からそれやすい。</p>
     <button class="btn" id="startBtn" type="button">はじめる</button>
     <p class="fine">商品はすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
   </div>
@@ -81,6 +85,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
       <p id="rCount"></p>
       <p id="rTitle"></p>
       <p id="rSub"></p>
+      <p id="rPrev" hidden></p>
       <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
       <div class="btns">
         <button class="btn" id="retry" type="button">もう一回</button>
@@ -108,7 +113,9 @@ function fontVar(n){return getComputedStyle(document.documentElement).getPropert
 /* ---------- the rules (sim.js uses the same numbers) ---------- */
 const LEN=200;     /* the perforation: 200 px of the 360-wide space = the label's 100 mm */
 const GRIP=30;     /* the tear tip heads toward the finger, which is this far below it */
-const BUDGET=12;   /* strain allowed: sum of (sideways offset)^2 x (depth)^2 along the way */
+const BUDGET=6;    /* strain allowed: sum of (sideways offset)^2 x (depth)^2 along the way */
+const TAU=.03;     /* the perforation pulls the tip back to the line: by e^(-time spent tearing / TAU).
+                      Slow pulls give it time to; a fast yank does not, and the tip goes where the finger goes. */
 const POW=2;
 const MAG=4;       /* the drawing shows the sideways offset this many times larger */
 const SUB=.5;
@@ -158,15 +165,20 @@ function ease(e){e=Math.max(0,Math.min(1,e));return e*e*(3-2*e);}
 function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);}
 
 /* ---------- the tear (same steps as sim.js) ---------- */
-function newTear(){return {tx:0,ty:0,S:0,px:0,py:0,pts:[[0,0]],off:false};}
-/* the finger moved to (fx,fy), measured from where it went down. Returns 'off', 'done' or ''. */
-function advance(T,fx,fy){
+function newTear(){return {tx:0,ty:0,S:0,px:0,py:0,pts:[[0,0]],off:false,time:0,started:false};}
+/* the finger moved to (fx,fy), measured from where it went down, dt seconds after the last move.
+   Returns 'off', 'done' or ''. The clock runs from the moment the tear starts to move. */
+function advance(T,fx,fy,dt){
   if(T.off)return 'off';
+  dt=Math.max(0,dt||0);
+  if(!T.started){if(fy<=T.ty){T.px=fx;T.py=fy;return '';}T.started=true;dt=Math.min(dt,1/60);}
+  T.time+=dt;
   if(fy>T.ty){
+    const dy=fy-T.ty;
     while(T.ty<fy&&T.ty<LEN){
       const st=Math.min(SUB,fy-T.ty,LEN-T.ty);
       const nx=T.px+(fx-T.px)*((T.ty+st-T.py)/Math.max(1e-9,fy-T.py));
-      T.tx+=st*(nx-T.tx)/GRIP;T.ty+=st;T.S+=T.tx*T.tx*st*Math.pow(T.ty/LEN,POW);
+      T.tx+=st*(nx-T.tx)/GRIP;T.tx*=Math.exp(-dt*st/dy/TAU);T.ty+=st;T.S+=T.tx*T.tx*st*Math.pow(T.ty/LEN,POW);
       if(T.pts.length===0||T.ty-T.pts[T.pts.length-1][1]>=2)T.pts.push([T.tx,T.ty]);
       if(T.S>BUDGET){T.off=true;T.pts.push([T.tx,T.ty]);return 'off';}
     }
@@ -177,7 +189,7 @@ function advance(T,fx,fy){
 }
 /* a planned pull (for checks and recording): straight at `ang` degrees, plus a slow sway */
 function planX(p,y){return Math.tan((p.ang||0)*Math.PI/180)*y+(p.sway||0)*Math.sin(y/(p.wl||90)*Math.PI*2)+(p.bend||0)*Math.pow(y/LEN,3);}
-function planResult(p){const T=newTear();const end=p.stopAt||LEN+4;for(let y=2;y<=end;y+=2){const r=advance(T,planX(p,y),y);if(r)return {r,T,pct:pctOf(T,r)};}return {r:'stop',T,pct:pctOf(T,'stop')};}
+function planResult(p){const T=newTear(),dt=2/(p.speed||260);const end=p.stopAt||LEN+4;for(let y=2;y<=end;y+=2){const r=advance(T,planX(p,y),y,dt);if(r)return {r,T,pct:pctOf(T,r),time:T.time};}return {r:'stop',T,pct:pctOf(T,'stop'),time:T.time};}
 function pctOf(T,r){return r==='done'?100:Math.min(99.9,Math.floor(T.ty/LEN*1000)/10);}
 
 /* ---------- state ---------- */
@@ -186,16 +198,19 @@ function newGame(){G={phase:'aim',t:0,drag:null,T:newTear(),res:null,shown:false
 
 /* ---------- input: put a finger down anywhere and pull straight down ---------- */
 function pt(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/SC,y:(e.clientY-r.top)/SC};}
-cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='aim'||G.auto)return;ac();try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();const P=pt(e);G.drag={x0:P.x,y0:P.y,fx:0,fy:0};});
-cv.addEventListener('pointermove',e=>{if(!G||!G.drag||G.phase!=='aim')return;const P=pt(e);pull(P.x-G.drag.x0,P.y-G.drag.y0);});
+cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='aim'||G.auto)return;ac();try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();const P=pt(e);G.drag={x0:P.x,y0:P.y,fx:0,fy:0,ts:e.timeStamp};});
+/* every point the finger passed (coalesced events), each with its own time: the speed is what the finger really did */
+cv.addEventListener('pointermove',e=>{if(!G||!G.drag||G.phase!=='aim')return;
+  let evs=[e];try{const c=e.getCoalescedEvents&&e.getCoalescedEvents();if(c&&c.length)evs=c;}catch(err){}
+  for(const ev of evs){if(!G.drag||G.phase!=='aim')break;const P=pt(ev);const ts=ev.timeStamp||e.timeStamp;const dt=Math.max(0,(ts-G.drag.ts)/1000);G.drag.ts=Math.max(G.drag.ts,ts);pull(P.x-G.drag.x0,P.y-G.drag.y0,dt);}});
 const up=()=>{if(!G||!G.drag)return;G.drag=null;if(G.phase!=='aim')return;
   if(G.T.ty<8){G.T=newTear();return;} /* a tap or a tiny pull: start again */
   finish('stop');};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 
-function pull(fx,fy){
+function pull(fx,fy,dt){
   if(G.drag){G.drag.fx=fx;G.drag.fy=fy;}
-  const before=G.T.ty,r=advance(G.T,fx,fy);
+  const before=G.T.ty,r=advance(G.T,fx,fy,dt);
   if(G.T.ty-G.zipAt>=7){G.zipAt=G.T.ty;SFX.zip();}
   if(r==='off')finish('off');else if(r==='done')finish('clean');
   return before;
@@ -203,8 +218,8 @@ function pull(fx,fy){
 function finish(kind){
   if(G.phase!=='aim')return;
   const T=G.T;G.drag=null;G.auto=null;
-  G.res={kind,pct:pctOf(T,kind==='clean'?'done':kind),side:T.tx>=0?1:-1,ty:T.ty,tx:T.tx};
-  G.phase=kind;G.t=0;
+  G.res={kind,pct:pctOf(T,kind==='clean'?'done':kind),side:T.tx>=0?1:-1,ty:T.ty,tx:T.tx,time:T.time,strain:T.S/BUDGET};
+  G.phase=kind;G.t=0;remember();
   if(kind==='off'){SFX.rip();anim($('app'),'shake');try{navigator.vibrate&&navigator.vibrate([30,20,60]);}catch(e){}}
   else if(kind==='clean'){SFX.pop();}
   else SFX.soft();
@@ -214,7 +229,7 @@ function step(dt,now){
   G.t+=dt;
   if(G.phase==='aim'&&G.auto){const a=G.auto;if(G.t>=a.at){
       const y=Math.min((G.t-a.at)*a.speed,(a.p.stopAt||LEN+4));
-      while(a.y+2<=y&&G.phase==='aim'){a.y+=2;a.fx=planX(a.p,a.y);pull(a.fx,a.y);}
+      while(a.y+2<=y&&G.phase==='aim'){a.y+=2;a.fx=planX(a.p,a.y);pull(a.fx,a.y,2/a.speed);}
       if(G.phase==='aim'&&a.p.stopAt&&a.y>=a.p.stopAt){finish('stop');}
   }}
   if(G.phase==='off'){if(!G.snd1&&G.t>=.3){G.snd1=true;SFX.snap();}}
@@ -308,6 +323,15 @@ function holeAndPerf(x){
   x.save();x.beginPath();x.rect(X-bw,Lt,bw*2,LEN);x.clip();
   stripPoly(x,T.pts,4.4);x.fillStyle='#d6eaf3';x.fill();x.fillStyle='rgba(120,180,210,.22)';x.fill();
   stripPoly(x,T.pts,4.4);x.strokeStyle='rgba(255,255,255,.95)';x.lineWidth=1.2;x.stroke();
+  /* the label creases beside the tip as it is pulled off the line (the strain so far) */
+  const k=Math.min(1,T.S/BUDGET);
+  if(k>.04&&(!G||G.phase!=='clean')){const [a,b]=tipXY(T.tx,T.ty),s=T.tx>=0?1:-1;
+    x.lineCap='round';
+    for(let i=0;i<3;i++){const l=(8+i*7)*(.4+.6*k),o=5+i*2.5;
+      x.strokeStyle=`rgba(255,255,255,${(.75*k).toFixed(3)})`;x.lineWidth=1.4;
+      x.beginPath();x.moveTo(a+s*o,b-2-i*5);x.quadraticCurveTo(a+s*(o+l*.6),b-6-i*7,a+s*(o+l),b-14-i*9);x.stroke();
+      x.strokeStyle=`rgba(10,40,70,${(.35*k).toFixed(3)})`;x.lineWidth=1;
+      x.beginPath();x.moveTo(a+s*o,b-.8-i*5);x.quadraticCurveTo(a+s*(o+l*.6),b-4.8-i*7,a+s*(o+l),b-12.8-i*9);x.stroke();}}
   x.restore();
 }
 /* after it ran off: a ragged tear going sideways round the bottle */
@@ -376,10 +400,24 @@ function takeSnap(){
 function score(){return G.res.pct;}
 function pctText(){const s=score();return s===100?'100':s.toFixed(1);}
 function remText(){const s=score();return s===100?'0':(Math.round((100-s)*10)/10).toFixed(1);}
+/* seconds, two decimals, the same everywhere (screen, picture, share text) */
+function secText(t){return (Math.round(t*100)/100).toFixed(2);}
+function timeText(){return secText(G.res.time);}
+/* for a run that went off: how long the whole 100 mm would have taken at that pace */
+function paceText(){const r=G.res;return secText(r.time*LEN/Math.max(1,r.ty));}
+let PREV=null;
 function finalize(){}
+/* remember this try for the next result screen ("前の回") */
+function remember(){G.prev=PREV;PREV=G.res.kind==='clean'?`${timeText()}秒で全部はがせた`:`${paceText()}秒ペースで${G.res.kind==='stop'?'手をはなした':(G.res.side>0?'右':'左')+'にそれた'}（残り${remText()}mm）`;}
 function titleOf(){
   const r=G.res,s=score();
-  if(r.kind==='clean')return 'ラベルを一回ではがせる人';
+  if(r.kind==='clean'){const t=+timeText();
+    if(t<.3)return 'ラベルを一瞬ではがす人';
+    if(t<.6)return 'ラベルを一気にはがす人';
+    if(t<1)return 'ラベルを一回ではがせる人';
+    if(t<2)return 'ラベルをていねいにはがす人';
+    if(t<4)return 'ラベルをじっくりはがす人';
+    return 'ラベルと見つめ合った人';}
   if(r.kind==='stop')return s>=90?'最後まで引かなかった人':'途中で手をはなした人';
   if(s>=99)return '最後の1ミリで負けた人';
   if(s>=90)return '下のほうだけ残した人';
@@ -387,18 +425,21 @@ function titleOf(){
   if(s>=10)return 'ミシン目を見失った人';
   return 'ベロだけちぎった人';
 }
+/* two lines: which way and how far it went, then how fast (faster = runs off more easily) */
 function feedback(){
   const r=G.res;
-  if(r.kind==='clean')return '引く向き：ぴったり（最後までミシン目どおり）';
-  if(r.kind==='stop')return `手をはなした（残り${remText()}mm）`;
-  return `引く向き：${r.side>0?'右':'左'}にそれた（残り${remText()}mm）`;
+  if(r.kind==='clean'){const left=Math.max(1,Math.floor((1-Math.min(1,r.strain))*100));
+    return ['引く向き：最後までミシン目どおり',`ずれ：それるまで、あと${left}%の余裕`];}
+  const pace=`速さ：このペースだと全部で${paceText()}秒`;
+  if(r.kind==='stop')return [`手をはなした（残り${remText()}mm）`,pace];
+  return [`引く向き：${r.side>0?'右':'左'}にそれた（残り${remText()}mm）`,pace+'（速いほどそれる）'];
 }
-function statusLine(){return G.res.kind==='clean'?'ラベルは全部はがれた':`ラベルが${remText()}mm残った`;}
-function bigLabel(){return 'はがせた';}
-function bigNum(){return [pctText(),'%'];}
+function statusLine(){return G.res.kind==='clean'?'ラベルは全部はがれた（100%）':`ラベルが${remText()}mm残った`;}
+function bigLabel(){return G.res.kind==='clean'?'全部はがせたタイム':'はがせた';}
+function bigNum(){return G.res.kind==='clean'?[timeText(),'秒']:[pctText(),'%'];}
 function shareText(){
-  const p=G.res.kind==='clean'?'全部はがれた':`残り${remText()}mm`;
-  return `ペットボトルのラベルを一回で全部はがせ　はがせた${pctText()}%（${p}）【${titleOf()}】\n${SHARE_URL}`;
+  if(G.res.kind==='clean')return `ペットボトルのラベルを一回で全部はがせ　${timeText()}秒で全部はがせた【${titleOf()}】\n${SHARE_URL}`;
+  return `ペットボトルのラベルを一回で全部はがせ　はがせた${pctText()}%（残り${remText()}mm）【${titleOf()}】\n${SHARE_URL}`;
 }
 
 async function showResult(){
@@ -407,7 +448,8 @@ async function showResult(){
   $('rScore').innerHTML=`${bigLabel()}<b>${n}<small>${u}</small></b>`;
   $('rCount').textContent=statusLine();
   $('rTitle').textContent='【'+titleOf()+'】';
-  $('rSub').textContent=feedback();
+  $('rSub').textContent=feedback().join('\n');
+  $('rPrev').hidden=!G.prev;$('rPrev').textContent=G.prev?'前の回：'+G.prev:'';
   $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
   G.cardFile=null;setShareUI();
   try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
@@ -453,7 +495,7 @@ async function drawCard(){
   if(!G.snap)takeSnap();
   const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
   const {y0,y1}=cropBox(),sh=y1-y0;
-  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=62,band=46,bottom=fbTop+fbH;
   const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
   x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
   x.textBaseline='alphabetic';x.textAlign='center';
@@ -468,7 +510,8 @@ async function drawCard(){
   x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
   try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#e9e2d4';x.fillRect(0,top0,w,sh);}
   x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
-  x.fillStyle='#6f7480';x.font=`700 14px ${F}`;x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
+  x.fillStyle='#6f7480';x.textBaseline='middle';const fb=feedback();
+  fb.forEach((t,i)=>{let fz=14;x.font=`700 ${fz}px ${F}`;while(x.measureText(t).width>w-20&&fz>10){fz-=.5;x.font=`700 ${fz}px ${F}`;}x.fillText(t,w/2,fbTop+fbH/2+(i-(fb.length-1)/2)*21);});
   x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
   x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${D}`;
   x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
@@ -484,7 +527,7 @@ function begin(){newGame();resize();$('title').hidden=true;$('result').hidden=tr
 $('startBtn').addEventListener('click',()=>{ac();begin();});
 /* for checks and recording: play(p) pulls along planX(p) at p.speed px/s after p.at seconds */
 function play(p){begin();G.auto={p,at:p.at||.5,speed:p.speed||260,y:0,fx:0};}
-window.__label={get G(){return G;},begin,play,planResult,planX,shareText,showResult,score,L,LEN};
+window.__label={get G(){return G;},begin,play,planResult,planX,shareText,showResult,score,L,LEN,feedback};
 </script>
 </body>
 </html>
