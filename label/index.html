@@ -113,9 +113,10 @@ function fontVar(n){return getComputedStyle(document.documentElement).getPropert
 /* ---------- the rules (sim.js uses the same numbers) ---------- */
 const LEN=200;     /* the perforation: 200 px of the 360-wide space = the label's 100 mm */
 const GRIP=30;     /* the tear tip heads toward the finger, which is this far below it */
-const BUDGET=6;    /* strain allowed: sum of (sideways offset)^2 x (depth)^2 along the way */
-const TAU=.03;     /* the perforation pulls the tip back to the line: by e^(-time spent tearing / TAU).
-                      Slow pulls give it time to; a fast yank does not, and the tip goes where the finger goes. */
+const BUDGET=12;   /* strain allowed: sum of (sideways offset)^2 x (depth)^2 x (1 + speed/V0) along the way */
+const V0=400;      /* speed (px/s of tear) at which the same offset strains the label twice as hard.
+                      A slow pull is exactly the first version's rule; the faster the pull, the sooner it runs off. */
+const VT=.1;       /* the speed is smoothed over about this many seconds */
 const POW=2;
 const MAG=4;       /* the drawing shows the sideways offset this many times larger */
 const SUB=.5;
@@ -165,7 +166,7 @@ function ease(e){e=Math.max(0,Math.min(1,e));return e*e*(3-2*e);}
 function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);}
 
 /* ---------- the tear (same steps as sim.js) ---------- */
-function newTear(){return {tx:0,ty:0,S:0,px:0,py:0,pts:[[0,0]],off:false,time:0,started:false};}
+function newTear(){return {tx:0,ty:0,S:0,px:0,py:0,pts:[[0,0]],off:false,time:0,started:false,v:0};}
 /* the finger moved to (fx,fy), measured from where it went down, dt seconds after the last move.
    Returns 'off', 'done' or ''. The clock runs from the moment the tear starts to move. */
 function advance(T,fx,fy,dt){
@@ -174,11 +175,13 @@ function advance(T,fx,fy,dt){
   if(!T.started){if(fy<=T.ty){T.px=fx;T.py=fy;return '';}T.started=true;dt=Math.min(dt,1/60);}
   T.time+=dt;
   if(fy>T.ty){
-    const dy=fy-T.ty;
+    const dy=fy-T.ty,vi=dy/Math.max(dt,1e-3);
+    T.v=T.v?T.v+(vi-T.v)*(1-Math.exp(-dt/VT)):vi;
+    const m=1+T.v/V0;
     while(T.ty<fy&&T.ty<LEN){
       const st=Math.min(SUB,fy-T.ty,LEN-T.ty);
       const nx=T.px+(fx-T.px)*((T.ty+st-T.py)/Math.max(1e-9,fy-T.py));
-      T.tx+=st*(nx-T.tx)/GRIP;T.tx*=Math.exp(-dt*st/dy/TAU);T.ty+=st;T.S+=T.tx*T.tx*st*Math.pow(T.ty/LEN,POW);
+      T.tx+=st*(nx-T.tx)/GRIP;T.ty+=st;T.S+=m*T.tx*T.tx*st*Math.pow(T.ty/LEN,POW);
       if(T.pts.length===0||T.ty-T.pts[T.pts.length-1][1]>=2)T.pts.push([T.tx,T.ty]);
       if(T.S>BUDGET){T.off=true;T.pts.push([T.tx,T.ty]);return 'off';}
     }
