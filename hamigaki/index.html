@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>歯みがき粉を、はみ出さずに歯ブラシいっぱいに出せ。</title>
+<meta name="description" content="押している間だけチューブをしぼる。歯ブラシの毛の端から端まで、ぴったり出せるか。登場するものはすべて架空です。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="歯みがき粉を、はみ出さずに歯ブラシいっぱいに出せ。">
+<meta property="og:description" content="押している間だけチューブをしぼる。">
+<meta property="og:url" content="https://kzaaa00.github.io/hamigaki/">
+<meta property="og:image" content="https://kzaaa00.github.io/hamigaki/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* A toothbrush over the sink and a tube of paste. Hold to squeeze; the paste keeps coming a little after you let go. */
+:root{
+  --ink:#24262b; --muted:#6f7480; --paper:#f7f6f2; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1f2228}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none;-webkit-touch-callout:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#dfeaee;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app.shake{animation:shake .45s}
+@keyframes shake{15%{transform:translate(-9px,3px)}30%{transform:translate(8px,-3px)}45%{transform:translate(-6px,2px)}60%{transform:translate(4px,-1px)}75%{transform:translate(-2px,0)}}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:linear-gradient(#eef5f7,#d9e7ec)}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,7.6vw,38px);line-height:1.45;margin:0 0 30px;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
+
+#result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:56px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#card{width:100%;border-radius:10px;border:1px solid #d6d8dc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-label="洗面台の上の歯ブラシと、歯みがき粉のチューブの画面"></canvas>
+
+  <div id="title" class="panel">
+    <h1>歯みがき粉を、<br>はみ出さずに<br>歯ブラシいっぱいに出せ。</h1>
+    <button class="btn" id="startBtn" type="button">はじめる</button>
+    <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+  </div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>歯みがき粉の結果</h2>
+      <p id="rScore"></p>
+      <p id="rCount"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <div class="btns">
+        <button class="btn" id="retry" type="button">もう一回</button>
+        <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
+      </div>
+      <img id="card" alt="結果と、そのときの歯ブラシの画面">
+      <p class="fine">登場するものはすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='歯みがき粉を、はみ出さずに歯ブラシいっぱいに出せ。';
+const CREATOR='@ordwxjhj';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/hamigaki/';})();
+
+/* ---------- the rules (sim.js uses the same numbers) ---------- */
+const HX0=112,HX1=292,LEN=HX1-HX0; /* the bristles, from heel to tip: the paste should cover exactly this */
+const T=1.25;      /* seconds of squeezing to reach the tip if the paste stopped the moment you let go */
+const P=4;         /* the paste comes slowly at first and faster the longer you squeeze: len = LEN*(t/T)^P */
+const TAU=.1;      /* after you let go it keeps coming: speed x TAU more, easing out */
+const FALL=40;     /* more than this % too long and what hangs off the tip drops into the sink */
+const MAXT=T*Math.pow(2,1/P); /* nobody squeezes forever: at twice the brush we let go for you */
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('hamigaki-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*1;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,vol,freq,delay=0,type='bandpass',q=1){
+  if(muted||!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=nbuf();s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur+.02);
+}
+function tone(f,dur,type='sine',vol=.05,delay=0,f2){
+  if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+}
+let SQ=null;
+const SFX={
+  squeezeOn(){if(muted||!AC)return;try{const t=AC.currentTime,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+    s.buffer=nbuf();s.loop=true;f.type='lowpass';f.Q.value=4;f.frequency.setValueAtTime(260,t);f.frequency.linearRampToValueAtTime(900,t+T);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.08);g.gain.linearRampToValueAtTime(.3,t+T);
+    s.connect(f).connect(g).connect(AC.destination);s.start(t);SQ={s,g};}catch(e){}},
+  squeezeOff(){if(!SQ||!AC)return;try{const t=AC.currentTime;SQ.g.gain.cancelScheduledValues(t);SQ.g.gain.setValueAtTime(SQ.g.gain.value,t);SQ.g.gain.exponentialRampToValueAtTime(.0001,t+.12);SQ.s.stop(t+.15);}catch(e){}SQ=null;},
+  pop(){tone(520,.06,'sine',.05,0,300);},
+  drop(){tone(260,.16,'sine',.12,0,90);noise(.12,.18,500,0,'lowpass');}
+};
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('hamigaki-mute',muted?'1':'0');}catch(err){}if(muted)SFX.squeezeOff();syncMute();});
+$('mute').addEventListener('pointerdown',e=>e.stopPropagation());
+
+/* ---------- canvas ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=360,H=640,SC=1,DPR=1;
+function resize(){
+  const r=$('app').getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);
+  SC=r.width/360;W=360;H=r.height/SC;
+  cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+}
+addEventListener('resize',resize);try{visualViewport.addEventListener('resize',resize);}catch(e){}
+resize();
+/* Yb: the bristle tips. The sink is below. */
+function L(){const Yb=Math.round(Math.max(215,Math.min(H-240,H*.45)));return {Yb,sinkY:Yb+150,land:Yb+158};}
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+/* ---------- state ---------- */
+let G=null,ROUND=0,PREV=null;
+function newGame(){ROUND++;G={phase:'ready',t0:performance.now(),tp:0,tr:0,xr:0,vr:0,F:0,res:null,shown:false,plan:undefined,snap:null,snapped:false,fallAt:0,round:ROUND};}
+/* paste length in px at time now (ms) */
+function lenAt(now){
+  if(!G||G.phase==='ready')return 0;
+  if(G.phase==='squeeze'){const u=Math.max(0,(now-G.tp)/1000)/T;return LEN*Math.pow(u,P);}
+  const a=Math.max(0,(now-G.tr)/1000);return G.xr+G.vr*TAU*(1-Math.exp(-a/TAU));
+}
+
+/* ---------- input: press, hold, let go ---------- */
+let PID=null;
+function tsOf(e){const n=performance.now();const t=e&&e.timeStamp;return (t&&Math.abs(n-t)<1000)?t:n;}
+function press(ts=performance.now()){
+  if(!G||G.phase!=='ready')return;
+  ac();G.phase='squeeze';G.tp=ts;SFX.squeezeOn();
+}
+function release(ts=performance.now()){
+  if(!G||G.phase!=='squeeze')return;
+  ts=Math.max(G.tp,Math.min(ts,G.tp+MAXT*1000));
+  const u=(ts-G.tp)/1000/T;
+  G.tr=ts;G.xr=LEN*Math.pow(u,P);G.vr=LEN*P*Math.pow(u,P-1)/T;G.F=G.xr+G.vr*TAU;
+  G.phase='ooze';SFX.squeezeOff();SFX.pop();
+  const d=(G.F/LEN-1)*100;
+  G.res={d,dev:devOf(d),fell:d>FALL,ooze:G.vr*TAU/LEN*100,atRelease:G.xr/LEN*100};
+  G.endIn=G.res.fell?2300:1700;
+}
+cv.addEventListener('pointerdown',e=>{if(!G||PID!==null)return;e.preventDefault();PID=e.pointerId;try{cv.setPointerCapture(e.pointerId);}catch(err){}press(tsOf(e));});
+const up=e=>{if(e.pointerId!==PID)return;PID=null;release(tsOf(e));};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&G&&$('result').hidden&&$('title').hidden){e.preventDefault();press(tsOf(e));}});
+addEventListener('keyup',e=>{if(e.code==='Space'&&G){e.preventDefault();release(tsOf(e));}});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+
+function devOf(d){const a=Math.abs(d);return a<.05?0:Math.max(.1,Math.ceil(a*10-1e-9)/10);}
+/* for checks and recording: hold so that the paste ends d % from the bristle tip (null = never let go) */
+function relFor(d){const want=1+d/100;let lo=0,hi=MAXT;for(let i=0;i<80;i++){const m=(lo+hi)/2,u=m/T;const F=Math.pow(u,P)+P*Math.pow(u,P-1)*TAU/T;if(F<want)lo=m;else hi=m;}return (lo+hi)/2;}
+
+function step(now){
+  if(G.phase==='ready'&&G.plan!==undefined&&now-G.t0>=260){press(G.t0+260);}
+  if(G.phase==='squeeze'){
+    if(G.plan!==undefined&&G.plan!==null){const at=G.tp+relFor(G.plan)*1000;if(now>=at)release(at);}
+    if(G.phase==='squeeze'&&now-G.tp>=MAXT*1000){PID=null;release(G.tp+MAXT*1000);}
+  }
+  if(G.phase==='ooze'){
+    const a=(now-G.tr)/1000;
+    if(G.res.fell&&!G.fallAt&&a>=.42){G.fallAt=now;}
+    if(G.fallAt&&!G.dropped&&(now-G.fallAt)/1000>=fallDur()){G.dropped=true;SFX.drop();anim($('app'),'shake');}
+    if(!G.snapped&&a>=(G.res.fell?1.25:.8)){G.snapped=true;takeSnap();}
+    if(a*1000>=G.endIn&&!G.shown){G.shown=true;showResult();}
+  }
+}
+
+/* ---------- drawing ---------- */
+function drawRoom(x){
+  const {Yb,sinkY}=L();const top=Yb+62;
+  /* tiled wall */
+  x.fillStyle='#e4eef1';x.fillRect(0,0,W,top);
+  x.strokeStyle='rgba(120,150,160,.22)';x.lineWidth=1.2;
+  for(let y=top-40;y>-40;y-=40){x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();}
+  for(let i=0;i*40<W+40;i++){x.beginPath();x.moveTo(i*40-4,0);x.lineTo(i*40-4,top);x.stroke();}
+  /* mirror corner and a cup */
+  x.fillStyle='rgba(255,255,255,.55)';rr(x,206,Math.max(14,Yb-200),170,120,10);x.fill();x.strokeStyle='rgba(120,150,160,.4)';x.lineWidth=2;x.stroke();
+  x.strokeStyle='rgba(255,255,255,.8)';x.lineWidth=3;x.beginPath();x.moveTo(236,Math.max(14,Yb-200)+30);x.lineTo(266,Math.max(14,Yb-200)+12);x.stroke();
+  /* counter */
+  const g=x.createLinearGradient(0,top,0,H);g.addColorStop(0,'#f8fbfc');g.addColorStop(1,'#d7e1e4');
+  x.fillStyle=g;x.fillRect(0,top,W,H-top);
+  x.fillStyle='rgba(120,150,160,.35)';x.fillRect(0,top,W,2);
+  /* basin */
+  x.save();x.translate(180,sinkY);
+  x.fillStyle='#c9d6da';x.beginPath();x.ellipse(0,0,158,64,0,0,Math.PI*2);x.fill();
+  const b=x.createRadialGradient(0,14,10,0,8,150);b.addColorStop(0,'#e9eff1');b.addColorStop(1,'#bccacf');
+  x.fillStyle=b;x.beginPath();x.ellipse(0,4,148,56,0,0,Math.PI*2);x.fill();
+  x.fillStyle='#8c9ba1';x.beginPath();x.ellipse(0,18,13,5,0,0,Math.PI*2);x.fill();
+  x.fillStyle='#5d6a70';x.beginPath();x.ellipse(0,18,9,3.2,0,0,Math.PI*2);x.fill();
+  x.restore();
+}
+const SKIN='#f1c9a6',SKIN_D='#d9a37c';
+function drawBrush(x){
+  const {Yb}=L();
+  /* handle with a hand around it */
+  x.fillStyle='rgba(0,0,0,.08)';rr(x,-30,Yb+26,HX0+LEN+40,10,5);x.fill();
+  x.fillStyle='#57b9a6';rr(x,-30,Yb+16,HX0+20,13,6);x.fill();
+  x.fillStyle='#78cdbc';rr(x,-30,Yb+17,HX0+16,4,2);x.fill();
+  /* neck and head */
+  x.fillStyle='#57b9a6';x.beginPath();x.moveTo(HX0-18,Yb+16);x.lineTo(HX1+10,Yb+16);x.quadraticCurveTo(HX1+18,Yb+16,HX1+18,Yb+22);x.quadraticCurveTo(HX1+18,Yb+28,HX1+10,Yb+28);x.lineTo(HX0-18,Yb+29);x.closePath();x.fill();
+  /* bristles: tufts from heel to tip */
+  for(let i=0;i<=18;i++){const bx=HX0+i*(LEN/18);x.fillStyle=i%3===1?'#9fd3f0':'#f6fbff';rr(x,bx-4.5,Yb,9,17,3);x.fill();x.strokeStyle='rgba(90,130,150,.35)';x.lineWidth=.8;x.stroke();}
+  x.fillStyle='rgba(255,255,255,.6)';x.fillRect(HX0-3,Yb+1,LEN+6,2);
+  /* the hand holding the handle */
+  x.fillStyle='rgba(0,0,0,.1)';rr(x,8,Yb+6,58,44,18);x.fill();
+  x.fillStyle=SKIN;rr(x,4,Yb+2,58,42,18);x.fill();x.strokeStyle=SKIN_D;x.lineWidth=1.3;x.stroke();
+  x.strokeStyle='rgba(190,130,95,.55)';x.lineWidth=1.2;for(const k of [16,28]){x.beginPath();x.moveTo(42,Yb+k);x.quadraticCurveTo(54,Yb+k+2,60,Yb+k);x.stroke();}
+  x.fillStyle=SKIN;rr(x,44,Yb-4,26,14,7);x.fill();x.strokeStyle=SKIN_D;x.stroke(); /* thumb on top */
+}
+/* points along the paste: on the bristles, then bending down off the tip */
+const RB=16,STIFF=5;
+function pastePath(s,dx=0,dy=0){
+  const {Yb}=L();const y0=Yb-6;const pts=[];
+  const on=Math.min(s,LEN+STIFF);
+  for(let u=0;u<=on;u+=3)pts.push([HX0+u+dx,y0+dy]);
+  if(s>LEN+STIFF){
+    const ex=HX0+LEN+STIFF,o=s-LEN-STIFF,arc=RB*Math.PI/2;
+    for(let q=3;q<=o+.01;q+=3){let px,py;if(q<=arc){px=ex+RB*Math.sin(q/RB);py=y0+RB*(1-Math.cos(q/RB));}else{px=ex+RB;py=y0+RB+(q-arc);}pts.push([px+dx,py+dy]);}
+  }
+  if(!pts.length)pts.push([HX0+dx,y0+dy]);
+  return pts;
+}
+function strokePaste(x,pts,w){
+  if(pts.length<2){x.fillStyle='#fbfdff';x.beginPath();x.arc(pts[0][0],pts[0][1],w/2,0,Math.PI*2);x.fill();return;}
+  const line=(off,lw,col)=>{x.strokeStyle=col;x.lineWidth=lw;x.lineCap='round';x.lineJoin='round';x.beginPath();
+    for(let i=0;i<pts.length;i++){const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)];let nx=-(b[1]-a[1]),ny=b[0]-a[0];const m=Math.hypot(nx,ny)||1;nx/=m;ny/=m;
+      const px=pts[i][0]+nx*off,py=pts[i][1]+ny*off;i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();};
+  line(0,w+2,'rgba(80,120,140,.35)');
+  line(0,w,'#fbfdff');
+  line(-w*.24,w*.18,'#7ec8ea');
+  line(w*.24,w*.18,'#7ec8ea');
+  line(-w*.36,w*.12,'rgba(255,255,255,.95)');
+}
+function drawTube(x,nx,ny,squeeze,lift){
+  x.save();x.translate(nx,ny-lift);x.rotate(-2.55); /* pointing up and to the left from the nozzle */
+  const pin=1-.22*squeeze;
+  /* nozzle and shoulder */
+  x.fillStyle='#e8edf0';rr(x,-2,-5,14,10,3);x.fill();x.strokeStyle='rgba(80,100,110,.45)';x.lineWidth=1;x.stroke();
+  x.fillStyle='#f4f7f8';x.beginPath();x.moveTo(12,-7);x.lineTo(28,-22);x.lineTo(28,22);x.lineTo(12,7);x.closePath();x.fill();x.stroke();
+  /* body: pinched in the middle while you squeeze */
+  x.beginPath();x.moveTo(28,-22);x.quadraticCurveTo(90,-22*pin,165,-25);x.lineTo(172,-26);x.lineTo(172,26);x.lineTo(165,25);x.quadraticCurveTo(90,22*pin,28,22);x.closePath();
+  const g=x.createLinearGradient(0,-24,0,24);g.addColorStop(0,'#ffffff');g.addColorStop(.5,'#eef3f5');g.addColorStop(1,'#cfdbe0');x.fillStyle=g;x.fill();x.strokeStyle='rgba(80,100,110,.45)';x.stroke();
+  x.fillStyle='#4aa7d8';x.beginPath();x.moveTo(60,-22*(.85+.15*pin));x.quadraticCurveTo(95,-22*pin,130,-23.5);x.lineTo(130,23.5);x.quadraticCurveTo(95,22*pin,60,22*(.85+.15*pin));x.closePath();x.fill();
+  x.fillStyle='#fff';x.fillRect(70,-3,48,6);
+  /* crimped end */
+  x.fillStyle='#e3eaed';x.fillRect(166,-27,10,54);x.strokeStyle='rgba(80,100,110,.4)';for(let k=-24;k<=24;k+=6){x.beginPath();x.moveTo(166,k);x.lineTo(176,k);x.stroke();}
+  /* the thumb pressing it */
+  const th=squeeze>0?0:8;
+  x.fillStyle=SKIN;x.beginPath();x.ellipse(96,-22*pin-12-th,20,13,0,0,Math.PI*2);x.fill();x.strokeStyle=SKIN_D;x.lineWidth=1.3;x.stroke();
+  x.fillStyle='#f9e3d4';x.beginPath();x.ellipse(84,-22*pin-14-th,7,6,0,0,Math.PI*2);x.fill();
+  x.restore();
+}
+function fallDur(){const {land,Yb}=L();return Math.sqrt(2*(land-(Yb+20))/1400);}
+function pill(label,lx,ly){cx.save();cx.font='900 15px '+getComputedStyle(document.documentElement).getPropertyValue('--body');cx.textAlign='center';cx.textBaseline='middle';
+  const w=cx.measureText(label).width+22;cx.fillStyle='rgba(36,38,43,.86)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
+
+function render(now){
+  cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
+  drawRoom(cx);
+  const {Yb,land}=L();
+  /* what fell, lying in the sink */
+  if(G&&G.dropped){const n=Math.min(1,(now-G.fallAt)/1000-fallDur());cx.save();cx.translate(HX1+RB-18,land);
+    cx.fillStyle='rgba(80,120,140,.25)';cx.beginPath();cx.ellipse(0,4,34,8,0,0,Math.PI*2);cx.fill();
+    strokePaste(cx,[[-26,0],[-12,-3-2*n],[0,-1],[12,-4],[24,0],[14,3],[-4,2]],12);cx.restore();}
+  drawBrush(cx);
+  const s=G?lenAt(now):0;
+  /* the paste on the brush (and hanging off it) */
+  if(G&&G.phase!=='ready'&&s>.5){
+    let pts=pastePath(s);
+    if(G.fallAt){const cut=LEN+STIFF+RB*.9;pts=pastePath(Math.min(s,cut));
+      if(!G.dropped){const t=(now-G.fallAt)/1000;const fall=.5*1400*t*t;const all=pastePath(s);const tail=all.slice(Math.floor(cut/3));
+        if(tail.length>1){cx.save();cx.translate(0,fall);strokePaste(cx,tail,14);cx.restore();}}}
+    strokePaste(cx,pts,14);
+  }
+  /* the tube: its nozzle rides along the tip of the paste */
+  let nx=HX0,ny=Yb-24,sq=0,lift=0;
+  if(G&&G.phase!=='ready'){nx=HX0+Math.min(s,LEN+8);sq=G.phase==='squeeze'?1:0;
+    if(G.phase==='ooze'){const a=(now-G.tr)/1000;sq=Math.max(0,1-a*6);lift=a<.35?0:Math.min(26,(a-.35)*90);}}
+  if(G&&(G.phase==='squeeze'||(G.phase==='ooze'&&lift<4))&&s>1){ /* the bit between nozzle and brush */
+    cx.strokeStyle='#fbfdff';cx.lineWidth=11;cx.lineCap='round';cx.beginPath();cx.moveTo(nx+1,ny-lift);cx.lineTo(Math.min(HX0+s,nx+1),Yb-6);cx.stroke();}
+  drawTube(cx,nx,ny,sq,lift);
+  if(G&&G.phase==='ready'&&G.round===1&&G.plan===undefined){pill('押している間、しぼる',180,Math.min(H-28,Yb+92));}
+}
+function loop(now){requestAnimationFrame(loop);if(G)step(now);render(now);}
+requestAnimationFrame(loop);
+function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);}
+
+/* ---------- result ---------- */
+function cropBox(){const {Yb}=L();return {y0:Math.max(0,Yb-118),y1:Math.min(H,Yb+186)};}
+function takeSnap(){
+  /* a resize (the phone's address bar moving) clears the canvas between frames; draw it again so the picture is never blank */
+  try{render(performance.now());}catch(e){}
+  try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
+    c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
+}
+function score(){const r=G.res;if(r.fell)return 0;return Math.max(0,Math.round((100-r.dev)*10)/10);}
+function pct(){return score().toFixed(1);}
+function devText(dev){return dev.toFixed(1);}
+function statusLine(r=G.res){
+  if(r.fell)return '洗面台に落ちた';
+  if(r.dev===0)return 'ぴったり';
+  return r.d>0?devText(r.dev)+'%はみ出した':devText(r.dev)+'%足りない';
+}
+function titleOf(){
+  const r=G.res;
+  if(r.fell)return '洗面台に食べさせた人';
+  if(r.dev===0)return 'CMみたいに出せる人';
+  if(r.dev<1)return 'ほぼCMの人';
+  if(r.d>0){if(r.dev<5)return 'ちょっとはみ出した人';if(r.dev<15)return '先っぽが垂れた人';return '大盛りの人';}
+  if(r.dev<5)return 'ちょっと遠慮した人';if(r.dev<20)return '控えめな人';if(r.dev<60)return '歯医者さんにほめられる量の人';
+  if(r.dev>97)return 'しぼれなかった人';return '米つぶで磨く人';
+}
+function lenLine(r){
+  if(r.dev===0)return 'ぴったり';
+  if(r.d>0){const w=r.fell?'（洗面台に落ちた）':r.dev<5?'（少しはみ出した）':r.dev<15?'（先が垂れた）':'（だらんと垂れた）';return 'ぴったりより'+devText(r.dev)+'%長い'+w;}
+  return 'ぴったりより'+devText(r.dev)+'%短い'+(r.dev<5?'（少し足りない）':'（毛が見えている）');
+}
+function feedback(){return '長さ：'+lenLine(G.res);}
+function shareText(){
+  return `歯みがき粉を、はみ出さずに歯ブラシいっぱいに出せ　ぴったり度${pct()}%（${statusLine()}）【${titleOf()}】\n${SHARE_URL}`;
+}
+
+async function showResult(){
+  const r=G.res;
+  $('rScore').innerHTML=`ぴったり度<b>${pct()}<small>%</small></b>`;
+  $('rCount').textContent=statusLine();
+  $('rTitle').textContent='【'+titleOf()+'】';
+  const lines=[feedback(),'離してから出た分：+'+r.ooze.toFixed(1)+'%'];
+  if(PREV)lines.push('前の回：'+lenLine(PREV));
+  $('rSub').innerHTML=lines.map(s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))).join('<br>');
+  PREV=r;
+  $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(res=>G.cardCanvas.toBlob(res,'image/png'));if(b)G.cardFile=new File([b],'hamigaki-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='hamigaki-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
+
+/* The share image: the result on top, the brush at the end in the middle, the length line, and a band with the game name and the creator. */
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  if(!G.snap)takeSnap();
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const {y0,y1}=cropBox(),sh=y1-y0;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#6f7480';x.font=`900 16px ${F}`;x.fillText('ぴったり度',w/2,32);
+  const n=pct(),u='%';let fs=96;x.font=`400 ${fs}px ${D}`;let tw=x.measureText(n).width;
+  while(tw*1.3>w-30&&fs>40){fs-=4;x.font=`400 ${fs}px ${D}`;tw=x.measureText(n).width;}
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;const pw=x.measureText(u).width;
+  const sx=(w-(tw+pw+4))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${D}`;x.fillText(n,sx,124);
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;x.fillText(u,sx+tw+4,124);
+  x.textAlign='center';x.fillStyle='#24262b';x.font=`900 17px ${F}`;x.fillText(statusLine(),w/2,160);
+  x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('【'+titleOf()+'】',w/2,192);
+  x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
+  try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#dfeaee';x.fillRect(0,top0,w,sh);}
+  x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
+  x.fillStyle='#6f7480';let ff=14;x.font=`700 ${ff}px ${F}`;while(x.measureText(feedback()).width>w-20&&ff>10){ff-=.5;x.font=`700 ${ff}px ${F}`;}
+  x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
+  x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
+  x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${D}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>8){gs-=.5;x.font=`400 ${gs}px ${D}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,bottom+band/2);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+
+/* ---------- start ---------- */
+function begin(){SFX.squeezeOff();PID=null;newGame();resize();$('title').hidden=true;$('result').hidden=true;$('mute').hidden=false;}
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+/* for checks and recording: play(d) presses 0.26 s after the start and lets go so the paste ends d % from the tip */
+function play(d){begin();G.plan=d;}
+window.__hamigaki={get G(){return G;},begin,press,release,play,shareText,showResult,score,L,lenAt,relFor,LEN,T,P,TAU};
+</script>
+</body>
+</html>
