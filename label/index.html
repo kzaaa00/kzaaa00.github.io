@@ -93,7 +93,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
         <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
         <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
       </div>
-      <img id="card" alt="結果と、そのときのペットボトルとラベルの画面">
+      <img id="card" alt="結果と、ラベルの裂け目が通った道">
       <p class="fine">商品はすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
     </div>
   </div>
@@ -297,9 +297,9 @@ function labelPaint(x,ox,oy,squash){
   x.restore();
 }
 function tipXY(px,py){const {PX,Lt}=L();return [PX+px*MAG,Lt+py];}
-function stripPoly(x,pts,hw){
-  x.beginPath();for(let i=0;i<pts.length;i++){const [a,b]=tipXY(pts[i][0],pts[i][1]);x.lineTo(a-hw,b);}
-  for(let i=pts.length-1;i>=0;i--){const [a,b]=tipXY(pts[i][0],pts[i][1]);x.lineTo(a+hw,b);}x.closePath();
+function stripPoly(x,pts,hw,map=tipXY){
+  x.beginPath();for(let i=0;i<pts.length;i++){const [a,b]=map(pts[i][0],pts[i][1]);x.lineTo(a-hw,b);}
+  for(let i=pts.length-1;i>=0;i--){const [a,b]=map(pts[i][0],pts[i][1]);x.lineTo(a+hw,b);}x.closePath();
 }
 function drawLabel(x){
   const {X,bw,Lt,Lb,PX}=L(),T=G?G.T:null,ph=G?G.phase:'aim';
@@ -335,9 +335,9 @@ function holeAndPerf(x){
   x.restore();
 }
 /* after it ran off: a ragged tear going sideways round the bottle */
-function drawSideTear(x){
+function drawSideTear(x,map=tipXY){
   if(!G||G.phase!=='off')return;
-  const {X,bw}=L(),r=G.res,[a,b]=tipXY(r.tx,r.ty),s=r.side;
+  const {X,bw}=L(),r=G.res,[a,b]=map(r.tx,r.ty),s=r.side;
   const end=s>0?X+bw:X-bw,e=ease(G.t/.28),len=Math.abs(end-a)*e;
   x.save();x.lineJoin='round';x.beginPath();x.moveTo(a,b);
   for(let i=1;i<=12;i++){const d=len*i/12;x.lineTo(a+s*d,b+d*.22+((i%2)?-2:1.8));}
@@ -396,6 +396,42 @@ function takeSnap(){
   try{render(performance.now());}catch(e){}
   try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
     c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
+}
+/* The share picture: the label still on the bottle, with the way the tear went drawn on it in red
+   (sideways offset magnified 10x so the path shows), where it started, and where it ended. */
+function trailPic(){
+  const {y0,y1}=cropBox(),k=3,c=document.createElement('canvas');c.width=360*k;c.height=Math.round((y1-y0)*k);
+  const x=c.getContext('2d');x.setTransform(k,0,0,k,0,-y0*k);
+  const T=G.T,r=G.res,{X,bw,Lt,Lb,PX}=L(),TM=10,map=(px,py)=>[PX+px*TM,Lt+py];
+  drawRoom(x);drawBottle(x);labelPaint(x,0,0);
+  /* the perforation, the whole length */
+  x.save();x.setLineDash([3,3]);x.lineWidth=1.3;x.strokeStyle='rgba(255,255,255,.9)';
+  x.beginPath();x.moveTo(PX-4,Lt);x.lineTo(PX-4,Lb);x.moveTo(PX+4,Lt);x.lineTo(PX+4,Lb);x.stroke();x.restore();
+  /* the strip that came off */
+  if(T.pts.length>1){x.save();x.beginPath();x.rect(X-bw,Lt,bw*2,LEN);x.clip();stripPoly(x,T.pts,4.4,map);x.fillStyle='#d6eaf3';x.fill();x.restore();}
+  if(r.kind==='off'){const gt=G.t;G.t=Math.max(gt,1);try{drawSideTear(x,map);}finally{G.t=gt;}}
+  /* the path itself */
+  const P=T.pts.map(q=>map(q[0],q[1]));
+  if(P.length>1){x.save();x.lineJoin='round';x.lineCap='round';
+    x.beginPath();P.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));
+    x.strokeStyle='#fff';x.lineWidth=5.5;x.stroke();x.strokeStyle='#e0321c';x.lineWidth=3;x.stroke();x.restore();}
+  /* start and end */
+  const [sx,sy]=P[0]||map(0,0),[ex,ey]=P[P.length-1]||[sx,sy];
+  x.fillStyle='#e0321c';x.strokeStyle='#fff';x.lineWidth=2;x.beginPath();x.arc(sx,sy,4.5,0,Math.PI*2);x.fill();x.stroke();
+  if(r.kind==='clean'){x.beginPath();x.arc(ex,ey,7,0,Math.PI*2);x.fillStyle='#fff';x.fill();x.strokeStyle='#e0321c';x.lineWidth=2.5;x.stroke();
+    x.beginPath();x.moveTo(ex-3.5,ey);x.lineTo(ex-1,ey+3);x.lineTo(ex+4,ey-3);x.stroke();}
+  else if(r.kind==='off'){x.save();x.translate(ex,ey);x.lineCap='round';x.strokeStyle='#fff';x.lineWidth=6;
+    for(const s of [1,-1]){x.beginPath();x.moveTo(-5,-5*s);x.lineTo(5,5*s);x.stroke();}
+    x.strokeStyle='#e0321c';x.lineWidth=3;for(const s of [1,-1]){x.beginPath();x.moveTo(-5,-5*s);x.lineTo(5,5*s);x.stroke();}x.restore();}
+  else{x.beginPath();x.arc(ex,ey,5,0,Math.PI*2);x.fillStyle='#fff';x.fill();x.strokeStyle='#e0321c';x.lineWidth=2.5;x.stroke();}
+  /* a key, outside the bottle */
+  x.save();x.textAlign='left';x.textBaseline='middle';
+  const lx=14,ly=Lt-70,lines=['赤い線＝','裂け目の通った道','横のずれは'+TM+'倍'];
+  x.fillStyle='rgba(255,255,255,.9)';rr(x,lx-7,ly-13,112,lines.length*17+9,8);x.fill();
+  lines.forEach((t,i)=>{x.font=`${i===0?900:700} 12px ${BODY}`;x.fillStyle=i===0?'#e0321c':'#24262b';x.fillText(t,lx,ly+i*17);});
+  x.beginPath();x.moveTo(lx+50,ly);x.lineTo(lx+90,ly);x.strokeStyle='#e0321c';x.lineWidth=3;x.lineCap='round';x.stroke();
+  x.restore();
+  return c;
 }
 function score(){return G.res.pct;}
 function pctText(){const s=score();return s===100?'100':s.toFixed(1);}
@@ -508,7 +544,8 @@ async function drawCard(){
   x.textAlign='center';x.fillStyle='#24262b';x.font=`900 17px ${F}`;x.fillText(statusLine(),w/2,160);
   x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('【'+titleOf()+'】',w/2,192);
   x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
-  try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#e9e2d4';x.fillRect(0,top0,w,sh);}
+  let pic=null;try{pic=trailPic();}catch(e){pic=G.snap;}
+  try{x.drawImage(pic,0,0,pic.width,pic.height,0,top0,w,sh);}catch(e){x.fillStyle='#e9e2d4';x.fillRect(0,top0,w,sh);}
   x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
   x.fillStyle='#6f7480';x.textBaseline='middle';const fb=feedback();
   fb.forEach((t,i)=>{let fz=14;x.font=`700 ${fz}px ${F}`;while(x.measureText(t).width>w-20&&fz>10){fz-=.5;x.font=`700 ${fz}px ${F}`;}x.fillText(t,w/2,fbTop+fbH/2+(i-(fb.length-1)/2)*21);});
