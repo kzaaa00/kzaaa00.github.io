@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>満員電車で、つり革をつかめ。</title>
+<meta name="description" content="ゆれるつり革が手の上に来た瞬間にタップしてつかむだけ。つかみそこねると、となりの人にもたれます。登場する人はすべて架空です。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="満員電車で、つり革をつかめ。">
+<meta property="og:description" content="ゆれるつり革が手の上に来た瞬間に、タップでつかむだけ。">
+<meta property="og:url" content="https://kzaaa00.github.io/tsurikawa/">
+<meta property="og:image" content="https://kzaaa00.github.io/tsurikawa/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* A packed train at night. The strap swings over your raised hand: tap the moment it is right above
+   to grab it. Too early or too late and the train lurches you into the person next to you. */
+:root{
+  --ink:#24262b; --muted:#6f7480; --paper:#f7f6f2; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1f2228}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#1b2233;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app.shake{animation:shake .45s}
+@keyframes shake{15%{transform:translate(-9px,3px)}30%{transform:translate(8px,-3px)}45%{transform:translate(-6px,2px)}60%{transform:translate(4px,-1px)}75%{transform:translate(-2px,0)}}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:linear-gradient(#f3f0e8,#dcd6c8)}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,8.2vw,40px);line-height:1.4;margin:0 0 30px;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
+
+#result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:56px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#card{width:100%;border-radius:10px;border:1px solid #d6d8dc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-tsurikawa="夜の満員電車で、ゆれるつり革に手をのばしている画面"></canvas>
+
+  <div id="title" class="panel">
+    <h1>満員電車で、<br>つり革をつかめ。</h1>
+    <button class="btn" id="startBtn" type="button">はじめる</button>
+    <p class="fine">登場する人はすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+  </div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>つり革の結果</h2>
+      <p id="rScore"></p>
+      <p id="rCount"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <div class="btns">
+        <button class="btn" id="retry" type="button">もう一回</button>
+        <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
+      </div>
+      <img id="card" alt="結果と、そのときのつり革と手の画面">
+      <p class="fine">登場する人はすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='満員電車で、つり革をつかめ。';
+const CREATOR='@ordwxjhj';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/tsurikawa/';})();
+const DISP=fontVar('--display'),BODY=fontVar('--body');
+function fontVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n);}
+
+
+/* ---------- the rules (sim.js uses the same numbers) ---------- */
+const T=1.7;          /* one full swing of the strap, seconds */
+const SL=150;         /* from the bar to the centre of the ring, px (360-wide space) */
+const AMP=60;         /* how far the ring swings sideways, px */
+const A=Math.asin(AMP/SL);
+const T0=.9;          /* the first time the ring passes over the hand */
+const MM=2.5;         /* 1 px = 2.5 mm */
+const PERF=.08;       /* 100% only within this many mm */
+const GRAB=40;        /* further than this and the hand closes on air */
+let PREV=null;
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('tsurikawa-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*1;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,vol,freq,delay=0,type='bandpass',q=1){
+  if(muted||!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=nbuf();f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur+.02);
+}
+function tone(f,dur,type='sine',vol=.05,delay=0,f2){
+  if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+}
+const SFX={
+  clack(d=0){noise(.09,.16,160,d,'lowpass');tone(70,.08,'sine',.07,d,50);},
+  grab(){noise(.05,.2,2400,0,'bandpass',2);tone(900,.05,'triangle',.04);tone(300,.08,'sine',.05,.02,220);},
+  air(){noise(.12,.12,900,0,'bandpass',.7);},
+  brake(){tone(1800,.5,'sawtooth',.012,0,1500);noise(.4,.08,3200,0,'bandpass',4);},
+  bump(d=0){noise(.18,.3,260,d,'lowpass');tone(110,.16,'sine',.08,d,60);}
+};
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('tsurikawa-mute',muted?'1':'0');}catch(err){}syncMute();});
+
+/* ---------- canvas ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=360,H=640,SC=1,DPR=1;
+function resize(){
+  const r=$('app').getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);
+  SC=r.width/360;W=360;H=r.height/SC;
+  cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+}
+addEventListener('resize',resize);try{visualViewport.addEventListener('resize',resize);}catch(e){}
+resize();
+/* layout: the bar, the strap's pivot, the ring's lowest point, where the hand waits */
+function L(){const bar=Math.round(Math.max(64,Math.min(H*.2,H-430)));return {X:180,bar,ry:bar+SL,hy:bar+SL};}
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function ease(e){e=Math.max(0,Math.min(1,e));return e*e*(3-2*e);}
+function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);}
+function theta(t){return A*Math.sin(2*Math.PI*(t-T0)/T);}
+function ringX(t){return 180+SL*Math.sin(theta(t));}
+function passTime(n){return T0+(n-1)*T/2;}
+
+/* ---------- state ---------- */
+let G=null;
+function newGame(){G={phase:'aim',t:0,t0:performance.now(),res:null,shown:false,snap:null,snapped:false,clk:0};}
+
+/* ---------- input: one tap anywhere ---------- */
+/* the time of the tap itself (not of the last frame), on the same clock as the swing */
+cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='aim'||G.plan)return;ac();e.preventDefault();const ts=(e.timeStamp&&e.timeStamp>1e3)?e.timeStamp:performance.now();tap(Math.max(0,(ts-G.t0)/1000));});
+function tap(at){
+  if(!G||G.phase!=='aim')return;
+  const t=at===undefined?G.t:at;G.t=t;
+  const dx=(ringX(t)-180)*MM,adx=Math.abs(dx);
+  const k=Math.max(0,Math.round((t-T0)/(T/2)));const dt=t-(T0+k*T/2);
+  const kind=adx<=PERF?'perfect':adx<=GRAB?'grab':'miss';
+  G.res={dx,adx,dt,kind,tt:t,th:theta(t)};G.phase=kind==='miss'?'miss':'grab';G.t2=0;
+  if(kind==='miss'){SFX.air();setTimeout(()=>{SFX.brake();},120);}else SFX.grab();
+  G.endIn=kind==='miss'?2100:1700;
+}
+function step(dt,now){
+  if(G.phase==='aim'){
+    G.t=(performance.now()-G.t0)/1000; /* real time: a slow phone does not slow the swing */
+    if(G.plan){const at=passTime(G.plan.n)+G.plan.dt;if(G.t>=at){const p=G.plan;G.plan=null;tap(at);}}
+  }else G.t2+=dt;
+  /* the rails: two knocks every 0.85 s */
+  G.clk+=dt;if(G.clk>=.85){G.clk-=.85;SFX.clack();SFX.clack(.16);}
+  if(G.phase==='miss'&&!G.bumped&&G.t2>=.55){G.bumped=true;SFX.bump();anim($('app'),'shake');try{navigator.vibrate&&navigator.vibrate([30,30,70]);}catch(e){}}
+  const snapAt=G.phase==='miss'?1.15:.75;
+  if(G.phase!=='aim'&&!G.snapped&&G.t2>=snapAt){G.snapped=true;takeSnap();}
+  if(G.phase!=='aim'&&G.t2*1000>=G.endIn&&!G.shown){G.shown=true;showResult();}
+}
+
+/* ---------- drawing ---------- */
+let SCROLL=0;
+/* the car is drawn in three layers: the night outside (moves), the wall with window holes, and the crowd (both cached) */
+let CACHE=null;
+function layer(fn){const c=document.createElement('canvas');c.width=cv.width;c.height=cv.height;const x=c.getContext('2d');x.setTransform(DPR*SC,0,0,DPR*SC,0,0);fn(x);return c;}
+function wins(){const {bar}=L();const winT=bar+40,winB=Math.min(H-120,bar+250);return [winT,winB,[[-30,170],[180,210]]];}
+const GLOW={};
+function glow(c,r,a){const k=c+r+a;if(GLOW[k])return GLOW[k];const s=Math.ceil(r*2.2*DPR*SC)*2+2,g=document.createElement('canvas');g.width=g.height=s;const x=g.getContext('2d'),h=s/2;
+  const gg=x.createRadialGradient(h,h,0,h,h,h);gg.addColorStop(0,`rgba(${c},${a})`);gg.addColorStop(1,`rgba(${c},0)`);x.fillStyle=gg;x.fillRect(0,0,s,s);return GLOW[k]=g;}
+function buildCache(){
+  const [winT,winB,ws]=wins();const {bar}=L();
+  const back=layer(x=>{
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#d9d4c6');g.addColorStop(.5,'#c9c2b0');g.addColorStop(1,'#8d8676');
+    x.fillStyle=g;x.fillRect(0,0,W,H);
+    for(const [wx,ww] of ws){x.save();x.globalCompositeOperation='destination-out';rr(x,wx,winT,ww,winB-winT,14);x.fill();x.restore();
+      x.save();rr(x,wx,winT,ww,winB-winT,14);x.clip();
+      const rf=x.createLinearGradient(wx,winT,wx+ww,winB);rf.addColorStop(0,'rgba(255,255,255,.10)');rf.addColorStop(.45,'rgba(255,255,255,0)');rf.addColorStop(.55,'rgba(255,255,255,.05)');rf.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=rf;x.fillRect(wx,winT,ww,winB-winT);x.restore();
+      x.strokeStyle='#a9a291';x.lineWidth=6;rr(x,wx,winT,ww,winB-winT,14);x.stroke();x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=1.2;rr(x,wx+3,winT+3,ww-6,winB-winT-6,12);x.stroke();}
+    const c=x.createLinearGradient(0,0,0,bar);c.addColorStop(0,'#efece4');c.addColorStop(1,'#d8d3c5');x.fillStyle=c;x.fillRect(0,0,W,bar-14);
+    const lg=x.createLinearGradient(0,bar-60,0,bar-20);lg.addColorStop(0,'rgba(255,253,240,0)');lg.addColorStop(.5,'rgba(255,253,240,1)');lg.addColorStop(1,'rgba(255,253,240,0)');x.fillStyle=lg;x.fillRect(0,bar-62,W,44);
+    x.fillStyle='rgba(255,250,230,.25)';x.beginPath();x.ellipse(180,bar-40,260,60,0,0,Math.PI*2);x.fill();
+  });
+  const front=layer(x=>{
+    x.save();x.filter='blur(3px)';
+    const crowd=[[18,1.0,'#2d3140'],[78,.92,'#4a3f3a'],[292,.95,'#34394a'],[350,1.05,'#3e3a36'],[130,.8,'#555064'],[236,.82,'#3b4452']];
+    for(const [cx2,sc,col] of crowd){const top=H-200*sc;x.fillStyle=col;x.beginPath();x.ellipse(cx2,H+20,70*sc,170*sc,0,Math.PI,0);x.fill();
+      x.fillStyle='#2a2522';x.beginPath();x.ellipse(cx2,top-10*sc,24*sc,28*sc,0,0,Math.PI*2);x.fill();}
+    x.restore();
+    const v=x.createRadialGradient(180,H*.45,H*.25,180,H*.45,H*.8);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(20,16,10,.38)');x.fillStyle=v;x.fillRect(0,0,W,H);
+  });
+  CACHE={key:cv.width+'x'+cv.height+'@'+SC,back,front};
+}
+function drawCar(x,now){
+  if(!CACHE||CACHE.key!==cv.width+'x'+cv.height+'@'+SC){for(const k in GLOW)delete GLOW[k];buildCache();}
+  const [winT,winB,ws]=wins();
+  /* the night outside: sky, far buildings, city lights sliding past (near ones fast and big) */
+  for(const [wx,ww] of ws){
+    x.save();x.beginPath();x.rect(wx,winT,ww,winB-winT);x.clip();
+    const s=x.createLinearGradient(0,winT,0,winB);s.addColorStop(0,'#0d1630');s.addColorStop(.7,'#1d2b52');s.addColorStop(1,'#33395a');x.fillStyle=s;x.fillRect(wx,winT,ww,winB-winT);
+    x.fillStyle='rgba(8,12,28,.85)';for(let i=0;i<14;i++){const bx=((i*53-SCROLL*.25)%520+520)%520-80,bh=40+rnd(i)*80;x.fillRect(bx,winB-bh,34+rnd(i+3)*20,bh);}
+    for(let i=0;i<40;i++){const near=i>=26,sp=near?1.1:.35,yy=winT+20+rnd(i*2.3)*(winB-winT-30),xx=((rnd(i)*600-SCROLL*sp)%600+600)%600-120;
+      const c=['255,214,150','255,245,220','150,200,255','255,170,120'][i%4],r=near?Math.round(5+rnd(i+2)*7):2;
+      const g=glow(c,r,near?.35:.95),d=r*2.2;x.drawImage(g,xx-d,yy-d,d*2,d*2);}
+    x.restore();
+  }
+  x.save();x.scale(1/(DPR*SC),1/(DPR*SC));x.drawImage(CACHE.back,0,0);x.restore();
+}
+function drawCrowd(x){x.save();x.scale(1/(DPR*SC),1/(DPR*SC));x.drawImage(CACHE.front,0,0);x.restore();}
+function drawBar(x){
+  const {bar}=L();
+  const g=x.createLinearGradient(0,bar-7,0,bar+7);g.addColorStop(0,'#8e959c');g.addColorStop(.35,'#f6f8fa');g.addColorStop(.6,'#b5bcc3');g.addColorStop(1,'#6d747b');
+  x.fillStyle=g;x.fillRect(0,bar-6,W,12);
+  for(const bx of [30,330]){x.fillStyle='#9aa1a8';rr(x,bx-6,bar-26,12,26,3);x.fill();}
+}
+/* one strap: a band from the bar and a ring. tilt in radians, s = scale (background straps are smaller) */
+function drawStrap(x,px,py,tilt,s,held){
+  x.save();x.translate(px,py);x.rotate(-tilt);x.scale(s,s);
+  const band=SL-30;
+  /* loop around the bar */
+  x.fillStyle='#3a3f47';rr(x,-9,-9,18,18,6);x.fill();
+  const bg=x.createLinearGradient(-8,0,8,0);bg.addColorStop(0,'#2b3038');bg.addColorStop(.45,'#5a626d');bg.addColorStop(1,'#262a31');
+  x.fillStyle=bg;rr(x,-8,0,16,band,4);x.fill();
+  x.strokeStyle='rgba(255,255,255,.22)';x.setLineDash([3,3]);x.lineWidth=.8;x.beginPath();x.moveTo(-5,4);x.lineTo(-5,band-4);x.moveTo(5,4);x.lineTo(5,band-4);x.stroke();x.setLineDash([]);
+  /* the clip */
+  x.fillStyle='#d9dde1';rr(x,-10,band-6,20,12,3);x.fill();
+  /* the ring */
+  const ry=SL;
+  x.lineWidth=7;const rg=x.createLinearGradient(-20,ry-20,20,ry+20);rg.addColorStop(0,'#ffffff');rg.addColorStop(.5,'#e9ebe8');rg.addColorStop(1,'#b9bdbb');x.strokeStyle=rg;
+  x.beginPath();x.arc(0,ry,19,0,Math.PI*2);x.stroke();
+  x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=1.6;x.beginPath();x.arc(0,ry,21,-2.4,-1.2);x.stroke();
+  x.strokeStyle='rgba(0,0,0,.15)';x.lineWidth=1;x.beginPath();x.arc(0,ry,15.5,0,Math.PI*2);x.stroke();
+  x.restore();
+}
+const SKIN='#f0c4a0',SKIN_D='#c98f6a';
+/* the raised arm and hand. open 0..1 (1 = open). (hx,hy) = palm centre. lean = how far the arm is pulled sideways */
+function drawArm(x,hx,hy,open,lean){
+  x.save();
+  /* sleeve: suit and a white cuff */
+  const ax=hx+16+lean*.4,ay=H+30;
+  const sg=x.createLinearGradient(hx-30,0,hx+60,0);sg.addColorStop(0,'#1c2540');sg.addColorStop(.5,'#34436b');sg.addColorStop(1,'#151c31');
+  x.fillStyle=sg;x.beginPath();x.moveTo(ax-34,ay);x.lineTo(hx-16,hy+70);x.lineTo(hx+26,hy+74);x.lineTo(ax+40,ay);x.closePath();x.fill();
+  x.fillStyle='#f3f4f6';x.beginPath();x.moveTo(hx-15,hy+60);x.lineTo(hx+25,hy+63);x.lineTo(hx+26,hy+74);x.lineTo(hx-16,hy+70);x.closePath();x.fill();
+  /* wrist and palm */
+  const pg=x.createLinearGradient(hx-20,0,hx+24,0);pg.addColorStop(0,'#e5b08b');pg.addColorStop(.5,SKIN);pg.addColorStop(1,'#d9a07c');
+  x.fillStyle=pg;rr(x,hx-12,hy+30,26,34,10);x.fill();
+  x.beginPath();x.ellipse(hx+1,hy+24,19,20,0,0,Math.PI*2);x.fill();
+  /* fingers: open = up and spread, closed = curled over the ring */
+  const fingers=[[-12,-.32,26],[-4,-.1,30],[5,.08,29],[13,.28,24]];
+  for(const [fx,ang,len] of fingers){
+    const l=len*(.45+.55*open),a=ang*(.4+.6*open);
+    x.save();x.translate(hx+fx*(.8+.2*open),hy+10);x.rotate(a);
+    x.fillStyle=pg;rr(x,-4.6,-l,9.2,l+6,4.6);x.fill();x.strokeStyle='rgba(160,100,70,.35)';x.lineWidth=.8;x.stroke();
+    if(open>.5){x.fillStyle='rgba(255,235,225,.8)';rr(x,-3,-l+1,6,6,2.5);x.fill();}
+    x.restore();
+  }
+  if(open<.5){/* knuckles over the top */x.fillStyle=pg;rr(x,hx-17,hy-4,36,16,8);x.fill();x.strokeStyle='rgba(160,100,70,.35)';x.lineWidth=.8;for(let i=1;i<4;i++){x.beginPath();x.moveTo(hx-17+i*9,hy-2);x.lineTo(hx-17+i*9,hy+8);x.stroke();}}
+  /* thumb */
+  x.save();x.translate(hx-15,hy+26);x.rotate(-.9+.5*(1-open));x.fillStyle=pg;rr(x,-5,-22,10,26,5);x.fill();x.restore();
+  x.restore();
+}
+/* the person you fall into: a big coat shoulder and the back of a head */
+function drawNeighbour(x,k,side){
+  if(k<=0)return;const {hy}=L();
+  const bx=side>0?W+40-150*k:-40+150*k;
+  x.save();x.translate(bx,hy+70);
+  const g=x.createLinearGradient(-90,-60,90,120);g.addColorStop(0,'#6b5a4a');g.addColorStop(1,'#3b3027');
+  x.fillStyle=g;rr(x,-115,-10,230,420,80);x.fill();
+  x.fillStyle='#4f4236';x.beginPath();x.moveTo(-34,-14);x.lineTo(0,40);x.lineTo(34,-14);x.closePath();x.fill();
+  x.strokeStyle='rgba(0,0,0,.25)';x.lineWidth=2;x.beginPath();x.moveTo(-60*side,30);x.quadraticCurveTo(-40*side,160,-70*side,300);x.stroke();
+  x.fillStyle='rgba(255,255,255,.08)';x.beginPath();x.ellipse(-55*side,60,30,80,.2*side,0,Math.PI*2);x.fill();
+  x.fillStyle='#2b241f';x.beginPath();x.ellipse(-6*side,-60,40,46,0,0,Math.PI*2);x.fill();
+  x.fillStyle='rgba(255,255,255,.07)';x.beginPath();x.ellipse(-18*side,-76,14,18,0,0,Math.PI*2);x.fill();
+  x.restore();
+}
+function pill(label,lx,ly){cx.save();cx.font='900 15px '+BODY;cx.textAlign='center';cx.textBaseline='middle';
+  const w=cx.measureText(label).width+22;cx.fillStyle='rgba(20,24,36,.82)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
+function render(now){
+  cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
+  const {X,bar,ry,hy}=L();
+  SCROLL=(now||0)*.12;
+  let tilt=0,side=1,nk=0;
+  if(G&&G.phase==='miss'){side=G.res.dt<0?1:-1;const a=G.t2;tilt=ease((a-.15)/.4)*.09*side-ease((a-1.2)/.6)*.03*side;nk=ease((a-.2)/.45);}
+  cx.save();cx.translate(180,H*.6);cx.rotate(tilt);cx.translate(-180,-H*.6);
+  drawCar(cx,now);drawCrowd(cx);drawBar(cx);
+  /* background straps swing a bit with the car */
+  const t=G?(G.phase==='aim'?G.t:G.res.tt+G.t2):(now/1000);
+  for(const [sx,s,ph] of [[44,.78,.3],[112,.86,.15],[250,.86,.1],[318,.78,.25]])drawStrap(cx,sx,bar,theta(t+ph)*.8,s);
+  /* your strap */
+  let th=theta(t),held=false;
+  if(G&&G.phase==='grab'){th=G.res.th*Math.max(0,1-G.t2*4);held=true;}
+  const rx=X+SL*Math.sin(th),ryy=bar+SL*Math.cos(th);
+  /* the hand: under the ring's lowest point; when it grabs it closes there */
+  let hx=X,hyy=hy+24,open=1,lean=0;
+  if(G&&G.phase==='grab'){const e=Math.min(1,G.t2/.08);open=1-e;hx=X;hyy=hy+24-e*6;}
+  if(G&&G.phase==='miss'){const e=Math.min(1,G.t2/.08);open=1-e;const a=ease((G.t2-.15)/.45);hx=X+a*70*side;lean=a*60*side;hyy=hy+24+a*30;}
+  if(G&&G.phase==='grab'){/* the ring is held where it was when you closed the hand */
+    const off=G.res.dx/MM;drawStrap(cx,X,bar,Math.asin(Math.max(-1,Math.min(1,off/SL))),1);
+    drawArm(cx,hx,hyy-24-2,open,0);
+  }else{drawStrap(cx,X,bar,th,1);drawArm(cx,hx,hyy-24+2,open,lean);}
+  drawNeighbour(cx,nk,side);
+  cx.restore();
+  if(G&&G.phase==='aim'&&G.t<2.2&&!G.plan)pill('真上に来た瞬間にタップ',180,Math.min(H-36,hy+130));
+}
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(G)step(dt,now);render(now);}
+requestAnimationFrame(loop);
+function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);}
+
+/* ---------- result ---------- */
+function cropBox(){const {bar,hy}=L();return {y0:Math.max(0,bar-40),y1:Math.min(H,hy+150)};}
+function takeSnap(){
+  /* a resize (the phone's address bar moving) clears the canvas between frames; draw it again so the picture is never blank */
+  try{render(performance.now());}catch(e){}
+  try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
+    c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
+}
+function devOf(r){return r.kind==='perfect'?0:Math.max(.1,Math.ceil(r.adx*10-1e-9)/10);}
+function score(){const r=G.res;if(r.kind==='perfect')return 100;if(r.kind==='miss')return 0;return Math.round((100-devOf(r))*10)/10;}
+function pctText(){const s=score();return s===100?'100':s.toFixed(1);}
+function mmText(r){return devOf(r||G.res).toFixed(1);}
+function devText(r){if(r.kind==='perfect')return 'ぴったり（ズレ 0.0mm）';return `${Math.abs(r.dt).toFixed(3)}秒${r.dt<0?'早い':'おそい'}（ズレ ${mmText(r)}mm）`;}
+function finalize(){}
+function titleOf(){
+  const r=G.res,s=score();
+  if(r.kind==='perfect')return 'つり革に選ばれし人';
+  if(r.kind==='miss')return r.adx<80?'つり革に逃げられた人':'となりの人につかまった人';
+  if(s>=99)return '手に吸いつく人';
+  if(s>=90)return 'つり革に好かれる人';
+  return 'なんとかつかんだ人';
+}
+function feedback(){return 'タイミング：'+devText(G.res);}
+function statusLine(){const r=G.res;if(r.kind==='miss')return 'つかみそこねて、となりの人にもたれた';if(r.kind==='perfect')return 'つり革のど真ん中をつかんだ';return `つり革をつかんだ（ズレ ${mmText()}mm）`;}
+function bigLabel(){return 'つかみ';}
+function bigNum(){return [pctText(),'%'];}
+function shareText(){
+  const r=G.res,p=r.kind==='miss'?`つかめず・ズレ${mmText()}mm`:`ズレ${mmText()}mm`;
+  return `満員電車で、つり革をつかめ　つかみ${pctText()}%（${p}）【${titleOf()}】\n${SHARE_URL}`;
+}
+
+async function showResult(){
+  finalize();
+  const [n,u]=bigNum();
+  $('rScore').innerHTML=`${bigLabel()}<b>${n}<small>${u}</small></b>`;
+  $('rCount').textContent=statusLine();
+  $('rTitle').textContent='【'+titleOf()+'】';
+  $('rSub').textContent=feedback();
+  if(PREV){const b=document.createElement('span');b.style.display='block';b.textContent='前の回：'+devText(PREV);$('rSub').appendChild(b);}
+  PREV=G.res;
+  $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(r=>G.cardCanvas.toBlob(r,'image/png'));if(b)G.cardFile=new File([b],'tsurikawa-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='tsurikawa-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
+
+/* The share image: the result on top, the scene at the moment that tells the story in the middle, then a line on the timing,
+   and a band with the game name and the creator. Portrait, 360 wide at 3x. */
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  if(!G.snap)takeSnap();
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const {y0,y1}=cropBox(),sh=y1-y0;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#6f7480';x.font=`900 16px ${F}`;x.fillText(bigLabel(),w/2,32);
+  const [n,u]=bigNum();let fs=96;x.font=`400 ${fs}px ${D}`;let tw=x.measureText(n).width;
+  while(tw*1.3>w-30&&fs>40){fs-=4;x.font=`400 ${fs}px ${D}`;tw=x.measureText(n).width;}
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;const pw=x.measureText(u).width;
+  const sx=(w-(tw+pw+4))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${D}`;x.fillText(n,sx,124);
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;x.fillText(u,sx+tw+4,124);
+  x.textAlign='center';x.fillStyle='#24262b';x.font=`900 17px ${F}`;x.fillText(statusLine(),w/2,160);
+  x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('【'+titleOf()+'】',w/2,192);
+  x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
+  try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#e9e2d4';x.fillRect(0,top0,w,sh);}
+  x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
+  x.fillStyle='#6f7480';x.font=`700 14px ${F}`;x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
+  x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
+  x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${D}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>9){gs-=.5;x.font=`400 ${gs}px ${D}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,bottom+band/2);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+
+/* ---------- start ---------- */
+function begin(){newGame();resize();$('title').hidden=true;$('result').hidden=true;$('mute').hidden=false;}
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+/* for checks and recording: play(dt,n) taps dt seconds after the strap passes the centre for the n-th time (dt<0: early) */
+function play(dt,n){begin();G.plan={dt,n:n||1};}
+window.__tsurikawa={get G(){return G;},begin,tap,play,shareText,showResult,score,L,ringX,passTime};
+</script>
+</body>
+</html>
