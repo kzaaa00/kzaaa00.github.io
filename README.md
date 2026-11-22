@@ -15,3 +15,4 @@
 - [tsurikawa](https://kzaaa00.github.io/tsurikawa/)
 - [hamigaki](https://kzaaa00.github.io/hamigaki/)
 - [onigiri](https://kzaaa00.github.io/onigiri/)
+- [kaisatsu](https://kzaaa00.github.io/kaisatsu/)

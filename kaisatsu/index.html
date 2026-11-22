@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>改札で、止まらずにICカードをタッチしろ。</title>
+<meta name="description" content="歩きながら、カードが読み取り部の真上に来た瞬間にタップ。駅も改札もカードもすべて架空です。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="改札で、止まらずにICカードをタッチしろ。">
+<meta property="og:description" content="歩きながら、読み取り部の真上でタップ。">
+<meta property="og:url" content="https://kzaaa00.github.io/kaisatsu/">
+<meta property="og:image" content="https://kzaaa00.github.io/kaisatsu/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* A station gate seen from the side. You walk at a steady pace; tap and your card comes down onto the reader.
+   Where it lands is the result. Miss the reader and the gate shuts on you. */
+:root{
+  --ink:#24262b; --muted:#6f7480; --paper:#f7f6f2; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1f2228}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none;-webkit-touch-callout:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#2a3140;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app.shake{animation:shake .45s}
+@keyframes shake{15%{transform:translate(-9px,3px)}30%{transform:translate(8px,-3px)}45%{transform:translate(-6px,2px)}60%{transform:translate(4px,-1px)}75%{transform:translate(-2px,0)}}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:radial-gradient(120% 80% at 50% 20%,#f4f6fa,#dfe4ee)}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(25px,7.8vw,39px);line-height:1.45;margin:0 0 30px;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
+
+#result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:56px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#card{width:100%;border-radius:10px;border:1px solid #d6d8dc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-label="駅の改札を横から見た画面。人が歩いてきて、カードを読み取り部にタッチする"></canvas>
+
+  <div id="title" class="panel">
+    <h1>改札で、<br>止まらずに<br>ICカードをタッチしろ。</h1>
+    <button class="btn" id="startBtn" type="button">はじめる</button>
+    <p class="fine">駅・改札・カードはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+  </div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>改札の結果</h2>
+      <p id="rScore"></p>
+      <p id="rCount"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <div class="btns">
+        <button class="btn" id="retry" type="button">もう一回</button>
+        <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
+      </div>
+      <img id="card" alt="結果と、そのときの改札の画面">
+      <p class="fine">駅・改札・カードはすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='改札で、止まらずにICカードをタッチしろ。';
+const CREATOR='@ordwxjhj';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/kaisatsu/';})();
+const BODYF=()=>getComputedStyle(document.documentElement).getPropertyValue('--body');
+
+/* ---------- the rules (sim.js uses the same numbers) ---------- */
+const V=320;          /* walking pace as the card sees it, mm per second (always the same) */
+const MMPX=2.67;      /* mm per px along the walk: 120 px per second on screen */
+const VPX=V/MMPX;
+const DIP=.12;        /* after the tap the card takes this long to come down onto the reader (you keep walking) */
+const ACC=30;         /* the reader answers within this many mm of its centre; further off and the gate shuts */
+const RX=150;         /* the reader's centre on screen */
+const CARD0=-24;      /* where the card starts (screen x): it reaches the reader about 1.45 s in */
+const ARM=58;         /* card centre is this far ahead of the walker's body */
+const FLAPX=236;      /* the flaps */
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('kaisatsu-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*1;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,vol,freq,delay=0,type='bandpass',q=1){
+  if(muted||!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=nbuf();s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur+.02);
+}
+function tone(f,dur,type='sine',vol=.05,delay=0,f2){
+  if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+}
+const SFX={
+  tap(){noise(.03,.08,2500,0,'bandpass',2);},
+  pi(){tone(2093,.09,'square',.035);},
+  pinpon(){tone(988,.32,'sine',.09);tone(784,.5,'sine',.09,.34);},
+  bump(){tone(150,.12,'sine',.12,0,70);noise(.08,.14,400,0,'lowpass');},
+  flap(){noise(.08,.1,1200,0,'bandpass',3);}
+};
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('kaisatsu-mute',muted?'1':'0');}catch(err){}syncMute();});
+$('mute').addEventListener('pointerdown',e=>e.stopPropagation());
+
+/* ---------- canvas ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=360,H=640,SC=1,DPR=1,CACHE=null,FRONT=null;
+function resize(){
+  const r=$('app').getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);
+  SC=r.width/360;W=360;H=r.height/SC;
+  cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);CACHE=null;
+}
+addEventListener('resize',resize);try{visualViewport.addEventListener('resize',resize);}catch(e){}
+resize();
+/* Yf: the floor line. The gate's top (waist height) is GT. */
+function L(){const Yf=Math.round(Math.max(330,Math.min(H-130,H*.68)));return {Yf,GT:Yf-112,CY:Yf-130,PAD:Yf-114};}
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);}
+function ease(e){e=clamp(e,0,1);return e*e*(3-2*e);}
+
+/* glow sprites, drawn once */
+function glowSprite(rgb,r){const c=document.createElement('canvas');c.width=c.height=r*2;const g=c.getContext('2d');const gr=g.createRadialGradient(r,r,0,r,r,r);
+  gr.addColorStop(0,`rgba(${rgb},.9)`);gr.addColorStop(.35,`rgba(${rgb},.35)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,r*2,r*2);return c;}
+const GLOW={blue:glowSprite('90,170,255',64),green:glowSprite('80,230,140',64),red:glowSprite('255,70,60',64),warm:glowSprite('255,236,200',64)};
+function glow(x,s,X,Y,R,a=1){x.save();x.globalAlpha=a;x.globalCompositeOperation='lighter';x.drawImage(s,X-R,Y-R,R*2,R*2);x.restore();}
+
+/* ---------- static layers, cached per screen size ---------- */
+function buildCache(){
+  const k=SC*DPR,c=document.createElement('canvas');c.width=Math.round(W*k);c.height=Math.round(H*k);const x=c.getContext('2d');x.scale(k,k);
+  const {Yf,GT}=L();
+  /* ceiling and back wall */
+  let g=x.createLinearGradient(0,0,0,Yf);g.addColorStop(0,'#1b2130');g.addColorStop(.35,'#3a4458');g.addColorStop(1,'#6b7487');x.fillStyle=g;x.fillRect(0,0,W,Yf);
+  const ceil=Math.max(40,Yf-300);
+  x.fillStyle='#141a26';x.fillRect(0,0,W,ceil);
+  for(let i=0;i<5;i++){const lx=20+i*80;x.fillStyle='#fff7e6';rr(x,lx,ceil-10,56,6,3);x.fill();}
+  for(let i=0;i<5;i++)glow(x,GLOW.warm,48+i*80,ceil-7,60,.55);
+  /* wall panels */
+  x.strokeStyle='rgba(255,255,255,.06)';x.lineWidth=1;for(let i=0;i<10;i++){x.beginPath();x.moveTo(i*40+10,ceil);x.lineTo(i*40+10,Yf-40);x.stroke();}
+  /* the sign board */
+  const sy=ceil+22;x.fillStyle='rgba(0,0,0,.25)';rr(x,26,sy+4,212,46,6);x.fill();
+  x.fillStyle='#12305c';rr(x,24,sy,212,46,6);x.fill();x.fillStyle='#1d4a8a';x.fillRect(24,sy+36,212,10);
+  x.fillStyle='#fff';x.font='900 17px '+BODYF();x.textBaseline='middle';x.textAlign='left';x.fillText('のりば',40,sy+18);
+  x.font='700 11px '+BODYF();x.fillText('1・2番線',96,sy+19);
+  x.beginPath();x.moveTo(196,sy+11);x.lineTo(214,sy+20);x.lineTo(196,sy+29);x.closePath();x.fill();x.fillRect(178,sy+17,20,6);
+  glow(x,GLOW.blue,130,sy+22,110,.18);
+  /* a clock */
+  x.fillStyle='#f4f4f0';x.beginPath();x.arc(300,sy+22,20,0,Math.PI*2);x.fill();x.strokeStyle='#333';x.lineWidth=2;x.stroke();
+  x.beginPath();x.moveTo(300,sy+22);x.lineTo(300,sy+9);x.moveTo(300,sy+22);x.lineTo(310,sy+27);x.stroke();
+  /* far people, blurred */
+  const far=document.createElement('canvas');far.width=c.width;far.height=c.height;const f=far.getContext('2d');f.scale(k,k);
+  const cols=['#6d5a8a','#8a4b4b','#3f6a7a','#9a8a6a','#4d5a74','#7a6a5a','#5a7a5a'];
+  for(let i=0;i<9;i++){const px=rnd(i)*W,ph=110+rnd(i+3)*30,py=Yf-46;f.fillStyle=cols[i%cols.length];rr(f,px-14,py-ph+28,28,ph-28,10);f.fill();f.fillStyle='#3a3030';f.beginPath();f.arc(px,py-ph+16,11,0,Math.PI*2);f.fill();}
+  x.save();x.globalAlpha=.55;try{x.filter='blur(3px)';}catch(e){}x.drawImage(far,0,0,W,H);x.restore();x.filter='none';
+  /* far gate (behind the walker) */
+  x.fillStyle='#596273';rr(x,128,GT-12,184,Yf-GT-30,10);x.fill();x.fillStyle='#7b8597';rr(x,128,GT-14,184,8,4);x.fill();
+  x.fillStyle='rgba(120,190,255,.35)';x.fillRect(132,GT+4,176,3);
+  /* floor */
+  g=x.createLinearGradient(0,Yf-40,0,H);g.addColorStop(0,'#9aa2ae');g.addColorStop(.25,'#b7bdc6');g.addColorStop(1,'#6e7480');x.fillStyle=g;x.fillRect(0,Yf-40,W,H-Yf+40);
+  x.strokeStyle='rgba(255,255,255,.18)';x.lineWidth=1;for(let i=-8;i<16;i++){x.beginPath();x.moveTo(180+(i-4)*28,Yf-40);x.lineTo(180+(i-4)*90,H);x.stroke();}
+  for(let j=0;j<6;j++){const yy=Yf-40+Math.pow(j/6,1.6)*(H-Yf+40);x.beginPath();x.moveTo(0,yy);x.lineTo(W,yy);x.stroke();}
+  /* tactile strip */
+  x.fillStyle='#e8c33a';x.fillRect(0,Yf+22,W,10);x.fillStyle='rgba(0,0,0,.12)';for(let i=0;i<40;i++)x.fillRect(i*10+2,Yf+24,6,2);
+  /* the light of the ceiling on the floor */
+  for(let i=0;i<5;i++)glow(x,GLOW.warm,48+i*80,Yf+40,70,.12);
+  CACHE=c;
+  /* the near gate body: its own layer, drawn in front of the walker */
+  const fc=document.createElement('canvas');fc.width=c.width;fc.height=c.height;const fx=fc.getContext('2d');fx.scale(k,k);
+  {const x=fx;const gx=112,gw=200;
+  x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(gx+gw/2,Yf+4,gw/2+14,10,0,0,Math.PI*2);x.fill();
+  g=x.createLinearGradient(0,GT,0,Yf);g.addColorStop(0,'#eef1f5');g.addColorStop(.08,'#cfd5de');g.addColorStop(.55,'#aab2bf');g.addColorStop(1,'#7d8594');
+  x.fillStyle=g;rr(x,gx,GT,gw,Yf-GT,12);x.fill();
+  x.strokeStyle='rgba(255,255,255,.7)';x.lineWidth=1.5;x.beginPath();x.moveTo(gx+10,GT+1.5);x.lineTo(gx+gw-10,GT+1.5);x.stroke();
+  /* top plate */
+  g=x.createLinearGradient(0,GT-8,0,GT+6);g.addColorStop(0,'#f8fafc');g.addColorStop(1,'#c7ced8');x.fillStyle=g;rr(x,gx-4,GT-8,gw+8,14,6);x.fill();
+  /* blue line */
+  x.fillStyle='#2f7fe0';rr(x,gx+12,GT+28,gw-24,6,3);x.fill();glow(x,GLOW.blue,gx+gw/2,GT+31,90,.35);
+  /* side panel and the arrow */
+  x.fillStyle='rgba(30,40,60,.18)';rr(x,gx+22,GT+48,gw-44,42,8);x.fill();
+  x.fillStyle='#20a35a';x.beginPath();x.arc(gx+gw-40,GT+69,12,0,Math.PI*2);x.fill();x.fillStyle='#fff';x.beginPath();x.moveTo(gx+gw-46,GT+63);x.lineTo(gx+gw-33,GT+69);x.lineTo(gx+gw-46,GT+75);x.closePath();x.fill();
+  /* the little screen at the exit end */
+  x.fillStyle='#101722';rr(x,gx+gw-58,GT-20,44,15,3);x.fill();x.fillStyle='rgba(120,200,255,.25)';x.fillRect(gx+gw-55,GT-17,38,9);
+  }
+  FRONT=fc;
+}
+function drawPad(x,now){
+  const {GT}=L();
+  /* the reader: a tilted pad on the entry end */
+  x.save();x.translate(RX,GT-10);
+  x.fillStyle='#1b2433';rr(x,-28,-10,56,14,4);x.fill();
+  const pulse=.55+.25*Math.sin(now/240);
+  x.fillStyle=`rgba(80,160,255,${.55+.3*pulse})`;rr(x,-24,-8,48,10,3);x.fill();
+  x.strokeStyle='rgba(255,255,255,.85)';x.lineWidth=1.4;for(const r of [3,6,9]){x.beginPath();x.arc(-5,-3,r,-.6,.6);x.stroke();}x.fillStyle='rgba(255,255,255,.9)';x.fillRect(-.6,-8,1.2,10);
+  x.restore();
+  glow(x,GLOW.blue,RX,GT-14,40,.5*pulse);
+}
+
+/* ---------- state ---------- */
+let G=null,PREV=null,ROUND=0;
+function newGame(){ROUND++;G={phase:'walk',t0:performance.now(),tapAt:0,res:null,shown:false,plan:undefined,snap:null,snapped:false,round:ROUND,stopX:null,endAt:0};}
+function cardX(now){return CARD0+VPX*Math.max(0,(now-G.t0)/1000);}
+function bodyX(now){
+  let x=cardX(now)-ARM;
+  if(G&&G.res&&!G.res.pass){const stop=FLAPX-34;if(x>stop){const over=(x-stop);x=stop-Math.min(8,over*.4)*Math.exp(-over/30);}}
+  return x;
+}
+
+/* ---------- input: one tap ---------- */
+function tap(ts=performance.now()){
+  if(!G||G.phase!=='walk')return;
+  ac();SFX.tap();G.phase='dip';G.tapAt=ts;
+  const land=ts+DIP*1000;const dx=(cardX(land)-RX)*MMPX;  /* minus: before the reader's centre, plus: past it */
+  G.land=land;G.dx=dx;
+}
+cv.addEventListener('pointerdown',e=>{if(!G)return;e.preventDefault();const n=performance.now(),t=e.timeStamp;tap(t&&Math.abs(n-t)<1000?t:n);});
+addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&G&&$('result').hidden&&$('title').hidden){e.preventDefault();tap();}});
+
+function devOf(a){return a<.05?0:Math.max(.1,Math.ceil(a*10-1e-9)/10);}
+function resolve(now,tapped){
+  const dx=tapped?G.dx:(cardX(now)-RX)*MMPX;const a=Math.abs(dx);
+  const pass=tapped&&a<=ACC;
+  G.res={dx,dev:devOf(a),pass,tapped,early:dx<0};
+  G.phase='after';G.endAt=now;
+  if(pass){SFX.pi();}else{SFX.pinpon();G.flapAt=now;setTimeout(()=>SFX.flap(),40);}
+}
+function step(now){
+  if(G.phase==='walk'&&G.plan!==undefined&&G.plan!==null){
+    /* scripted tap: the card lands G.plan mm from the reader's centre */
+    const at=G.t0+((RX+G.plan/MMPX-CARD0)/VPX-DIP)*1000;if(now>=at)tap(at);
+  }
+  if(G.phase==='dip'&&now>=G.land)resolve(G.land,true);
+  if(G.phase==='walk'&&cardX(now)>RX+ACC/MMPX+26)resolve(now,false);
+  if(G.phase==='after'){
+    const a=(now-G.endAt)/1000;
+    if(!G.res.pass&&!G.bumped&&cardX(now)-ARM>FLAPX-34){G.bumped=true;SFX.bump();anim($('app'),'shake');}
+    const snapAt=G.res.pass?.55:.9;
+    if(!G.snapped&&a>=snapAt){G.snapped=true;takeSnap();}
+    if(a>=(G.res.pass?1.5:1.8)&&!G.shown){G.shown=true;showResult();}
+  }
+}
+
+/* ---------- the walker ---------- */
+function drawWalker(x,bx,now,stopped){
+  const {Yf,GT}=L();
+  const dist=stopped?0:(bx*1.0);const ph=dist/34;
+  const hipY=Yf-104,shY=Yf-180,headY=Yf-206;
+  x.save();
+  /* legs */
+  const leg=(sgn,col)=>{const a=Math.sin(ph+sgn*Math.PI)*.42;const kx=bx+Math.sin(a)*48,ky=hipY+Math.cos(a)*48;const b=a-.25*Math.max(0,Math.sin(ph+sgn*Math.PI+1.2));
+    const fx=kx+Math.sin(b)*52,fy=Math.min(Yf-3,ky+Math.cos(b)*52);
+    x.strokeStyle=col;x.lineWidth=15;x.lineCap='round';x.beginPath();x.moveTo(bx,hipY);x.lineTo(kx,ky);x.lineTo(fx,fy);x.stroke();
+    x.fillStyle='#1a1a1e';rr(x,fx-8,fy-4,26,9,4);x.fill();};
+  leg(1,'#2b2f3a');leg(0,'#363b48');
+  /* back arm swinging */
+  const sw=Math.sin(ph)*.35;x.strokeStyle='#1e2a44';x.lineWidth=13;x.beginPath();x.moveTo(bx-4,shY+6);x.lineTo(bx-4-Math.sin(sw)*40,shY+6+Math.cos(sw)*40);x.stroke();
+  /* coat */
+  const g=x.createLinearGradient(bx-24,0,bx+24,0);g.addColorStop(0,'#24324f');g.addColorStop(.6,'#2f4268');g.addColorStop(1,'#1d2840');
+  x.fillStyle=g;x.beginPath();x.moveTo(bx-20,shY);x.quadraticCurveTo(bx-26,hipY-20,bx-24,hipY+16);x.lineTo(bx+22,hipY+16);x.quadraticCurveTo(bx+24,hipY-30,bx+18,shY);x.closePath();x.fill();
+  x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=2;x.beginPath();x.moveTo(bx+14,shY+6);x.lineTo(bx+16,hipY+10);x.stroke();
+  /* bag strap and bag */
+  x.strokeStyle='#5a3a22';x.lineWidth=4;x.beginPath();x.moveTo(bx+12,shY+2);x.lineTo(bx-18,hipY-6);x.stroke();
+  x.fillStyle='#6b4428';rr(x,bx-34,hipY-14,26,30,6);x.fill();
+  /* head */
+  x.fillStyle='#f0c8a4';x.beginPath();x.ellipse(bx+4,headY,15,17,0,0,Math.PI*2);x.fill();
+  x.fillStyle='#2a2220';x.beginPath();x.ellipse(bx-1,headY-7,16,12,-.2,Math.PI*.95,Math.PI*2.15);x.fill();
+  x.fillStyle='#2a2220';x.fillRect(bx-14,headY-8,7,14);
+  x.fillStyle='#d9a37c';x.beginPath();x.arc(bx+18,headY+2,2.4,0,Math.PI*2);x.fill();
+  x.restore();
+}
+function drawArm(x,bx,cxp,cyp){
+  const {Yf}=L();const shX=bx+10,shY=Yf-174;
+  x.strokeStyle='#2f4268';x.lineWidth=13;x.lineCap='round';x.beginPath();x.moveTo(shX,shY);x.quadraticCurveTo(shX+18,(shY+cyp)/2+10,cxp-14,cyp+2);x.stroke();
+  x.fillStyle='#f0c8a4';x.beginPath();x.ellipse(cxp-10,cyp+1,8,7,0,0,Math.PI*2);x.fill();
+}
+function drawCard(x,cxp,cyp,tilt){
+  x.save();x.translate(cxp,cyp);x.rotate(tilt);
+  x.fillStyle='rgba(0,0,0,.3)';rr(x,-19,-3,40,10,2);x.fill();
+  const g=x.createLinearGradient(-20,0,20,0);g.addColorStop(0,'#ffffff');g.addColorStop(1,'#b9dcfb');x.fillStyle=g;rr(x,-20,-6,40,10,2.5);x.fill();
+  x.strokeStyle='rgba(20,60,120,.6)';x.lineWidth=1;x.stroke();x.fillStyle='#2f7fe0';x.fillRect(-20,-6,40,3);x.fillStyle='rgba(20,60,120,.7)';x.fillRect(-.6,-6,1.2,10);
+  x.restore();
+}
+
+function render(now){
+  if(!CACHE)buildCache();
+  cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
+  cx.drawImage(CACHE,0,0,W,H);
+  const {Yf,GT,CY,PAD}=L();
+  let bx=-200,cxp=-200,cyp=CY,tilt=0;
+  if(G){bx=bodyX(now);cxp=bx+ARM;
+    if(G.phase==='dip'||G.phase==='after'){const a=(now-G.tapAt)/1000;const down=a<DIP?ease(a/DIP):a<DIP+.22?1:1-ease((a-DIP-.22)/.15);cyp=CY+(PAD-CY)*down;tilt=-.12*down;}
+  }else{bx=40;cxp=bx+ARM;}
+  const stopped=G&&G.res&&!G.res.pass&&cardX(now)-ARM>FLAPX-34;
+  drawWalker(cx,bx,now,stopped);
+  cx.drawImage(FRONT,0,0,W,H);
+  drawArm(cx,bx,cxp,cyp);
+  /* near gate in front (cached), then the pad, then the card over it */
+  drawPad(cx,now);
+  drawCard(cx,cxp,cyp,tilt);
+  /* flaps */
+  if(G&&G.flapAt){const a=Math.min(1,(now-G.flapAt)/120);const h=56*ease(a);
+    const g=cx.createLinearGradient(0,GT-h,0,GT);g.addColorStop(0,'rgba(255,110,90,.95)');g.addColorStop(1,'rgba(200,50,40,.95)');
+    cx.fillStyle=g;rr(cx,FLAPX-6,GT-8-h,14,h+8,6);cx.fill();cx.strokeStyle='rgba(255,255,255,.6)';cx.lineWidth=1;cx.stroke();
+    const blink=Math.floor((now-G.flapAt)/180)%2===0;
+    cx.fillStyle=blink?'#ff3b2f':'#6a1a14';cx.beginPath();cx.arc(298,GT-28,6,0,Math.PI*2);cx.fill();if(blink)glow(cx,GLOW.red,298,GT-28,46,.9);
+    cx.fillStyle='#101722';rr(cx,254,GT-20,44,15,3);cx.fill();cx.fillStyle='#ff5a4a';cx.font='900 9px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';cx.fillText('もう一度',276,GT-12.5);}
+  if(G&&G.res&&G.res.pass){const a=(now-G.endAt)/1000;
+    glow(cx,GLOW.green,RX,GT-14,40+a*80,Math.max(0,.9-a*1.2));
+    cx.strokeStyle=`rgba(120,255,170,${Math.max(0,.9-a*1.4)})`;cx.lineWidth=2;cx.beginPath();cx.ellipse(RX,GT-12,20+a*70,6+a*18,0,0,Math.PI*2);cx.stroke();
+    cx.fillStyle='#101722';rr(cx,254,GT-20,44,15,3);cx.fill();cx.fillStyle='#8fe3ff';cx.font='900 8px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';cx.fillText('残額 1,234',276,GT-12.5);}
+  /* where the card landed, a tiny mark on the pad, after the fact */
+  if(G&&G.res&&G.res.tapped){const lx=RX+G.res.dx/MMPX;cx.fillStyle=G.res.pass?'rgba(120,255,170,.95)':'rgba(255,90,70,.95)';cx.beginPath();cx.moveTo(lx,GT-24);cx.lineTo(lx-4,GT-31);cx.lineTo(lx+4,GT-31);cx.closePath();cx.fill();}
+  if(G&&G.round===1&&G.plan===undefined&&G.phase==='walk'){const a=(now-G.t0)/1000;cx.save();cx.globalAlpha=clamp((1.3-a)/.3,0,1);pill('読み取り部の真上で、タップ',180,Math.min(H-28,Yf+60));cx.restore();}
+}
+function pill(label,lx,ly){cx.save();cx.font='900 15px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';
+  const w=cx.measureText(label).width+22;cx.fillStyle='rgba(20,24,32,.86)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
+function loop(now){requestAnimationFrame(loop);if(G)step(now);render(now);}
+requestAnimationFrame(loop);
+function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);}
+
+/* ---------- result ---------- */
+function cropBox(){const {Yf}=L();return {y0:Math.max(0,Yf-236),y1:Math.min(H,Yf+36)};}
+function takeSnap(){
+  /* a resize (the phone's address bar moving) clears the canvas between frames; draw it again so the picture is never blank */
+  try{render(performance.now());}catch(e){}
+  try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
+    c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
+}
+function mmText(){return G.res.dev.toFixed(1);}
+function titleOf(){
+  const r=G.res;
+  if(!r.tapped)return '改札に突っ込んだ人';
+  if(!r.pass)return r.early?'カードを空中でかざした人':'改札に止められた人';
+  if(r.dev===0)return '改札と心が通じている人';
+  if(r.dev<1)return '毎日この改札を通る人';
+  if(r.dev<5)return '定期券のプロ';
+  if(r.dev<15)return 'ふつうに通れた人';
+  return 'ギリギリ通れた人';
+}
+function sideText(r){return r.dev===0?'ぴったり真ん中':r.early?`中心より${mmText()}mm手前（早い）`:`中心より${mmText()}mm奥（遅い）`;}
+function feedback(){const r=G.res;if(!r.tapped)return 'タッチ：しなかった（そのまま改札へ）';return 'タッチ：'+sideText(r);}
+function statusLine(){const r=G.res;return r.pass?'ピッ（そのまま通れた）':'ピンポーン（止められた）';}
+function shareText(){
+  return `改札で、止まらずにICカードをタッチしろ　ズレ${mmText()}mm（${G.res.pass?'ピッ':'ピンポーン'}）【${titleOf()}】\n${SHARE_URL}`;
+}
+
+async function showResult(){
+  const r=G.res;
+  $('rScore').innerHTML=`読み取り部の中心からのズレ<b>${mmText()}<small>mm</small></b>`;
+  $('rCount').textContent=statusLine();
+  $('rTitle').textContent='【'+titleOf()+'】';
+  const lines=[feedback(),`読み取れるのは中心から${ACC}mm以内`];
+  if(PREV)lines.push('前の回：'+PREV);
+  $('rSub').innerHTML=lines.map(s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))).join('<br>');
+  PREV=r.tapped?sideText(r):'タッチしなかった';
+  $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawShare();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(res=>G.cardCanvas.toBlob(res,'image/png'));if(b)G.cardFile=new File([b],'kaisatsu-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='kaisatsu-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
+
+/* The share image: the result on top, the gate at the moment in the middle, the touch line, and a band with the game name and the creator. */
+async function drawShare(){
+  try{await document.fonts.ready;}catch(e){}
+  if(!G.snap)takeSnap();
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const {y0,y1}=cropBox(),sh=y1-y0;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#6f7480';x.font=`900 16px ${F}`;x.fillText('読み取り部の中心からのズレ',w/2,32);
+  const n=mmText(),u='mm';let fs=96;x.font=`400 ${fs}px ${D}`;let tw=x.measureText(n).width;
+  while(tw*1.45>w-30&&fs>40){fs-=4;x.font=`400 ${fs}px ${D}`;tw=x.measureText(n).width;}
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;const pw=x.measureText(u).width;
+  const sx=(w-(tw+pw+4))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${D}`;x.fillText(n,sx,124);
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;x.fillText(u,sx+tw+4,124);
+  x.textAlign='center';x.fillStyle='#24262b';x.font=`900 17px ${F}`;x.fillText(statusLine(),w/2,160);
+  x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('【'+titleOf()+'】',w/2,192);
+  x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
+  try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#3a4458';x.fillRect(0,top0,w,sh);}
+  x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
+  x.fillStyle='#6f7480';let ff=14;x.font=`700 ${ff}px ${F}`;while(x.measureText(feedback()).width>w-20&&ff>10){ff-=.5;x.font=`700 ${ff}px ${F}`;}
+  x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
+  x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
+  x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${D}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>8){gs-=.5;x.font=`400 ${gs}px ${D}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,bottom+band/2);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+
+/* ---------- start ---------- */
+function begin(){newGame();resize();$('title').hidden=true;$('result').hidden=true;$('mute').hidden=false;}
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+/* for checks and recording: play(d) taps so the card lands d mm from the reader's centre (minus = before it; null = never tap) */
+function play(d){begin();G.plan=d;}
+window.__kaisatsu={get G(){return G;},begin,tap,play,shareText,showResult,L,RX,MMPX,VPX,DIP,ACC};
+</script>
+</body>
+</html>
