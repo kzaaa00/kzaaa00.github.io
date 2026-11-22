@@ -7,7 +7,7 @@
 <meta name="description" content="歩きながら、カードが読み取り部の真上に来た瞬間にタップ。駅も改札もカードもすべて架空です。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="改札で、止まらずにICカードをタッチしろ。">
-<meta property="og:description" content="歩きながら、カードの影を光る的に重ねてタップ。">
+<meta property="og:description" content="歩きながら、メーターの▼が緑に入ったらタップ。">
 <meta property="og:url" content="https://kzaaa00.github.io/kaisatsu/">
 <meta property="og:image" content="https://kzaaa00.github.io/kaisatsu/play.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -40,7 +40,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 .btn.x{background:#000;box-shadow:0 5px 0 #444}
 .btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 #title .how{margin:-14px 0 24px;font-size:15px;font-weight:900;color:var(--ink)}
-#title .how b{color:#1d6fd0}
+#title .how b{color:#1a9a50}
 #title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
 
 #result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
@@ -72,7 +72,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 
   <div id="title" class="panel">
     <h1>改札で、<br>止まらずに<br>ICカードをタッチしろ。</h1>
-    <p class="how">カードの<b>影</b>を、光る<b>的</b>に重ねてタップ。</p>
+    <p class="how">下のメーターの<b>▼</b>が、<b>緑</b>に入ったらタップ。</p>
     <button class="btn" id="startBtn" type="button">はじめる</button>
     <p class="fine">駅・改札・カードはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
   </div>
@@ -260,6 +260,43 @@ function drawGhost(x,gx,hot){
   x.restore();
 }
 
+/* the meter under the gate: where the card would land if you tapped now, blown up.
+   left = early, middle (green) = the reader answers, right = late. 1 px per mm. */
+const MR=150;
+function drawMeter(x,now){
+  const {Yf}=L(),mx=180,my=Yf+66,mh=26;
+  let v=null,col='#ffffff',live=false;
+  if(G&&G.phase==='walk'){v=(cardX(now)+VPX*DIP-RX)*MMPX;live=true;}
+  else if(G&&G.phase==='dip'&&G.dx!=null){v=G.dx;}
+  else if(G&&G.res&&G.res.tapped){v=G.res.dx;}
+  const inZone=v!=null&&Math.abs(v)<=ACC;
+  x.save();
+  /* caption */
+  x.font='900 15px '+BODYF();x.textAlign='center';x.textBaseline='middle';
+  const cap=live?(inZone?'いま！タップ':'▼が緑に入ったらタップ'):G&&G.res?(G.res.pass?'ピッ！':G.res.tapped?(G.res.early?'早すぎた':'遅すぎた'):'タップしなかった'):'';
+  if(cap){const w=x.measureText(cap).width+24;x.fillStyle=live&&inZone?'rgba(20,120,60,.92)':'rgba(20,24,32,.86)';rr(x,mx-w/2,my-40,w,28,14);x.fill();x.fillStyle='#fff';x.fillText(cap,mx,my-25);}
+  /* bar */
+  x.fillStyle='rgba(20,24,32,.82)';rr(x,mx-MR-6,my-4,MR*2+12,mh+8,10);x.fill();
+  x.fillStyle='#5a3a44';x.fillRect(mx-MR,my,MR-ACC,mh);x.fillRect(mx+ACC,my,MR-ACC,mh);
+  x.fillStyle=inZone?'#3fe07f':'#22a85a';x.fillRect(mx-ACC,my,ACC*2,mh);
+  x.fillStyle='rgba(255,255,255,.9)';x.fillRect(mx-1,my,2,mh);
+  if(inZone)glow(x,GLOW.green,mx,my+mh/2,60,.7);
+  /* labels */
+  x.font='900 12px '+BODYF();x.fillStyle='#ffffff';
+  x.textAlign='left';x.fillText('← 早い',mx-MR,my+mh+16);x.textAlign='right';x.fillText('遅い →',mx+MR,my+mh+16);
+  x.textAlign='center';x.fillStyle='#9ff0bd';x.fillText('ちょうど',mx,my+mh+16);
+  /* the marker */
+  if(v!=null){
+    const out=Math.abs(v)>MR,px=mx+clamp(v,-MR,MR);
+    col=live?(inZone?'#ffffff':'#ffd23f'):G.res&&G.res.pass?'#7dffb0':'#ff6a5a';
+    x.globalAlpha=out?.5:1;
+    x.fillStyle=col;x.fillRect(px-2,my-2,4,mh+4);
+    x.beginPath();x.moveTo(px,my-3);x.lineTo(px-9,my-15);x.lineTo(px+9,my-15);x.closePath();x.fill();
+    x.strokeStyle='rgba(0,0,0,.5)';x.lineWidth=1;x.stroke();
+  }
+  x.restore();
+}
+
 /* ---------- state ---------- */
 let G=null,PREV=null,ROUND=0;
 function newGame(){ROUND++;G={phase:'walk',t0:performance.now(),tapAt:0,res:null,shown:false,plan:undefined,snap:null,snapped:false,round:ROUND,stopX:null,endAt:0};}
@@ -378,7 +415,7 @@ function render(now){
     cx.fillStyle='#101722';rr(cx,254,GT-20,44,15,3);cx.fill();cx.fillStyle='#8fe3ff';cx.font='900 8px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';cx.fillText('残額 1,234',276,GT-12.5);}
   /* where the card landed, a tiny mark on the pad, after the fact */
   if(G&&G.res&&G.res.tapped){const lx=RX+G.res.dx/MMPX;cx.fillStyle=G.res.pass?'rgba(120,255,170,.95)':'rgba(255,90,70,.95)';cx.beginPath();cx.moveTo(lx,GT-24);cx.lineTo(lx-4,GT-31);cx.lineTo(lx+4,GT-31);cx.closePath();cx.fill();}
-  if(G&&G.round===1&&G.plan===undefined&&G.phase==='walk'){const a=(now-G.t0)/1000;cx.save();cx.globalAlpha=clamp(a/.25,0,1);pill('カードの影を、光る的に重ねてタップ',180,Math.min(H-28,Yf+60));cx.restore();}
+  if(G)drawMeter(cx,now);
 }
 function pill(label,lx,ly){cx.save();cx.font='900 15px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';
   const w=cx.measureText(label).width+22;cx.fillStyle='rgba(20,24,32,.86)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
