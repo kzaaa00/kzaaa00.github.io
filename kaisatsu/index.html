@@ -7,7 +7,7 @@
 <meta name="description" content="歩きながら、カードが読み取り部の真上に来た瞬間にタップ。駅も改札もカードもすべて架空です。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="改札で、止まらずにICカードをタッチしろ。">
-<meta property="og:description" content="歩きながら、読み取り部の真上でタップ。">
+<meta property="og:description" content="歩きながら、カードの影を光る的に重ねてタップ。">
 <meta property="og:url" content="https://kzaaa00.github.io/kaisatsu/">
 <meta property="og:image" content="https://kzaaa00.github.io/kaisatsu/play.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -39,6 +39,8 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 .btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
 .btn.x{background:#000;box-shadow:0 5px 0 #444}
 .btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .how{margin:-14px 0 24px;font-size:15px;font-weight:900;color:var(--ink)}
+#title .how b{color:#1d6fd0}
 #title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
 
 #result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
@@ -70,6 +72,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 
   <div id="title" class="panel">
     <h1>改札で、<br>止まらずに<br>ICカードをタッチしろ。</h1>
+    <p class="how">カードの<b>影</b>を、光る<b>的</b>に重ねてタップ。</p>
     <button class="btn" id="startBtn" type="button">はじめる</button>
     <p class="fine">駅・改札・カードはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
   </div>
@@ -235,6 +238,28 @@ function drawPad(x,now){
   glow(x,GLOW.blue,RX,GT-14,40,.5*pulse);
 }
 
+/* the target: the part of the reader that answers (within ACC mm of its centre) */
+const TZ=ACC/MMPX;
+function drawTarget(x,now,hot){
+  const {GT}=L(),y=GT-12,p=.6+.4*Math.sin(now/180);
+  glow(x,hot?GLOW.green:GLOW.warm,RX,y,30+6*p,hot?.9:.55+.25*p);
+  x.save();x.lineWidth=2;x.strokeStyle=hot?'rgba(120,255,170,.95)':`rgba(255,215,80,${.75+.25*p})`;
+  x.beginPath();x.ellipse(RX,y,TZ,4.5,0,0,Math.PI*2);x.stroke();
+  /* brackets above, so the target reads from far */
+  x.beginPath();x.moveTo(RX-TZ,y-20);x.lineTo(RX-TZ,y-13);x.moveTo(RX+TZ,y-20);x.lineTo(RX+TZ,y-13);x.stroke();
+  x.fillStyle=x.strokeStyle;x.beginPath();x.moveTo(RX,y-9);x.lineTo(RX-5,y-17);x.lineTo(RX+5,y-17);x.closePath();x.fill();
+  x.restore();
+}
+/* the ghost: where the card would come down if you tapped right now */
+function drawGhost(x,gx,hot){
+  const {GT}=L(),y=GT-12;
+  x.save();x.translate(gx,y);
+  x.fillStyle=hot?'rgba(120,255,170,.4)':'rgba(255,255,255,.18)';rr(x,-20,-4,40,8,2.5);x.fill();
+  x.setLineDash([4,3]);x.lineWidth=1.6;x.strokeStyle=hot?'rgba(160,255,190,1)':'rgba(255,255,255,.95)';x.stroke();x.setLineDash([]);
+  x.fillStyle=x.strokeStyle;x.fillRect(-1.2,-9,2.4,16);
+  x.restore();
+}
+
 /* ---------- state ---------- */
 let G=null,PREV=null,ROUND=0;
 function newGame(){ROUND++;G={phase:'walk',t0:performance.now(),tapAt:0,res:null,shown:false,plan:undefined,snap:null,snapped:false,round:ROUND,stopX:null,endAt:0};}
@@ -335,7 +360,11 @@ function render(now){
   drawArm(cx,bx,cxp,cyp);
   /* near gate in front (cached), then the pad, then the card over it */
   drawPad(cx,now);
+  let ghost=null;
+  if(G&&G.phase==='walk'){const gx=cardX(now)+VPX*DIP;ghost={gx,hot:Math.abs(gx-RX)<=TZ};drawTarget(cx,now,ghost.hot);}
+  else if(!G||G.phase==='dip')drawTarget(cx,now,false);
   drawCard(cx,cxp,cyp,tilt);
+  if(ghost&&ghost.gx>-30)drawGhost(cx,ghost.gx,ghost.hot);
   /* flaps */
   if(G&&G.flapAt){const a=Math.min(1,(now-G.flapAt)/120);const h=56*ease(a);
     const g=cx.createLinearGradient(0,GT-h,0,GT);g.addColorStop(0,'rgba(255,110,90,.95)');g.addColorStop(1,'rgba(200,50,40,.95)');
@@ -349,7 +378,7 @@ function render(now){
     cx.fillStyle='#101722';rr(cx,254,GT-20,44,15,3);cx.fill();cx.fillStyle='#8fe3ff';cx.font='900 8px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';cx.fillText('残額 1,234',276,GT-12.5);}
   /* where the card landed, a tiny mark on the pad, after the fact */
   if(G&&G.res&&G.res.tapped){const lx=RX+G.res.dx/MMPX;cx.fillStyle=G.res.pass?'rgba(120,255,170,.95)':'rgba(255,90,70,.95)';cx.beginPath();cx.moveTo(lx,GT-24);cx.lineTo(lx-4,GT-31);cx.lineTo(lx+4,GT-31);cx.closePath();cx.fill();}
-  if(G&&G.round===1&&G.plan===undefined&&G.phase==='walk'){const a=(now-G.t0)/1000;cx.save();cx.globalAlpha=clamp((1.3-a)/.3,0,1);pill('読み取り部の真上で、タップ',180,Math.min(H-28,Yf+60));cx.restore();}
+  if(G&&G.round===1&&G.plan===undefined&&G.phase==='walk'){const a=(now-G.t0)/1000;cx.save();cx.globalAlpha=clamp(a/.25,0,1);pill('カードの影を、光る的に重ねてタップ',180,Math.min(H-28,Yf+60));cx.restore();}
 }
 function pill(label,lx,ly){cx.save();cx.font='900 15px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';
   const w=cx.measureText(label).width+22;cx.fillStyle='rgba(20,24,32,.86)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
