@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ポテチの袋を、中身を飛ばさずに開けろ。</title>
+<meta name="description" content="袋の口を下へ引いて開ける。遅いと開かない、速いとチップが飛ぶ。ちょうどの速さで開けられるか。登場するものはすべて架空です。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ポテチの袋を、中身を飛ばさずに開けろ。">
+<meta property="og:description" content="袋の口を下へ引いて開ける。">
+<meta property="og:url" content="https://kzaaa00.github.io/potechi/">
+<meta property="og:image" content="https://kzaaa00.github.io/potechi/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* A bag of chips held up over the table. Pull the front of the bag down once: too slow and the seal holds, too fast and the chips fly. */
+:root{
+  --ink:#24262b; --muted:#6f7480; --paper:#f7f6f2; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#2b2a27}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none;-webkit-touch-callout:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#f2e6d0;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app.shake{animation:shake .45s}
+@keyframes shake{15%{transform:translate(-9px,3px)}30%{transform:translate(8px,-3px)}45%{transform:translate(-6px,2px)}60%{transform:translate(4px,-1px)}75%{transform:translate(-2px,0)}}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:linear-gradient(#f7eedc,#ecdcbf)}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,7.6vw,38px);line-height:1.45;margin:0 0 30px;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
+
+#result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:56px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#card{width:100%;border-radius:10px;border:1px solid #d6d8dc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-label="テーブルの上で持ったポテトチップスの袋の画面"></canvas>
+
+  <div id="title" class="panel">
+    <h1>ポテチの袋を、<br>中身を飛ばさずに<br>開けろ。</h1>
+    <button class="btn" id="startBtn" type="button">はじめる</button>
+    <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+  </div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>ポテチの袋の結果</h2>
+      <p id="rScore"></p>
+      <p id="rCount"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <div class="btns">
+        <button class="btn" id="retry" type="button">もう一回</button>
+        <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
+      </div>
+      <img id="card" alt="結果と、そのときの袋の画面">
+      <p class="fine">登場するものはすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='ポテチの袋を、中身を飛ばさずに開けろ。';
+const CREATOR='@ordwxjhj';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/potechi/';})();
+const BODYF=()=>getComputedStyle(document.documentElement).getPropertyValue('--body');
+
+/* ---------- the rules (sim.js uses the same numbers) ---------- */
+const D=110;       /* pull the front of the bag down this far (px) and the mouth is fully open */
+const S0=3;        /* the pull starts counting once the finger has moved this far */
+const V0=520;      /* the right speed, px per second, averaged over the whole pull (S0..D) */
+const OK=.0006;    /* within 0.06% of it counts as exactly right (100.0%) */
+const SLOW=-.5,FAST=.5; /* slower than half: the seal holds and the fingers slip. Faster than 1.5x: the bag rips open */
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('potechi-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*1;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,vol,freq,delay=0,type='bandpass',q=1){
+  if(muted||!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=nbuf();s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur+.02);
+}
+function tone(f,dur,type='sine',vol=.05,delay=0,f2){
+  if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+}
+const SFX={
+  crinkle(){noise(.08,.08,3200,0,'highpass');},
+  open(big){noise(.18+.25*big,.2+.2*big,1800,0,'bandpass',.8);noise(.1,.12,5000,.02,'highpass');},
+  slip(){tone(300,.12,'sine',.06,0,170);noise(.06,.06,2500,0,'highpass');},
+  rip(){noise(.5,.35,1200,0,'bandpass',.6);noise(.3,.2,4000,.05,'highpass');tone(140,.25,'sine',.1,0,60);},
+  chip(d){noise(.05,.06,2800+Math.random()*1500,d,'bandpass',3);}
+};
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('potechi-mute',muted?'1':'0');}catch(err){}syncMute();});
+$('mute').addEventListener('pointerdown',e=>e.stopPropagation());
+
+/* ---------- canvas ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=360,H=640,SC=1,DPR=1;
+function resize(){
+  const r=$('app').getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);
+  SC=r.width/360;W=360;H=r.height/SC;
+  cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+}
+addEventListener('resize',resize);try{visualViewport.addEventListener('resize',resize);}catch(e){}
+resize();
+/* Ys: the top seal of the bag. The bag hangs from there; the table is below it. */
+const BX0=78,BX1=282,BW=BX1-BX0,BH=262,CXB=(BX0+BX1)/2;
+function L(){const Ys=Math.round(Math.max(150,Math.min(H-350,H*.3)));return {Ys,Yb:Ys+BH,Yt:Math.min(H-24,Ys+BH+52)};}
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);}
+function ease(e){e=clamp(e,0,1);return e*e*(3-2*e);}
+
+/* ---------- state ---------- */
+let G=null,ROUND=0,PREV=null;
+function newGame(){ROUND++;G={phase:'ready',t0:performance.now(),pull:0,drag:null,res:null,shown:false,plan:undefined,snap:null,snapped:false,chips:[],round:ROUND,tj:0};}
+
+/* ---------- input: one pull down ---------- */
+function pt(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/SC,y:(e.clientY-r.top)/SC};}
+let PID=null;
+cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='ready'||PID!==null)return;e.preventDefault();ac();PID=e.pointerId;try{cv.setPointerCapture(e.pointerId);}catch(err){}
+  const P=pt(e);G.drag={y0:P.y,pts:[[e.timeStamp||performance.now(),0]]};G.phase='pull';SFX.crinkle();});
+cv.addEventListener('pointermove',e=>{if(!G||!G.drag||e.pointerId!==PID)return;
+  let evs=[e];try{const c=e.getCoalescedEvents&&e.getCoalescedEvents();if(c&&c.length)evs=c;}catch(err){}
+  for(const ev of evs){const P=pt(ev);addPoint(ev.timeStamp||performance.now(),P.y-G.drag.y0);if(G.phase!=='pull')break;}});
+const up=e=>{if(e.pointerId!==PID)return;PID=null;if(G&&G.phase==='pull'){G.phase='ready';G.drag=null;G.back=performance.now();G.backFrom=G.pull;G.pull=0;}};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+/* the front of the bag follows the finger 1:1; the moment it reaches D the mouth is open and the speed is judged */
+function addPoint(t,dy){
+  const d=G.drag;d.pts.push([t,dy]);G.pull=clamp(dy,0,D);
+  if(dy>=D){const v=avgSpeed(d.pts);G.lastPts=d.pts;G.drag=null;judge(v,t);}
+}
+/* average speed over the whole pull: from where the finger had moved S0 to where it reached D (stopping before you start does not count) */
+function crossT(pts,y){for(let i=1;i<pts.length;i++)if(pts[i][1]>=y){const a=pts[i-1],b=pts[i];return a[0]+(b[0]-a[0])*((y-a[1])/Math.max(1e-6,b[1]-a[1]));}return pts[pts.length-1][0];}
+/* where the finger started moving: touch screens send no events while the finger rests, so after a pause the step from
+   the resting point to the first move is not part of the pull; take the start from the pace of the first moves instead */
+function startT(pts){const i=pts.findIndex(p=>p[1]>=S0);if(i<1)return pts[0][0];const a=pts[i-1],b=pts[i];
+  if(b[0]-a[0]<=40)return a[0]+(b[0]-a[0])*((S0-a[1])/Math.max(1e-6,b[1]-a[1]));
+  let j=i+1;while(j<pts.length-1&&pts[j][0]-b[0]<24)j++;const c=pts[Math.min(j,pts.length-1)];
+  const v=(c[1]-b[1])/Math.max(1,c[0]-b[0]);return v>0?b[0]-(b[1]-S0)/v:b[0];}
+function avgSpeed(pts){const t0=startT(pts),t1=crossT(pts,D);return (D-S0)/Math.max(1,(t1-t0))*1000;}
+
+function judge(v,t){
+  const r=v/V0-1;
+  let kind;
+  if(Math.abs(r)<=OK)kind='clean';
+  else if(r<SLOW)kind='slip';
+  else if(r>FAST)kind='rip';
+  else kind=r<0?'slow':'fast';
+  const d=r*100;
+  /* chips that fly: 1 for every 2% too fast; a rip throws out most of the bag */
+  const fly=kind==='fast'?Math.max(1,Math.round(d/2)):kind==='rip'?60:0;
+  /* too slow: the seal gives only in the middle; 1% too slow closes 2% of the mouth's width */
+  const open=kind==='slow'?clamp(1+2*r,.04,1):kind==='slip'?0:1;
+  G.res={v,r,d,kind,fly,open,dev:devOf(d,kind)};if(G.drag===null&&G.lastPts===undefined)G.lastPts=null;G.phase='open';G.tj=t||performance.now();
+  if(kind==='slip'){SFX.slip();G.pull=0;}
+  else if(kind==='rip'){SFX.rip();anim($('app'),'shake');}
+  else SFX.open(clamp(r*2,0,1));
+  const {Ys}=L();
+  for(let i=0;i<fly;i++){const k=i/Math.max(1,fly-1)-.5,sp=kind==='rip'?1.25:1;
+    G.chips.push({x:CXB+k*(kind==='rip'?150:90)+(rnd(i+ROUND)-.5)*30,y:Ys+20,vx:(k*260+(rnd(i*3+ROUND)-.5)*200)*sp,vy:-(420+rnd(i*7+ROUND)*520*clamp(.4+d/40,.4,1.2))*sp,a:rnd(i*5)*6,va:(rnd(i*9)-.5)*20,s:10+rnd(i*11)*7,delay:i*.012});}
+  for(let i=0;i<Math.min(10,fly);i++)SFX.chip(.35+i*.06);
+  G.endIn=kind==='slip'?1500:kind==='clean'||kind==='slow'?1500:2300;
+}
+function devOf(d,kind){const a=Math.abs(d);if(kind==='clean')return 0;return Math.max(.1,Math.ceil(a*10-1e-9)/10);}
+
+function step(now){
+  if(G.phase==='ready'&&G.plan!==undefined&&now-G.t0>=300){
+    const v=V0*(1+G.plan/100);G.phase='pull';G.drag={y0:0,pts:[[now,0]],auto:v,ta:now};SFX.crinkle();}
+  if(G.phase==='pull'&&G.drag&&G.drag.auto){const d=G.drag;const dy=(now-d.ta)/1000*d.auto;
+    if(dy>=D){d.pts.push([d.ta+D/d.auto*1000,D]);G.pull=D;G.drag=null;judge(d.auto,d.ta+D/d.auto*1000);}else{d.pts.push([now,dy]);G.pull=dy;}}
+  if(G.phase==='open'){
+    const a=(now-G.tj)/1000;
+    if(!G.snapped&&a*1000>=G.endIn-400){G.snapped=true;takeSnap();}
+    if(a*1000>=G.endIn&&!G.shown){G.shown=true;showResult();}
+  }
+}
+
+/* ---------- drawing ---------- */
+const SKIN='#f1c9a6',SKIN_D='#d9a37c';
+function drawRoom(x){
+  const {Yt}=L();
+  x.fillStyle='#f2e6d0';x.fillRect(0,0,W,Yt);
+  x.fillStyle='rgba(180,140,90,.12)';for(let i=0;i<9;i++)x.fillRect(i*44-6,0,18,Yt);
+  /* window light */
+  x.fillStyle='rgba(255,255,255,.35)';rr(x,236,Math.max(10,Yt-470),110,150,8);x.fill();
+  /* table */
+  x.fillStyle='#b98a5a';x.fillRect(0,Yt,W,H-Yt);x.fillStyle='#a3764a';x.fillRect(0,Yt,W,6);
+  x.strokeStyle='rgba(90,55,25,.18)';x.lineWidth=1.2;for(let i=1;i<6;i++){x.beginPath();x.moveTo(0,Yt+i*22);x.bezierCurveTo(120,Yt+i*22+5,240,Yt+i*22-5,W,Yt+i*22+2);x.stroke();}
+}
+/* the top edge of the front panel at x: pulled down in the middle, held at the sealed corners */
+function frontEdge(xp,pull,open){const hw=BW/2*open;const k=hw<1?0:clamp(1-Math.abs(xp-CXB)/hw,0,1);return pull*Math.sin(k*Math.PI/2);}
+function chipShape(x,X,Y,s,a,col='#f3c44f'){x.save();x.translate(X,Y);x.rotate(a);x.fillStyle=col;x.beginPath();x.moveTo(-s,0);x.bezierCurveTo(-s,-s*.7,s*.4,-s*.8,s,-s*.1);x.bezierCurveTo(s*.9,s*.6,-s*.4,s*.8,-s,0);x.fill();
+  x.fillStyle='rgba(200,130,40,.35)';x.beginPath();x.arc(-s*.2,-s*.1,s*.14,0,Math.PI*2);x.arc(s*.35,s*.15,s*.1,0,Math.PI*2);x.fill();x.restore();}
+function drawBag(x,now){
+  const {Ys,Yb}=L();
+  let pull=G?G.pull:0,open=1;
+  if(G&&G.res){open=G.res.open;pull=G.res.kind==='slip'?0:D;}
+  if(G&&G.phase==='ready'&&G.back){const a=(now-G.back)/1000;pull=G.backFrom*Math.max(0,1-a*8)*Math.cos(a*30);}
+  if(G&&G.res&&G.res.kind==='slip'){const a=(now-G.tj)/1000;pull=D*.5*Math.max(0,1-a*5)*Math.cos(a*34);open=1;}
+  const rip=G&&G.res&&G.res.kind==='rip';
+  /* back panel: its sealed top band stays put */
+  x.fillStyle='#1f6f8b';x.fillRect(BX0+4,Ys,BW-8,BH-6);
+  /* inside of the bag, seen through the open mouth */
+  x.fillStyle='#3a2a14';x.beginPath();x.moveTo(BX0+6,Ys+14);for(let xp=BX0+6;xp<=BX1-6;xp+=4)x.lineTo(xp,Ys+14+frontEdge(xp,pull,open)+(rip?40:0));x.lineTo(BX1-6,Ys+14);x.closePath();x.fill();
+  if(pull>20){x.save();x.beginPath();x.moveTo(BX0+6,Ys+14);for(let xp=BX0+6;xp<=BX1-6;xp+=4)x.lineTo(xp,Ys+14+frontEdge(xp,pull,open)+(rip?40:0));x.lineTo(BX1-6,Ys+14);x.closePath();x.clip();
+    for(let i=0;i<16;i++)chipShape(x,BX0+20+rnd(i+1)*(BW-40),Ys+30+rnd(i+5)*Math.max(10,pull-6),11+rnd(i+9)*5,rnd(i+2)*6,i%3?'#f3c44f':'#e8b23c');x.restore();}
+  /* back seal band (crimped) */
+  x.fillStyle='#17566c';x.fillRect(BX0,Ys-2,BW,16);x.fillStyle='rgba(255,255,255,.18)';for(let xp=BX0+3;xp<BX1;xp+=6)x.fillRect(xp,Ys,2,12);
+  x.fillStyle='#17566c';x.beginPath();x.moveTo(BX0,Ys-2);for(let xp=BX0;xp<=BX1;xp+=6)x.lineTo(xp+3,Ys-6),x.lineTo(xp+6,Ys-2);x.closePath();x.fill();
+  /* front panel: its top edge is pulled down; the sealed corners stay up */
+  const top=xp=>Ys+14+frontEdge(xp,pull,open);
+  x.save();
+  x.beginPath();x.moveTo(BX0,top(BX0));for(let xp=BX0;xp<=BX1;xp+=4)x.lineTo(xp,top(xp));
+  x.lineTo(BX1,Yb-14);x.quadraticCurveTo(BX1,Yb,BX1-16,Yb);x.lineTo(BX0+16,Yb);x.quadraticCurveTo(BX0,Yb,BX0,Yb-14);x.closePath();
+  const g=x.createLinearGradient(BX0,0,BX1,0);g.addColorStop(0,'#1d7f9e');g.addColorStop(.25,'#2fa3c4');g.addColorStop(.5,'#3cb4d3');g.addColorStop(.8,'#2a95b6');g.addColorStop(1,'#1b6f8a');
+  x.fillStyle=g;x.fill();x.strokeStyle='rgba(0,40,60,.4)';x.lineWidth=1.2;x.stroke();x.clip();
+  /* shine stripe and the label */
+  x.fillStyle='rgba(255,255,255,.22)';x.beginPath();x.moveTo(BX0+26,Ys);x.lineTo(BX0+46,Ys);x.lineTo(BX0+32,Yb);x.lineTo(BX0+14,Yb);x.closePath();x.fill();
+  const ly=Ys+pull*.25;
+  x.fillStyle='#fff6d8';x.beginPath();x.ellipse(CXB,ly+120,78,62,0,0,Math.PI*2);x.fill();
+  for(let i=0;i<5;i++)chipShape(x,CXB-34+i*17,ly+140+(i%2)*8,15,-.4+i*.3,i%2?'#f2bf45':'#f7d066');
+  x.fillStyle='#c8402c';x.font=`400 30px ${'"Dela Gothic One",sans-serif'}`;x.textAlign='center';x.textBaseline='middle';x.fillText('ぱりっと',CXB,ly+95);
+  x.fillStyle='#24262b';x.font=`900 15px ${BODYF()}`;x.fillText('うすしお味',CXB,ly+68);
+  x.fillStyle='rgba(255,255,255,.85)';x.font=`900 11px ${BODYF()}`;x.fillText('ポテトチップス',CXB,ly+200);
+  /* rip down the side */
+  if(rip){const a=clamp((now-G.tj)/250,0,1);x.fillStyle='#3a2a14';x.beginPath();x.moveTo(BX1-40,Ys+14);for(let i=0;i<=10;i++)x.lineTo(BX1-40+(i%2?8:-6)+i*1.5,Ys+14+i*14*a);x.lineTo(BX1-20,Ys+14);x.closePath();x.fill();}
+  x.restore();
+  /* the front panel's own crimped top edge */
+  x.strokeStyle='#145066';x.lineWidth=5;x.beginPath();x.moveTo(BX0,top(BX0));for(let xp=BX0;xp<=BX1;xp+=4)x.lineTo(xp,top(xp));x.stroke();
+  return {pull,top};
+}
+function drawHands(x,now,pull){
+  const {Ys}=L();
+  /* left hand holds the back of the bag at the top left */
+  x.fillStyle='rgba(0,0,0,.1)';rr(x,BX0-50,Ys-22,64,48,20);x.fill();
+  x.fillStyle=SKIN;rr(x,BX0-52,Ys-26,62,46,20);x.fill();x.strokeStyle=SKIN_D;x.lineWidth=1.3;x.stroke();
+  x.fillStyle=SKIN;rr(x,BX0-6,Ys-14,26,16,8);x.fill();x.strokeStyle=SKIN_D;x.stroke();
+  /* right hand: thumb and finger pinch the front panel at the middle, moving down with it */
+  const fy=Ys+14+pull;
+  x.fillStyle='rgba(0,0,0,.1)';rr(x,CXB+18,fy-8,56,46,20);x.fill();
+  x.fillStyle=SKIN;rr(x,CXB+14,fy-14,56,46,20);x.fill();x.strokeStyle=SKIN_D;x.lineWidth=1.3;x.stroke();
+  x.fillStyle=SKIN;rr(x,CXB-14,fy-6,36,16,8);x.fill();x.strokeStyle=SKIN_D;x.stroke();
+  x.fillStyle='#f9e3d4';x.beginPath();x.ellipse(CXB-6,fy+2,6,5,0,0,Math.PI*2);x.fill();
+}
+function drawGuide(x){
+  /* where the pull ends: the mouth is fully open at this line */
+  const {Ys}=L();const y=Ys+14+D;
+  x.save();x.setLineDash([6,5]);x.lineWidth=3;x.strokeStyle='rgba(40,30,20,.25)';x.beginPath();x.moveTo(BX0-8,y);x.lineTo(BX1+8,y);x.stroke();x.lineWidth=1.4;x.strokeStyle='#fff';x.stroke();x.restore();
+  /* arrow down from the pinch */
+  x.save();x.strokeStyle='rgba(255,255,255,.95)';x.lineWidth=4;x.lineCap='round';x.beginPath();x.moveTo(CXB-48,Ys+30);x.lineTo(CXB-48,y-14);x.stroke();
+  x.fillStyle='#fff';x.beginPath();x.moveTo(CXB-58,y-18);x.lineTo(CXB-48,y-4);x.lineTo(CXB-38,y-18);x.closePath();x.fill();x.restore();
+}
+function drawChips(x,now){
+  if(!G||!G.res)return;const {Yt}=L();const a0=(now-G.tj)/1000;
+  for(const c of G.chips){const a=a0-c.delay;if(a<0)continue;let px=c.x+c.vx*a,py=c.y+c.vy*a+.5*1500*a*a,ang=c.a+c.va*a;
+    const land=Yt+8+((c.s*7)%22);if(py>land){const tl=(-c.vy+Math.sqrt(c.vy*c.vy+2*1500*(land-c.y)))/1500;px=c.x+c.vx*tl;py=land;ang=c.a+c.va*tl;}
+    chipShape(x,px,py,c.s,ang);}
+}
+function pill(label,lx,ly){cx.save();cx.font='900 15px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';
+  const w=cx.measureText(label).width+22;cx.fillStyle='rgba(36,38,43,.86)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
+
+function render(now){
+  cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
+  drawRoom(cx);
+  const b=drawBag(cx,now);
+  if(G&&(G.phase==='ready'||G.phase==='pull')&&!window.__noguide)drawGuide(cx);
+  drawHands(cx,now,b.pull);
+  drawChips(cx,now);
+  const {Yb}=L();
+  if(G&&G.phase==='ready'&&G.round===1&&G.plan===undefined){pill('下へ引いて開ける',180,Math.min(H-28,Yb+30));}
+}
+function loop(now){requestAnimationFrame(loop);if(G)step(now);render(now);}
+requestAnimationFrame(loop);
+function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);}
+
+/* ---------- result ---------- */
+function cropBox(){const {Ys,Yt}=L();return {y0:Math.max(0,Ys-150),y1:Math.min(H,Yt+40)};}
+function takeSnap(){
+  try{render(performance.now());}catch(e){}
+  try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
+    c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
+}
+function failed(r=G.res){return r.kind==='slip'||r.kind==='rip';}
+function score(){const r=G.res;if(failed(r))return 0;return Math.max(0,Math.round((100-r.dev)*10)/10);}
+function pct(){return score().toFixed(1);}
+function bigWord(r=G.res){return r.kind==='slip'?'開かない':r.kind==='rip'?'大惨事':pct()+'%';}
+function statusLine(r=G.res){
+  if(r.kind==='slip')return '遅すぎて指がすべった';
+  if(r.kind==='rip')return '速すぎて袋が裂けた';
+  if(r.kind==='clean')return 'ちょうど・1枚も飛ばない';
+  if(r.kind==='slow')return r.dev.toFixed(1)+'%遅い・口が'+Math.round(r.open*100)+'%しか開かない';
+  return r.dev.toFixed(1)+'%速い・'+r.fly+'枚飛んだ';
+}
+function titleOf(){
+  const r=G.res;
+  if(r.kind==='slip')return '袋に負けた人';
+  if(r.kind==='rip')return '部屋じゅうポテチの人';
+  if(r.kind==='clean')return 'パーティー開けの名人';
+  if(r.dev<1)return 'ほぼ名人';
+  if(r.kind==='fast'){if(r.fly<=3)return 'ちょっと飛ばした人';if(r.fly<=10)return 'テーブルに配った人';return 'ポテチをまいた人';}
+  if(r.dev<5)return 'ちょっと慎重な人';if(r.dev<20)return '口がせまい人';return 'ハサミを探す人';
+}
+function lineOf(r){
+  if(r.kind==='clean')return 'ちょうど（1枚も飛ばない）';
+  const w=r.kind==='slip'?'（指がすべった）':r.kind==='rip'?'（袋が裂けた）':r.kind==='slow'?'（口が'+Math.round(r.open*100)+'%しか開かない）':'（'+r.fly+'枚飛んだ）';
+  return 'ちょうどより'+r.dev.toFixed(1)+'%'+(r.d<0?'遅い':'速い')+w;
+}
+function feedback(){return '引く速さ：'+lineOf(G.res);}
+function shareText(){
+  return `ポテチの袋を、中身を飛ばさずに開けろ　${failed()?bigWord():'開けっぷり'+pct()+'%'}（${statusLine()}）【${titleOf()}】\n${SHARE_URL}`;
+}
+
+async function showResult(){
+  const r=G.res;
+  $('rScore').innerHTML=failed(r)?`開けっぷり<b>${bigWord(r)}</b>`:`開けっぷり<b>${pct()}<small>%</small></b>`;
+  $('rCount').textContent=statusLine();
+  $('rTitle').textContent='【'+titleOf()+'】';
+  const lines=[feedback()];
+  if(PREV)lines.push('前の回：'+lineOf(PREV));
+  $('rSub').innerHTML=lines.map(s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))).join('<br>');
+  PREV=r;
+  $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(res=>G.cardCanvas.toBlob(res,'image/png'));if(b)G.cardFile=new File([b],'potechi-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='potechi-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
+
+/* The share image: the result on top, the bag at the end in the middle, the speed line, and a band with the game name and the creator. */
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  if(!G.snap)takeSnap();
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',Df='"Dela Gothic One",sans-serif';
+  const {y0,y1}=cropBox(),sh=y1-y0;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#6f7480';x.font=`900 16px ${F}`;x.fillText('開けっぷり',w/2,32);
+  const fl=failed(),n=fl?bigWord():pct(),u=fl?'':'%';let fs=fl?70:96;x.font=`400 ${fs}px ${Df}`;let tw=x.measureText(n).width;
+  while(tw*1.3>w-30&&fs>40){fs-=4;x.font=`400 ${fs}px ${Df}`;tw=x.measureText(n).width;}
+  x.font=`400 ${Math.round(fs*.45)}px ${Df}`;const pw=u?x.measureText(u).width+4:0;
+  const sx=(w-(tw+pw))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${Df}`;x.fillText(n,sx,124);
+  if(u){x.font=`400 ${Math.round(fs*.45)}px ${Df}`;x.fillText(u,sx+tw+4,124);}
+  x.textAlign='center';x.fillStyle='#24262b';let ss=17;x.font=`900 ${ss}px ${F}`;while(x.measureText(statusLine()).width>w-20&&ss>11){ss-=.5;x.font=`900 ${ss}px ${F}`;}x.fillText(statusLine(),w/2,160);
+  x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('【'+titleOf()+'】',w/2,192);
+  x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
+  try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#f2e6d0';x.fillRect(0,top0,w,sh);}
+  x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
+  x.fillStyle='#6f7480';let ff=14;x.font=`700 ${ff}px ${F}`;while(x.measureText(feedback()).width>w-20&&ff>10){ff-=.5;x.font=`700 ${ff}px ${F}`;}
+  x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
+  x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
+  x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${Df}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>8){gs-=.5;x.font=`400 ${gs}px ${Df}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,bottom+band/2);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+
+/* ---------- start ---------- */
+function begin(){PID=null;newGame();resize();$('title').hidden=true;$('result').hidden=true;$('mute').hidden=false;}
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+/* for checks and recording: play(d) pulls at a steady speed d % from the right one, 0.3 s after the start */
+function play(d){begin();G.plan=d;}
+window.__potechi={get G(){return G;},begin,play,shareText,showResult,score,L,avgSpeed,startT,judge,D,S0,V0,OK};
+</script>
+</body>
+</html>
