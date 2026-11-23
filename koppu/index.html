@@ -156,7 +156,7 @@ addEventListener('resize',resize);try{visualViewport.addEventListener('resize',r
 resize();
 /* Yr: the rim of the glass. Yg: the table under it. The pitcher's spout hangs above-left. */
 const CXG=180,RXR=110,RYR=14,RXB=90,WALL=5;
-function L(){const Yr=Math.round(Math.max(250,Math.min(H-262,H*.46)));const Yg=Yr+212;return {Yr,Yg,SPX:132,SPY:Yr-150,lim:Yr-LIM*MM};}
+function L(){const Yr=Math.round(Math.max(250,Math.min(H-262,H*.46)));const Yg=Yr+212;return {Yr,Yg,SPX:132,SPY:Yr-150,lim:Yr-LIM*MM-RYR};}
 function hw(y){const {Yr,Yg}=L();return RXR-WALL-(RXR-RXB)*(y-Yr)/(Yg-Yr);}
 function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
@@ -340,6 +340,7 @@ function drawWater(x,now){
     /* top of the dome, seen from slightly above */
     g=x.createLinearGradient(0,yl-RYR,0,yl+RYR);g.addColorStop(0,'rgba(235,250,255,.9)');g.addColorStop(1,'rgba(160,215,242,.85)');
     x.fillStyle=g;x.beginPath();x.ellipse(CXG,yl,rt,RYR,0,0,Math.PI*2);x.fill();
+    x.strokeStyle='rgba(70,140,190,.55)';x.lineWidth=1.2;x.beginPath();x.ellipse(CXG,yl,rt,RYR,0,Math.PI,Math.PI*2);x.stroke();
     /* the bright rolled edge that says "this is about to go" */
     x.strokeStyle='rgba(255,255,255,.95)';x.lineWidth=1.8;x.beginPath();x.moveTo(CXG-rw+1,Yr-1);x.bezierCurveTo(CXG-rw,Yr-hp*.6,CXG-rt-sh*.3,yl+RYR*.2,CXG-rt+6,yl+RYR*.55);x.stroke();
     x.beginPath();x.moveTo(CXG+rw-1,Yr-1);x.bezierCurveTo(CXG+rw,Yr-hp*.6,CXG+rt+sh*.3,yl+RYR*.2,CXG+rt-6,yl+RYR*.55);x.stroke();
