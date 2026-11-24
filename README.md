@@ -1,5 +1,8 @@
 # kzaaa00.github.io
 
+トップページ（ゲーム一覧）: `index.html`。ゲームを足したら `index.html` の一覧にも1枚足す（ai-tegara-binta・ronten-binta・potechi は一覧に出さない）。
+ほかに `about/`（このサイトについて・お問い合わせ）と `privacy/`（プライバシーポリシー）。
+
 - [ai-tegara-binta](https://kzaaa00.github.io/ai-tegara-binta/)
 - [kidoku](https://kzaaa00.github.io/kidoku/)
 - [yugiri](https://kzaaa00.github.io/yugiri/)
