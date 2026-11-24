@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>寄ってくるペンギンを、枠ぴったりで撮れ。</title>
-<meta name="description" content="どんどん寄ってくるペンギンを、カメラの枠にぴったり収まる瞬間に撮る。近すぎるとくちばしでつつかれる。登場するものはすべて架空です。">
+<title>大好きで寄ってくるペンギンを、全員1枚に収めろ。</title>
+<meta name="description" content="しゃがんでスマホを向けたら、ペンギンたちが大好きで寄ってきた。全員がカメラの枠にぴったり収まる瞬間に撮る。近すぎると撮れない。登場するものはすべて架空です。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="寄ってくるペンギンを、枠ぴったりで撮れ。">
+<meta property="og:title" content="大好きで寄ってくるペンギンを、全員1枚に収めろ。">
 <meta property="og:description" content="枠にぴったり収まる瞬間に撮る。">
 <meta property="og:url" content="https://kzaaa00.github.io/penguin/">
 <meta property="og:image" content="https://kzaaa00.github.io/penguin/play.png">
@@ -65,10 +65,11 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 </head>
 <body>
 <div id="app">
-  <canvas id="cv" aria-label="スマホのカメラ越しに、芝生の上をこちらへ歩いてくるペンギンたちの画面"></canvas>
+  <canvas id="cv" aria-label="しゃがんだ飼育員のスマホのカメラ越しに、芝生の上をこちらへ寄ってくるペンギンの群れの画面"></canvas>
 
   <div id="title" class="panel">
-    <h1>寄ってくる<br>ペンギンを、<br>枠ぴったりで撮れ。</h1>
+    <h1>大好きで<br>寄ってくるペンギンを、<br>全員1枚に収めろ。</h1>
+    <p style="margin:0 0 14px;font-weight:900;font-size:14px;line-height:1.6">あなたは飼育員。しゃがんでスマホを向けたら、<br>みんな寄ってきた。</p>
     <button class="btn" id="startBtn" type="button">はじめる</button>
     <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
   </div>
@@ -97,16 +98,17 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 
 <script>
 const $=id=>document.getElementById(id);
-const GAME='寄ってくるペンギンを、枠ぴったりで撮れ。';
+const GAME='大好きで寄ってくるペンギンを、全員1枚に収めろ。';
 const CREATOR='@ordwxjhj';
 const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://kzaaa00.github.io/penguin/';})();
 const BODYF=()=>getComputedStyle(document.documentElement).getPropertyValue('--body');
 
 /* ---------- the rules (sim.js uses the same numbers) ---------- */
-const V=320;       /* the front penguin walks at you at 320 mm per second, always */
+const V=320;       /* the front penguin's usual walking speed, mm per second (it changes its mind: see makePlan) */
 const D0=1500;     /* it starts 1.5 m away */
 const BEST=400;    /* at 40 cm it fills the frame exactly */
-const OKMM=.05;    /* within 0.05 mm of that counts as exactly right (100.0%) */
+const OKMM=.05;
+const OKP=.0125;    /* within 0.0125% of just-fitting counts as exactly right (100.0%) */
 const PECK=150;    /* closer than 15 cm and it pecks the lens instead */
 const END=60;      /* nobody waits forever: at 6 cm it pecks anyway */
 
@@ -130,7 +132,8 @@ const SFX={
   shutter(){noise(.05,.25,3000,0,'highpass');noise(.06,.2,1800,.07,'bandpass',2);},
   step(){noise(.03,.03,700,0,'bandpass',4);},
   peck(){tone(900,.05,'square',.06,0,500);tone(900,.05,'square',.06,.12,500);noise(.05,.12,2500,0,'bandpass',3);noise(.05,.12,2500,.12,'bandpass',3);},
-  coo(){tone(620,.12,'triangle',.05,0,880);tone(700,.1,'triangle',.04,.15,520);}
+  coo(){tone(620,.12,'triangle',.05,0,880);tone(700,.1,'triangle',.04,.15,520);},
+  hey(){tone(760,.07,'triangle',.05,0,1100);}
 };
 function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
 syncMute();
@@ -148,7 +151,7 @@ function resize(){
 addEventListener('resize',resize);try{visualViewport.addEventListener('resize',resize);}catch(e){}
 resize();
 /* CY: the centre of the frame. FH: its height. A penguin d mm away is K/d px tall: exactly FH*.92 at BEST. */
-const FW=210,FH=250,K=FH*.96/.92*BEST; /* the drawn penguin is .92 h tall, so at BEST it fills 96% of the frame */
+const FW=300,FH=200,K=FH*.96/.92*BEST; /* the drawn penguin is .92 h tall, so at BEST it fills 96% of the frame */
 function L(){const CY=Math.round(Math.max(210,Math.min(H-250,H*.42)));return {CY,hz:CY-30,SH:Math.min(H-62,CY+FH/2+120)};}
 function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
@@ -157,9 +160,45 @@ function ease(e){e=clamp(e,0,1);return e*e*(3-2*e);}
 
 /* ---------- state ---------- */
 let G=null,ROUND=0,PREV=null;
-function newGame(){ROUND++;G={phase:'walk',t0:performance.now()+500,res:null,shown:false,plan:undefined,snap:null,snapped:false,round:ROUND,ts:0,lastStep:0};}
+function newGame(seed){ROUND++;if(seed==null)seed=Math.random()*1e9|0;const F=formation(seed);
+  G={phase:'walk',t0:performance.now()+500,res:null,shown:false,plan:undefined,snap:null,snapped:false,round:ROUND,ts:0,lastStep:0,F};
+  G.Dstar=dAtFill(1);G.segs=makePlan(seed,G.Dstar);}
+/* the flock: the leader in the middle, the others around it, a bit further back. Different every round. */
+function formation(seed){const R=rng(seed*7+3);const n=5+(R()<.5?1:0);const F=[{ox:0,dz:0}];
+  const side=R()<.5?1:-1;const slots=[[-1,0],[1,0],[-.55,1],[.55,1],[0,2]];
+  for(let i=1;i<n;i++){const [sx,row]=slots[i-1];F.push({ox:sx*side*(100+R()*70)+(R()-.5)*20,dz:30+row*60+R()*90});}
+  return F;}
+/* boxes of every penguin when the leader is D mm away (screen px) */
+function boxes(D,F){const {CY}=L();const hl=K/Math.max(30,D);return F.map((f,i)=>{const d=Math.max(30,D+f.dz);const h=K/d,w=h*.62;
+  const X=180+f.ox*h/230;const Y=CY+hl*.46-(hl-h)*.3;return {i,d,h,w,X,Y,l:X-w*.56,r:X+w*.56,t:Y-h*.97,b:Y};});}
+/* how full the frame is: 1 = the first penguin just touches the frame edge */
+function fillAt(D,F){F=F||G.F;const {CY}=L();let f=0;for(const q of boxes(D,F))f=Math.max(f,(180-q.l)/(FW/2),(q.r-180)/(FW/2),(CY-q.t)/(FH/2),(q.b-CY)/(FH/2));return f;}
+function dAtFill(f){let lo=40,hi=D0*2;for(let k=0;k<60;k++){const m=(lo+hi)/2;if(fillAt(m)>f)lo=m;else hi=m;}return (lo+hi)/2;}
+/* every round the front penguin walks its own way: it stops to look around (?), suddenly hurries (!),
+   or gets bumped forward by the one behind (!). It never stands still right at the frame size. */
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makePlan(seed,Ds){Ds=Ds||BEST;
+  const R=rng(seed);let t=0,d=D0,last='',first=true;const S=[];
+  const push=(dur,dd,kind,extra)=>{S.push(Object.assign({t0:t,t1:t+dur,d0:d,d1:d-dd,kind},extra||{}));t+=dur;d-=dd;};
+  const still=()=>d>Ds+90;
+  while(d>END){
+    const v=V*(.75+R()*.5);const dist=first?260+R()*200:120+R()*220;first=false;
+    push(dist/v*1000,dist,'walk');if(d<=END)break;
+    const r=R();
+    if(r<.4&&still()&&last!=='look'){push(500+R()*700,0,'look');last='look';}
+    else if(r<.75&&last!=='hurry'){const dd=Math.min(d-END+10,140+R()*160);push(dd/(V*2.3)*1000,dd,'hurry');last='hurry';}
+    else if(still()&&d>Ds+80){push(450+R()*350,0,'look',{bump:1});push(140,75,'push');last='push';}
+  }
+  return S;
+}
+function segAt(rel){const S=G.segs;for(const g of S)if(rel<g.t1)return g;return null;}
 /* distance of the front penguin at time t (ms) */
-function distAt(t){if(!G)return D0;return D0-V*Math.max(0,t-G.t0)/1000;}
+function distAt(t){if(!G)return D0;const rel=t-G.t0;if(rel<=0)return D0;const g=segAt(rel);
+  if(!g){const z=G.segs[G.segs.length-1];return z.d1-V*(rel-z.t1)/1000;}
+  return g.d0+(g.d1-g.d0)*(rel-g.t0)/(g.t1-g.t0);}
+/* first moment (ms, page clock) the front penguin is at distance d */
+function timeAt(d){for(const g of G.segs)if(g.d0>=d&&g.d1<d&&g.d1<g.d0)return G.t0+g.t0+(g.d0-d)/(g.d0-g.d1)*(g.t1-g.t0);
+  const z=G.segs[G.segs.length-1];return G.t0+z.t1+(z.d1-d)/V*1000;}
 
 /* ---------- input: one tap = the shutter ---------- */
 function tsOf(e){const n=performance.now();const t=e&&e.timeStamp;return (t&&Math.abs(n-t)<1000)?t:n;}
@@ -169,19 +208,19 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 
 function shoot(ts,auto){
   if(!G||G.phase!=='walk')return;
-  const d=distAt(ts);const err=d-BEST;const pct=err/BEST*100;
+  const d=distAt(ts);const fill=fillAt(d);const pct=(fill-1)*100;
   const pecked=d<PECK;
-  G.res={d,err,pct,pecked,dev:devOf(err),auto:!!auto};G.phase='shot';G.ts=ts;G.dShot=d;
+  G.res={d,fill,pct,err:-pct,pecked,dev:devOf(pct),auto:!!auto};G.phase='shot';G.ts=ts;G.dShot=d;
   if(pecked){SFX.peck();anim($('app'),'shake');}else{SFX.shutter();}
-  if(!pecked&&Math.abs(err)<8)setTimeout(()=>SFX.coo(),500);
+  if(!pecked&&Math.abs(pct)<2)setTimeout(()=>SFX.coo(),500);
   G.endIn=pecked?1900:1700;
 }
-function devOf(err){const a=Math.abs(err);if(a<=OKMM)return 0;return Math.max(.1,Math.ceil(a/BEST*1000-1e-9)/10);}
+function devOf(p){const a=Math.abs(p);if(a<=OKP)return 0;return Math.max(.1,Math.ceil(a*10-1e-9)/10);}
 function step(now){
   if(G.phase==='walk'){
-    if(G.plan!==undefined&&G.plan!==null){const at=G.t0+(D0-BEST*(1+G.plan/100))/V*1000;if(now>=at)shoot(at);}
-    if(G.phase==='walk'&&distAt(now)<=END)shoot(G.t0+(D0-END)/V*1000,true);
-    if(G.phase==='walk'&&now>G.t0&&now-G.lastStep>300){G.lastStep=now;SFX.step();}
+    if(G.plan!==undefined&&G.plan!==null){const at=timeAt(G.plan==='peck'?120:dAtFill(1+G.plan/100));if(now>=at)shoot(at);}
+    if(G.phase==='walk'&&distAt(now)<=END)shoot(timeAt(END),true);
+    if(G.phase==='walk'&&now>G.t0){const g=segAt(now-G.t0);const k=g?g.kind:'walk';const gap=k==='hurry'?120:k==='push'?60:300;if(k!=='look'&&now-G.lastStep>gap){G.lastStep=now;SFX.step();}if(g&&g!==G.lastSeg){G.lastSeg=g;if(k==='hurry'||k==='push')SFX.hey();}}
   }
   if(G.phase==='shot'){
     const a=(now-G.ts)/1000;
@@ -201,16 +240,17 @@ function drawField(x){
   x.strokeStyle='rgba(60,110,40,.25)';x.lineWidth=1;for(let i=0;i<60;i++){const px=rnd(i+3)*W,py=hz+Math.pow(rnd(i+7),.7)*(H-hz);x.beginPath();x.moveTo(px,py);x.lineTo(px-2,py-5);x.moveTo(px,py);x.lineTo(px+2,py-5);x.stroke();}
 }
 /* one penguin, h px tall, feet at (X, Y) */
-function penguin(x,X,Y,h,ph,peck){
-  const w=h*.62;x.save();x.translate(X,Y);x.rotate(Math.sin(ph)*.08);
+function penguin(x,X,Y,h,ph,peck,mode,ma){
+  const w=h*.62;x.save();x.translate(X,Y);x.rotate(mode==='look'?Math.sin(ma*4.2)*.2:Math.sin(ph)*(mode==='hurry'?.13:.08));
   x.fillStyle='rgba(0,0,0,.18)';x.beginPath();x.ellipse(0,0,w*.55,h*.06,0,0,Math.PI*2);x.fill();
   /* feet */
   x.fillStyle='#f0a23a';x.beginPath();x.ellipse(-w*.2,-h*.02+Math.max(0,Math.sin(ph))*-h*.02,w*.17,h*.04,0,0,Math.PI*2);x.ellipse(w*.2,-h*.02+Math.max(0,-Math.sin(ph))*-h*.02,w*.17,h*.04,0,0,Math.PI*2);x.fill();
   /* body */
   x.fillStyle='#22262e';x.beginPath();x.ellipse(0,-h*.46,w*.5,h*.46,0,0,Math.PI*2);x.fill();
   /* flippers */
-  x.save();x.translate(-w*.46,-h*.55);x.rotate(.35+Math.sin(ph*2)*.12);x.beginPath();x.ellipse(0,h*.14,w*.1,h*.2,0,0,Math.PI*2);x.fill();x.restore();
-  x.save();x.translate(w*.46,-h*.55);x.rotate(-.35-Math.sin(ph*2)*.12);x.beginPath();x.ellipse(0,h*.14,w*.1,h*.2,0,0,Math.PI*2);x.fill();x.restore();
+  const fl=mode==='hurry'||mode==='push'?.95+Math.sin(ma*38)*.4:.35+Math.sin(ph*2)*.12;
+  x.save();x.translate(-w*.46,-h*.55);x.rotate(fl);x.beginPath();x.ellipse(0,h*.14,w*.1,h*.2,0,0,Math.PI*2);x.fill();x.restore();
+  x.save();x.translate(w*.46,-h*.55);x.rotate(-fl);x.beginPath();x.ellipse(0,h*.14,w*.1,h*.2,0,0,Math.PI*2);x.fill();x.restore();
   /* belly and face */
   x.fillStyle='#fbfbf7';x.beginPath();x.ellipse(0,-h*.38,w*.36,h*.36,0,0,Math.PI*2);x.fill();
   x.beginPath();x.ellipse(-w*.16,-h*.78,w*.17,h*.1,0,0,Math.PI*2);x.ellipse(w*.16,-h*.78,w*.17,h*.1,0,0,Math.PI*2);x.fill();
@@ -223,10 +263,26 @@ function penguin(x,X,Y,h,ph,peck){
 }
 /* the flock: the front one walks at the middle; three more behind it */
 const FLOCK=[[0,0],[-80,260],[95,480],[-25,720]];
-function drawFlock(x,d0,tw){
-  const {CY}=L();const list=FLOCK.map(([ox,dd],i)=>({ox,d:d0+dd,i})).sort((a,b)=>b.d-a.d);
-  for(const p of list){const d=Math.max(30,p.d);const h=K/d;const X=180+p.ox*(K/d)/230;const Y=CY+h*.46+(p.i?-(1-BEST/d)*30:0);
-    penguin(x,X,Y,h,tw*7+p.i*1.7,p.i===0&&G&&G.res&&G.res.pecked);}
+function poseAt(t){
+  if(!G)return {mode:'walk',ma:0,off:0,mark:''};const rel=t-G.t0;const g=rel>0?segAt(rel):null;if(!g)return {mode:'walk',ma:0,off:0,mark:''};
+  const a=(rel-g.t0)/1000,pr=(rel-g.t0)/(g.t1-g.t0);let off=0;
+  if(g.bump)off=-175*ease(pr/.8);
+  if(g.kind==='push')off=-175+75*pr;
+  const i=G.segs.indexOf(g);const pv=G.segs[i-1];if(g.kind==='walk'&&pv&&pv.kind==='push')off=-100*(1-ease(a/.6));
+  const mark=g.kind==='look'?(g.bump&&pr>.75?'!':'?'):(g.kind==='hurry'&&a<.45)||g.kind==='push'?'!':'';
+  return {mode:g.kind,ma:a,off,mark};
+}
+function drawFlock(x,d0,tw,now){
+  const {CY}=L();const P=G&&G.phase==='walk'?poseAt(now):G&&G.phase==='shot'?poseAt(G.ts):{mode:'walk',ma:0,off:0,mark:''};
+  const F=G?G.F.map((f,i)=>i===1?{ox:f.ox,dz:f.dz+P.off}:f):[{ox:0,dz:0},{ox:-90,dz:150},{ox:95,dz:170},{ox:-50,dz:300},{ox:55,dz:320}];
+  const list=boxes(d0,F).sort((a,b)=>b.d-a.d);
+  const walked=(D0-d0)/320*7;let top=null;
+  for(const p of list){const {h,X,Y}=p;
+    const lead=p.i===0;const mode=lead?P.mode:(P.mode==='look'&&!(p.i===1&&P.off<-20)?'look':'walk');
+    penguin(x,X,Y,h,(lead?walked:walked+tw*2)+p.i*1.7,lead&&G&&G.res&&G.res.pecked,mode,P.ma+p.i*.4);
+    if(lead)top={X,Y:Y-h*.98,h};}
+  if(top&&P.mark&&!(G&&G.phase==='shot')){const fs=clamp(top.h*.2,16,44);x.save();x.font='900 '+fs+'px '+BODYF();x.textAlign='center';x.textBaseline='bottom';
+    const bob=Math.sin(P.ma*10)*2;x.lineWidth=4;x.strokeStyle='rgba(0,0,0,.35)';x.strokeText(P.mark,top.X+top.h*.28,top.Y+bob);x.fillStyle=P.mark==='!'?'#ffd84a':'#fff';x.fillText(P.mark,top.X+top.h*.28,top.Y+bob);x.restore();}
 }
 function drawUI(x,phase){
   const {CY,SH}=L();
@@ -234,7 +290,7 @@ function drawUI(x,phase){
   const x0=180-FW/2,x1=180+FW/2,y0=CY-FH/2,y1=CY+FH/2,b=24;
   x.strokeStyle='rgba(255,255,255,.95)';x.lineWidth=3.5;x.lineCap='round';
   for(const [px,py,sx,sy] of [[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]]){x.beginPath();x.moveTo(px,py+sy*b);x.lineTo(px,py);x.lineTo(px+sx*b,py);x.stroke();}
-  x.font='900 12px '+BODYF();x.textAlign='center';x.textBaseline='bottom';x.lineWidth=3;x.strokeStyle='rgba(0,0,0,.35)';x.strokeText('この枠にぴったり',180,y0-6);x.fillStyle='#fff';x.fillText('この枠にぴったり',180,y0-6);
+  x.font='900 12px '+BODYF();x.textAlign='center';x.textBaseline='bottom';x.lineWidth=3;x.strokeStyle='rgba(0,0,0,.35)';x.strokeText('全員この枠にぴったり',180,y0-6);x.fillStyle='#fff';x.fillText('全員この枠にぴったり',180,y0-6);
   /* phone camera bar and shutter */
   x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,SH-40,W,H-SH+40);
   x.fillStyle='#fff';x.beginPath();x.arc(180,SH+8,27,0,Math.PI*2);x.fill();
@@ -248,7 +304,7 @@ function pill(label,lx,ly){cx.save();cx.font='900 15px '+BODYF();cx.textAlign='c
 function scene(x,now,d){
   drawField(x);
   const tw=G?Math.max(0,(G.phase==='walk'?now:G.ts)-G.t0)/1000:0;
-  drawFlock(x,d,tw);
+  drawFlock(x,d,tw,now);
 }
 function render(now){
   cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
@@ -260,7 +316,7 @@ function render(now){
   }else{scene(cx,now,d);}
   drawUI(cx,G?G.phase:'');
   if(G&&G.phase==='shot'&&!G.res.pecked){const a=(now-G.ts)/1000;if(a<.25){cx.fillStyle=`rgba(255,255,255,${1-a/.25})`;cx.fillRect(0,0,W,H);}}
-  if(G&&G.phase==='walk'&&G.round===1&&G.plan===undefined){const {CY}=L();pill('枠ぴったりの瞬間にタップ',180,CY+FH/2+36);}
+  if(G&&G.phase==='walk'&&G.round===1&&G.plan===undefined){const {CY}=L();pill('全員が枠にぴったり収まる瞬間にタップ',180,CY+FH/2+36);}
 }
 function loop(now){requestAnimationFrame(loop);if(G)step(now);render(now);}
 requestAnimationFrame(loop);
@@ -278,31 +334,31 @@ function score(){const r=G.res;if(failed(r))return 0;return Math.max(0,Math.roun
 function pct(){return score().toFixed(1);}
 function cmOf(r){return (Math.abs(r.err)/10).toFixed(1);}
 function statusLine(r=G.res){
-  if(r.pecked)return 'くちばしでレンズをつつかれた';
-  if(r.dev===0)return '枠ぴったり';
-  return r.err>0?r.dev.toFixed(1)+'%遠い（'+cmOf(r)+'cm早い）':r.dev.toFixed(1)+'%近い（'+cmOf(r)+'cm遅い）';
+  if(r.pecked)return '近すぎてくちばしがレンズに';
+  if(r.dev===0)return '全員ぴったり';
+  return r.pct<0?r.dev.toFixed(1)+'%小さい':r.dev.toFixed(1)+'%はみ出した';
 }
 function titleOf(){
   const r=G.res;
-  if(r.pecked)return 'くちばしに撮られた人';
-  if(r.dev===0)return 'ペンギンの専属カメラマン';
-  if(r.dev<1)return 'ほぼ専属カメラマン';
-  if(r.err>0){if(r.dev<5)return 'ちょっとせっかちな人';if(r.dev<40)return '遠慮がちな人';return '豆粒ペンギンの人';}
-  if(r.dev<5)return 'ちょっと待ちすぎた人';return 'ドアップの人';
+  if(r.pecked)return '大好きすぎて撮れなかった人';
+  if(r.dev===0)return 'ペンギンに選ばれし飼育員';
+  if(r.dev<1)return 'ほぼ選ばれし飼育員';
+  if(r.pct<0){if(r.dev<5)return 'ちょっとせっかちな飼育員';if(r.dev<40)return '遠慮がちな飼育員';return '豆粒ペンギンの人';}
+  if(r.dev<5)return 'ちょっと待ちすぎた飼育員';return 'はみ出しペンギンの人';
 }
 function lineOf(r){
-  if(r.pecked)return 'ちょうどより'+Math.ceil(Math.abs(r.pct)*10)/10+'%近い（つつかれた）';
-  if(r.dev===0)return 'ちょうど枠ぴったり';
-  return 'ちょうどより'+r.dev.toFixed(1)+'%'+(r.err>0?'遠い（'+cmOf(r)+'cm早い）':'近い（'+cmOf(r)+'cm遅い）');
+  if(r.pecked)return '近すぎて撮れない（くちばしがレンズに）';
+  if(r.dev===0)return 'ちょうど全員ぴったり';
+  return 'ちょうどより'+r.dev.toFixed(1)+'%'+(r.pct<0?'小さい（早い）':'はみ出した（遅い）');
 }
-function feedback(){return '距離：'+lineOf(G.res);}
+function feedback(){return '収まり：'+lineOf(G.res);}
 function shareText(){
-  return `寄ってくるペンギンを、枠ぴったりで撮れ　${failed()?'つつかれた':'ぴったり度'+pct()+'%'}（${statusLine()}）【${titleOf()}】\n${SHARE_URL}`;
+  return `大好きで寄ってくるペンギンを全員1枚に収めろ　${failed()?'撮れない':'ぴったり度'+pct()+'%'}（${statusLine()}）【${titleOf()}】\n${SHARE_URL}`;
 }
 
 async function showResult(){
   const r=G.res;
-  $('rScore').innerHTML=failed(r)?`ぴったり度<b>つつかれた</b>`:`ぴったり度<b>${pct()}<small>%</small></b>`;
+  $('rScore').innerHTML=failed(r)?`ぴったり度<b>撮れない</b>`:`ぴったり度<b>${pct()}<small>%</small></b>`;
   $('rCount').textContent=statusLine();
   $('rTitle').textContent='【'+titleOf()+'】';
   const lines=[feedback()];
@@ -358,7 +414,7 @@ async function drawCard(){
   x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
   x.textBaseline='alphabetic';x.textAlign='center';
   x.fillStyle='#6f7480';x.font=`900 16px ${F}`;x.fillText('ぴったり度',w/2,32);
-  const fl=failed(),n=fl?'つつかれた':pct(),u=fl?'':'%';let fs=fl?64:96;x.font=`400 ${fs}px ${Df}`;let tw=x.measureText(n).width;
+  const fl=failed(),n=fl?'撮れない':pct(),u=fl?'':'%';let fs=fl?64:96;x.font=`400 ${fs}px ${Df}`;let tw=x.measureText(n).width;
   while(tw*1.3>w-30&&fs>40){fs-=4;x.font=`400 ${fs}px ${Df}`;tw=x.measureText(n).width;}
   x.font=`400 ${Math.round(fs*.45)}px ${Df}`;const pw=u?x.measureText(u).width+4:0;
   const sx=(w-(tw+pw))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${Df}`;x.fillText(n,sx,124);
@@ -381,12 +437,12 @@ async function drawCard(){
 }
 
 /* ---------- start ---------- */
-function begin(){PID=null;newGame();resize();$('title').hidden=true;$('result').hidden=true;$('mute').hidden=false;}
+function begin(seed){PID=null;newGame(seed);resize();$('title').hidden=true;$('result').hidden=true;$('mute').hidden=false;}
 let PID=null;
 $('startBtn').addEventListener('click',()=>{ac();begin();});
 /* for checks and recording: play(p) taps when the front penguin is p % farther (+) or nearer (-) than exactly right; null = never */
-function play(p){begin();G.plan=p;}
-window.__penguin={get G(){return G;},begin,play,shoot,shareText,showResult,score,L,distAt,V,D0,BEST,OKMM};
+function play(p,seed){begin(seed);G.plan=p;}
+window.__penguin={get G(){return G;},begin,play,shoot,shareText,showResult,score,L,distAt,timeAt,makePlan,fillAt,dAtFill,formation,V,D0,BEST,OKMM};
 </script>
 </body>
 </html>
