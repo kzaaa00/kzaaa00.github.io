@@ -180,14 +180,14 @@ function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15
 function makePlan(seed,Ds){Ds=Ds||BEST;
   const R=rng(seed);let t=0,d=D0,last='',first=true;const S=[];
   const push=(dur,dd,kind,extra)=>{S.push(Object.assign({t0:t,t1:t+dur,d0:d,d1:d-dd,kind},extra||{}));t+=dur;d-=dd;};
-  const still=()=>d>Ds+90;
+  const still=()=>d>Ds*1.15+80;
   while(d>END){
     const v=V*(.75+R()*.5);const dist=first?260+R()*200:120+R()*220;first=false;
     push(dist/v*1000,dist,'walk');if(d<=END)break;
     const r=R();
     if(r<.4&&still()&&last!=='look'){push(500+R()*700,0,'look');last='look';}
     else if(r<.75&&last!=='hurry'){const dd=Math.min(d-END+10,140+R()*160);push(dd/(V*2.3)*1000,dd,'hurry');last='hurry';}
-    else if(still()&&d>Ds+80){push(450+R()*350,0,'look',{bump:1});push(140,75,'push');last='push';}
+    else if(still()&&d>Ds*1.15+80){push(450+R()*350,0,'look',{bump:1});push(140,75,'push');last='push';}
   }
   return S;
 }
@@ -208,7 +208,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 
 function shoot(ts,auto){
   if(!G||G.phase!=='walk')return;
-  const d=distAt(ts);const fill=fillAt(d);const pct=(fill-1)*100;
+  const d=distAt(ts);const fill=fillT(ts);const pct=(fill-1)*100;
   const pecked=d<PECK;
   G.res={d,fill,pct,err:-pct,pecked,dev:devOf(pct),auto:!!auto};G.phase='shot';G.ts=ts;G.dShot=d;
   if(pecked){SFX.peck();anim($('app'),'shake');}else{SFX.shutter();}
@@ -218,7 +218,7 @@ function shoot(ts,auto){
 function devOf(p){const a=Math.abs(p);if(a<=OKP)return 0;return Math.max(.1,Math.ceil(a*10-1e-9)/10);}
 function step(now){
   if(G.phase==='walk'){
-    if(G.plan!==undefined&&G.plan!==null){const at=timeAt(G.plan==='peck'?120:dAtFill(1+G.plan/100));if(now>=at)shoot(at);}
+    if(G.plan!==undefined&&G.plan!==null){const at=G.plan==='peck'?timeAt(120):(G.planAt||(G.planAt=timeAtFill(1+G.plan/100)));if(now>=at)shoot(at);}
     if(G.phase==='walk'&&distAt(now)<=END)shoot(timeAt(END),true);
     if(G.phase==='walk'&&now>G.t0){const g=segAt(now-G.t0);const k=g?g.kind:'walk';const gap=k==='hurry'?120:k==='push'?60:300;if(k!=='look'&&now-G.lastStep>gap){G.lastStep=now;SFX.step();}if(g&&g!==G.lastSeg){G.lastSeg=g;if(k==='hurry'||k==='push')SFX.hey();}}
   }
@@ -240,15 +240,27 @@ function drawField(x){
   x.strokeStyle='rgba(60,110,40,.25)';x.lineWidth=1;for(let i=0;i<60;i++){const px=rnd(i+3)*W,py=hz+Math.pow(rnd(i+7),.7)*(H-hz);x.beginPath();x.moveTo(px,py);x.lineTo(px-2,py-5);x.moveTo(px,py);x.lineTo(px+2,py-5);x.stroke();}
 }
 /* one penguin, h px tall, feet at (X, Y) */
+function tiltOf(ph,mode,ma){return mode==='look'?Math.sin(ma*4.2)*.2:Math.sin(ph)*(mode==='hurry'?.13:.08);}
+function flipOf(ph,mode,ma){return mode==='hurry'||mode==='push'?.95+Math.sin(ma*38)*.4:.35+Math.sin(ph*2)*.12;}
+/* the exact outline box of a drawn penguin (body, flippers, feet; not the shadow), from the same numbers penguin() draws with */
+function pbox(q){const {X,Y,h,ph,mode,ma}=q;const w=h*.62,r0=tiltOf(ph,mode,ma),fl=flipOf(ph,mode,ma);
+  let l=1e9,r=-1e9,t=1e9,b=-1e9;
+  const ell=(cx,cy,a,bb,th)=>{const c=Math.cos(r0),s=Math.sin(r0);const X1=X+cx*c-cy*s,Y1=Y+cx*s+cy*c,T=th+r0;
+    const hw=Math.sqrt(a*a*Math.cos(T)**2+bb*bb*Math.sin(T)**2),hh=Math.sqrt(a*a*Math.sin(T)**2+bb*bb*Math.cos(T)**2);
+    l=Math.min(l,X1-hw);r=Math.max(r,X1+hw);t=Math.min(t,Y1-hh);b=Math.max(b,Y1+hh);};
+  ell(0,-h*.46,w*.5,h*.46,0);
+  for(const sg of [-1,1]){const a=-sg*fl;ell(sg*w*.46-Math.sin(a)*h*.14,-h*.55+Math.cos(a)*h*.14,w*.1,h*.2,a);}
+  ell(-w*.2,-h*.02+Math.max(0,Math.sin(ph))*-h*.02,w*.17,h*.04,0);ell(w*.2,-h*.02+Math.max(0,-Math.sin(ph))*-h*.02,w*.17,h*.04,0);
+  return {l,r,t,b};}
 function penguin(x,X,Y,h,ph,peck,mode,ma){
-  const w=h*.62;x.save();x.translate(X,Y);x.rotate(mode==='look'?Math.sin(ma*4.2)*.2:Math.sin(ph)*(mode==='hurry'?.13:.08));
-  x.fillStyle='rgba(0,0,0,.18)';x.beginPath();x.ellipse(0,0,w*.55,h*.06,0,0,Math.PI*2);x.fill();
+  const w=h*.62;x.save();x.translate(X,Y);x.rotate(tiltOf(ph,mode,ma));
+  x.fillStyle='rgba(0,0,0,.18)';x.beginPath();x.ellipse(0,0,w*.45,h*.02,0,0,Math.PI*2);x.fill();
   /* feet */
   x.fillStyle='#f0a23a';x.beginPath();x.ellipse(-w*.2,-h*.02+Math.max(0,Math.sin(ph))*-h*.02,w*.17,h*.04,0,0,Math.PI*2);x.ellipse(w*.2,-h*.02+Math.max(0,-Math.sin(ph))*-h*.02,w*.17,h*.04,0,0,Math.PI*2);x.fill();
   /* body */
   x.fillStyle='#22262e';x.beginPath();x.ellipse(0,-h*.46,w*.5,h*.46,0,0,Math.PI*2);x.fill();
   /* flippers */
-  const fl=mode==='hurry'||mode==='push'?.95+Math.sin(ma*38)*.4:.35+Math.sin(ph*2)*.12;
+  const fl=flipOf(ph,mode,ma);
   x.save();x.translate(-w*.46,-h*.55);x.rotate(fl);x.beginPath();x.ellipse(0,h*.14,w*.1,h*.2,0,0,Math.PI*2);x.fill();x.restore();
   x.save();x.translate(w*.46,-h*.55);x.rotate(-fl);x.beginPath();x.ellipse(0,h*.14,w*.1,h*.2,0,0,Math.PI*2);x.fill();x.restore();
   /* belly and face */
@@ -272,15 +284,24 @@ function poseAt(t){
   const mark=g.kind==='look'?(g.bump&&pr>.75?'!':'?'):(g.kind==='hurry'&&a<.45)||g.kind==='push'?'!':'';
   return {mode:g.kind,ma:a,off,mark};
 }
-function drawFlock(x,d0,tw,now){
-  const {CY}=L();const P=G&&G.phase==='walk'?poseAt(now):G&&G.phase==='shot'?poseAt(G.ts):{mode:'walk',ma:0,off:0,mark:''};
+/* every penguin as it is drawn when the leader is d0 away at page time t (tw: seconds since the round began) */
+function flockAt(d0,t,P){
+  const tw=G?Math.max(0,t-G.t0)/1000:0;
   const F=G?G.F.map((f,i)=>i===1?{ox:f.ox,dz:f.dz+P.off}:f):[{ox:0,dz:0},{ox:-90,dz:150},{ox:95,dz:170},{ox:-50,dz:300},{ox:55,dz:320}];
-  const list=boxes(d0,F).sort((a,b)=>b.d-a.d);
-  const walked=(D0-d0)/320*7;let top=null;
-  for(const p of list){const {h,X,Y}=p;
-    const lead=p.i===0;const mode=lead?P.mode:(P.mode==='look'&&!(p.i===1&&P.off<-20)?'look':'walk');
-    penguin(x,X,Y,h,(lead?walked:walked+tw*2)+p.i*1.7,lead&&G&&G.res&&G.res.pecked,mode,P.ma+p.i*.4);
-    if(lead)top={X,Y:Y-h*.98,h};}
+  const walked=(D0-d0)/320*7;
+  return boxes(d0,F).sort((a,b)=>b.d-a.d).map(p=>{const lead=p.i===0;
+    return Object.assign(p,{lead,ph:(lead?walked:walked+tw*2)+p.i*1.7,mode:lead?P.mode:(P.mode==='look'&&!(p.i===1&&P.off<-20)?'look':'walk'),ma:P.ma+p.i*.4});});}
+/* how full the frame is, measured on the drawn penguins: 1 = the first one just touches the frame line */
+function fillOf(list){const {CY}=L();let f=0;for(const q of list){const b=pbox(q);f=Math.max(f,(180-b.l)/(FW/2),(b.r-180)/(FW/2),(CY-b.t)/(FH/2),(b.b-CY)/(FH/2));}return f;}
+function fillT(t){return fillOf(flockAt(distAt(t),t,poseAt(t)));}
+/* first moment the drawn flock reaches fill f (scripted shots) */
+function timeAtFill(f){const t1=timeAt(END);let a=G.t0;for(let t=G.t0;t<=t1;t+=4){if(fillT(t)>=f){let lo=t-4,hi=t;for(let k=0;k<40;k++){const m=(lo+hi)/2;if(fillT(m)>=f)hi=m;else lo=m;}return hi;}}return t1;}
+function drawFlock(x,d0,tw,now){
+  const P=G&&G.phase==='walk'?poseAt(now):G&&G.phase==='shot'?poseAt(G.ts):{mode:'walk',ma:0,off:0,mark:''};
+  const tt=G?(G.phase==='shot'?G.ts:now):now;let top=null;
+  for(const p of flockAt(d0,tt,P)){const {h,X,Y}=p;
+    penguin(x,X,Y,h,p.ph,p.lead&&G&&G.res&&G.res.pecked,p.mode,p.ma);
+    if(p.lead)top={X,Y:Y-h*.98,h};}
   if(top&&P.mark&&!(G&&G.phase==='shot')){const fs=clamp(top.h*.2,16,44);x.save();x.font='900 '+fs+'px '+BODYF();x.textAlign='center';x.textBaseline='bottom';
     const bob=Math.sin(P.ma*10)*2;x.lineWidth=4;x.strokeStyle='rgba(0,0,0,.35)';x.strokeText(P.mark,top.X+top.h*.28,top.Y+bob);x.fillStyle=P.mark==='!'?'#ffd84a':'#fff';x.fillText(P.mark,top.X+top.h*.28,top.Y+bob);x.restore();}
 }
@@ -442,7 +463,7 @@ let PID=null;
 $('startBtn').addEventListener('click',()=>{ac();begin();});
 /* for checks and recording: play(p) taps when the front penguin is p % farther (+) or nearer (-) than exactly right; null = never */
 function play(p,seed){begin(seed);G.plan=p;}
-window.__penguin={get G(){return G;},begin,play,shoot,shareText,showResult,score,L,distAt,timeAt,makePlan,fillAt,dAtFill,formation,V,D0,BEST,OKMM};
+window.__penguin={get G(){return G;},begin,play,shoot,shareText,showResult,score,L,distAt,timeAt,makePlan,fillAt,fillT,timeAtFill,dAtFill,formation,V,D0,BEST,OKMM};
 </script>
 </body>
 </html>
