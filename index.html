@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<title>日常あるあるミニゲーム</title>
+<meta name="description" content="カップ焼きそばの湯切り、納豆のタレ、改札のタッチ。日常のちょっとした緊張を、スマホで数秒遊べるブラウザゲームにしています。登録もインストールもいりません。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="日常あるあるミニゲーム">
+<meta property="og:description" content="日常のちょっとした緊張を、スマホで数秒遊べるブラウザゲームに。">
+<meta name="twitter:card" content="summary">
+<style>
+:root{--ink:#24262b;--muted:#6f7480;--paper:#f7f6f2;--card:#fff;--line:#e3e1da;--red:#c8402c;
+  --display:"Dela Gothic One","Hiragino Sans",sans-serif;--body:"Zen Maru Gothic","Hiragino Sans",sans-serif}
+@media (prefers-color-scheme:dark){:root{--ink:#ecebe6;--muted:#a3a7b0;--paper:#1b1c1f;--card:#26282c;--line:#3a3c41;--red:#ef6a52}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-weight:500;line-height:1.7}
+.wrap{max-width:960px;margin:0 auto;padding:24px 16px 48px}
+header h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,5vw,34px);line-height:1.3;margin:8px 0 4px}
+header p{margin:0;color:var(--muted)}
+a{color:var(--red)}
+ul.games{list-style:none;padding:0;margin:24px 0 0;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+ul.games a{display:block;height:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;color:inherit;text-decoration:none}
+ul.games a:hover{border-color:var(--red)}
+ul.games img{display:block;width:100%;height:auto;aspect-ratio:1200/630;object-fit:cover;background:var(--line)}
+ul.games h2{font-size:16px;font-weight:900;line-height:1.45;margin:10px 12px 4px}
+ul.games p{font-size:13px;color:var(--muted);margin:0 12px 12px;line-height:1.6}
+main.doc h2{font-size:18px;font-weight:900;margin:28px 0 6px}
+main.doc p,main.doc li{font-size:15px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+footer a{color:var(--muted);margin-right:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>日常あるある<br>ミニゲーム</h1>
+  <p>カップ焼きそばの湯切り、納豆のタレ、改札のタッチ。日常のちょっとした緊張を、スマホで数秒遊べるゲームにしています。登録もインストールもいりません。結果は画像つきでXにシェアできます。</p>
+</header>
+<ul class="games">
+    <li><a href="/orca/">
+      <img src="/orca/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>プールのシャチになって、線ギリギリまで乗り上げろ。</h2>
+      <p>水族館のプールのシャチになって、スロープに自分で乗り上げて遊ぶ。長押しで勢いをためて、離すと乗り上げる。鼻先が赤い線ぴったりで止まれば100%。越えたらアウト。</p>
+    </a></li>
+    <li><a href="/penguin/">
+      <img src="/penguin/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>大好きで寄ってくるペンギンを、全員1枚に収めろ。</h2>
+      <p>しゃがんでスマホを向けたら、ペンギンたちが大好きで寄ってきた。全員がカメラの枠にぴったり収まる瞬間に撮る。近すぎると撮れない。</p>
+    </a></li>
+    <li><a href="/koppu/">
+      <img src="/koppu/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>コップの水を、こぼさずに表面張力ギリギリまで注げ。</h2>
+      <p>押している間だけピッチャーを傾けて注ぐ。ふちから盛り上がった水が、こぼれる寸前で止められるか。</p>
+    </a></li>
+    <li><a href="/kaisatsu/">
+      <img src="/kaisatsu/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>改札で、止まらずにICカードをタッチしろ。</h2>
+      <p>歩きながら、カードが読み取り部の真上に来た瞬間にタップ。</p>
+    </a></li>
+    <li><a href="/onigiri/">
+      <img src="/onigiri/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>コンビニおにぎりの海苔を、破らずに開けろ。</h2>
+      <p>②を左へ、③を右へ。フィルムを横に引き抜いて、海苔を破らずに開けられるか。</p>
+    </a></li>
+    <li><a href="/hamigaki/">
+      <img src="/hamigaki/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>歯みがき粉を、はみ出さずに歯ブラシいっぱいに出せ。</h2>
+      <p>押している間だけチューブをしぼる。歯ブラシの毛の端から端まで、ぴったり出せるか。</p>
+    </a></li>
+    <li><a href="/tsurikawa/">
+      <img src="/tsurikawa/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>満員電車で、つり革をつかめ。</h2>
+      <p>ゆれるつり革が手の上に来た瞬間にタップしてつかむだけ。つかみそこねると、となりの人にもたれます。</p>
+    </a></li>
+    <li><a href="/label/">
+      <img src="/label/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>ペットボトルのラベルを、一回で全部はがせ。</h2>
+      <p>ミシン目にそって、ラベルを下へ引くだけ。途中でそれたら、ラベルが残ります。全部はがせたら、タイムで勝負。</p>
+    </a></li>
+    <li><a href="/tamago/">
+      <img src="/tamago/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>卵を片手で割って、殻を1つも入れるな。</h2>
+      <p>下にシュッとふって、卵をボウルのふちで1回で割るだけ。入った殻の数が結果になります。</p>
+    </a></li>
+    <li><a href="/hanketsu/">
+      <img src="/hanketsu/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>六法を見ずに、判決を当てろ。</h2>
+      <p>本当にあった裁判の判決を当てるクイズ。10問中、何問当てられるか。</p>
+    </a></li>
+    <li><a href="/tape/">
+      <img src="/tape/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>セロハンテープの端を、一発で見つけろ。</h2>
+      <p>回るテープの端が爪の下に来た瞬間にタップ。端からのズレが結果になります。</p>
+    </a></li>
+    <li><a href="/jidoudoa/">
+      <img src="/jidoudoa/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>自動ドアに気づいてもらえ。</h2>
+      <p>押しているあいだ歩いて、離すと止まる。自動ドアに気づいてもらえるか。</p>
+    </a></li>
+    <li><a href="/natto/">
+      <img src="/natto/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>納豆のタレを、手につけずに開けろ。</h2>
+      <p>タレの袋をしごいて、納豆にかけるだけ。指についたタレの滴の数が結果になります。</p>
+    </a></li>
+    <li><a href="/shotoku/">
+      <img src="/shotoku/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>聖徳太子体験｜10人の話を、いっぺんに聞き分けろ。</h2>
+      <p>何人もが同時に話します。誰が何と言ったか聞き分けてください。2人から始まって、最後は10人。</p>
+    </a></li>
+    <li><a href="/omakase/">
+      <img src="/omakase/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>ツイートおまかせ</h2>
+      <p>ボタンを押すと3つの言葉が回って、1つのツイートができます。予想いいねは適当です。</p>
+    </a></li>
+    <li><a href="/renji/">
+      <img src="/renji/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>電子レンジを、チンと鳴らさずに止めろ。</h2>
+      <p>深夜の台所。家族は寝ている。ダイヤル式の電子レンジを、針が0に着く直前で止めるだけ。0からのずれが結果になります。</p>
+    </a></li>
+    <li><a href="/kidoku/">
+      <img src="/kidoku/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>既読をつけずに、全部読め。</h2>
+      <p>通知を下に引いて、既読をつけずに全部読むゲーム。</p>
+    </a></li>
+    <li><a href="/yugiri/">
+      <img src="/yugiri/play.png" alt="" width="1200" height="630" loading="lazy">
+      <h2>カップ焼きそばの湯切りで、麺を1本も落とすな。</h2>
+      <p>フタをはがして、傾けて、お湯を捨てるだけ。シンクに落ちた麺の本数が結果になります。</p>
+    </a></li>
+</ul>
+<footer><a href="/">ゲーム一覧</a><a href="/about/">このサイトについて・お問い合わせ</a><a href="/privacy/">プライバシーポリシー</a><br>© 2026 kzaaa00</footer>
+</div>
+</body>
+</html>

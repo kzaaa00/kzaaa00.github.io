@@ -1,5 +1,9 @@
 # kzaaa00.github.io
 
+トップページ（ゲーム一覧）: `index.html`。ゲームを足したら `index.html` の一覧にも1枚足す（ai-tegara-binta・ronten-binta・potechi は一覧に出さない）。
+各ゲームには `_parts/moregames.html`（タイトル画面の左上「‹ 他のゲーム」と結果画面の「ほかのゲームで遊ぶ」）を `</body>` の直前に貼る。
+ほかに `about/`（このサイトについて・お問い合わせ）と `privacy/`（プライバシーポリシー）。
+
 - [ai-tegara-binta](https://kzaaa00.github.io/ai-tegara-binta/)
 - [kidoku](https://kzaaa00.github.io/kidoku/)
 - [yugiri](https://kzaaa00.github.io/yugiri/)

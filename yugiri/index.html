@@ -655,5 +655,24 @@ function begin(){
 $('startBtn').addEventListener('click',()=>{ac();begin();});
 window.__yugiri={get G(){return G;},begin,L,lidGeo,cupPoint,pop,showResult,TOTAL,flick,zone,score,shareText};
 </script>
+<!--moregames:v1 タイトル画面の左上に「他のゲーム」、結果画面のボタンの下に「ほかのゲームで遊ぶ」。遊んでいる最中は出さない。-->
+<style>
+#moreGames{position:absolute;left:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:#24262b;border-radius:999px;font:700 11px "Zen Maru Gothic","Hiragino Sans",sans-serif;line-height:1.5;padding:4px 10px;text-decoration:none}
+#moreGames[hidden]{display:none}
+#moreGames:focus-visible,#moreGamesBtn:focus-visible{outline:3px solid #ffd23f;outline-offset:3px}
+#result .btns a.btn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
+</style>
+<script>
+(function(){
+  var title=document.getElementById('title'),result=document.getElementById('result');
+  var mute=document.getElementById('mute'),host=(mute&&mute.parentNode)||document.getElementById('app')||document.body;
+  var a=document.createElement('a');a.id='moreGames';a.href='/';a.textContent='‹ 他のゲーム';host.appendChild(a);
+  function sync(){a.hidden=title?title.hidden:!!(result&&!result.hidden);}
+  [title,result].forEach(function(el){if(el)new MutationObserver(sync).observe(el,{attributes:true,attributeFilter:['hidden']});});
+  sync();
+  var btns=result&&result.querySelector('.btns');
+  if(btns){var b=document.createElement('a');b.id='moreGamesBtn';b.className='btn ghost';b.href='/';b.textContent='ほかのゲームで遊ぶ';btns.appendChild(b);}
+})();
+</script>
 </body>
 </html>
