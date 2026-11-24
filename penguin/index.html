@@ -70,6 +70,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
   <div id="title" class="panel">
     <h1>大好きで<br>寄ってくるペンギンを、<br>全員1枚に収めろ。</h1>
     <p style="margin:0 0 14px;font-weight:900;font-size:14px;line-height:1.6">あなたは飼育員。しゃがんでスマホを向けたら、<br>みんな寄ってきた。</p>
+    <p style="margin:0 0 14px;font-size:13px;line-height:1.6">枠からはみ出さない、ぎりぎりの大きさで撮る。<br><b>いちばん外のペンギンが枠の線に触れた瞬間が100%</b>。<br>内側の子は枠に触れなくていい。</p>
     <button class="btn" id="startBtn" type="button">はじめる</button>
     <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
   </div>
@@ -311,7 +312,7 @@ function drawUI(x,phase){
   const x0=180-FW/2,x1=180+FW/2,y0=CY-FH/2,y1=CY+FH/2,b=24;
   x.strokeStyle='rgba(255,255,255,.95)';x.lineWidth=3.5;x.lineCap='round';
   for(const [px,py,sx,sy] of [[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]]){x.beginPath();x.moveTo(px,py+sy*b);x.lineTo(px,py);x.lineTo(px+sx*b,py);x.stroke();}
-  x.font='900 12px '+BODYF();x.textAlign='center';x.textBaseline='bottom';x.lineWidth=3;x.strokeStyle='rgba(0,0,0,.35)';x.strokeText('全員この枠にぴったり',180,y0-6);x.fillStyle='#fff';x.fillText('全員この枠にぴったり',180,y0-6);
+  x.font='900 12px '+BODYF();x.textAlign='center';x.textBaseline='bottom';x.lineWidth=3;x.strokeStyle='rgba(0,0,0,.35)';x.strokeText('この枠からはみ出さず、ぎりぎりの大きさで',180,y0-6);x.fillStyle='#fff';x.fillText('この枠からはみ出さず、ぎりぎりの大きさで',180,y0-6);
   /* phone camera bar and shutter */
   x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,SH-40,W,H-SH+40);
   x.fillStyle='#fff';x.beginPath();x.arc(180,SH+8,27,0,Math.PI*2);x.fill();
@@ -337,7 +338,7 @@ function render(now){
   }else{scene(cx,now,d);}
   drawUI(cx,G?G.phase:'');
   if(G&&G.phase==='shot'&&!G.res.pecked){const a=(now-G.ts)/1000;if(a<.25){cx.fillStyle=`rgba(255,255,255,${1-a/.25})`;cx.fillRect(0,0,W,H);}}
-  if(G&&G.phase==='walk'&&G.round===1&&G.plan===undefined){const {CY}=L();pill('全員が枠にぴったり収まる瞬間にタップ',180,CY+FH/2+36);}
+  if(G&&G.phase==='walk'&&G.round===1&&G.plan===undefined){const {CY}=L();pill('いちばん外の子が枠に触れた瞬間にタップ',180,CY+FH/2+36);}
 }
 function loop(now){requestAnimationFrame(loop);if(G)step(now);render(now);}
 requestAnimationFrame(loop);
