@@ -24,3 +24,4 @@
 - [potechi](https://tapitta.com/potechi/)
 - [penguin](https://tapitta.com/penguin/)
 - [orca](https://tapitta.com/orca/)
+- [yuuhi](https://tapitta.com/yuuhi/)
