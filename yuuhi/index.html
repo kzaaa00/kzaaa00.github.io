@@ -350,8 +350,8 @@ glit.rotation.x=-Math.PI/2;S.add(glit);
 function sandTex(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');x.fillStyle='#7a5a48';x.fillRect(0,0,256,256);
   for(let i=0;i<9000;i++){const v=rnd(i);x.fillStyle=`rgba(${v<.5?40:255},${v<.5?25:220},${v<.5?20:190},${.05+rnd(i+1)*.1})`;x.fillRect(rnd(i+2)*256,rnd(i+3)*256,1.2,1.2);}
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(30,30);t.colorSpace=THREE.SRGBColorSpace;return t;}
-const sand=new THREE.Mesh(new THREE.PlaneGeometry(60,40,1,1),new THREE.MeshPhysicalMaterial({map:sandTex(),color:'#e0b090',roughness:.35,clearcoat:1,clearcoatRoughness:.12,envMapIntensity:1.6}));
-sand.rotation.x=-Math.PI/2;sand.position.set(0,0,-6);sand.receiveShadow=true;S.add(sand);
+const sand=new THREE.Mesh(new THREE.PlaneGeometry(60,40,1,1),new THREE.MeshPhysicalMaterial({map:sandTex(),color:'#e0b090',roughness:.35,clearcoat:.45,clearcoatRoughness:.07,envMapIntensity:1.6}));
+sand.rotation.x=-Math.PI/2;sand.position.set(0,0,-6);sand.receiveShadow=false;S.add(sand);
 /* the low dune the dog stands on */
 /* thin foam line where the waves end */
 const foam=new THREE.Mesh(new THREE.PlaneGeometry(80,.25),new THREE.MeshBasicMaterial({color:'#ffd9b8',transparent:true,opacity:.55,depthWrite:false}));
