@@ -11,8 +11,8 @@
    遊んでいる最中は出さない。結果画面が開いたときに1回だけ読み込む。 */
 (function () {
   var SLOTS = {
-    result: null,
-    list: null
+    result: { type: 'admax', id: 'eb89faf517e68b4d7d00f6f53c60414c' },  // 忍者AdMax「tapitta結果画面」
+    list:   { type: 'admax', id: '5c6f97434182620655874aee677c16c6' }   // 忍者AdMax「tapitta一覧ページ」
   };
   var ADSENSE_CLIENT = 'ca-pub-2540616238933875';
   var NO_ADS = /\/(ai-tegara-binta|ronten-binta|potechi)\//;
@@ -47,7 +47,7 @@
     if (cfg.type === 'admax') {
       var d = document.createElement('div');
       d.className = 'admax-ads'; d.setAttribute('data-admax-id', cfg.id);
-      d.style.cssText = 'display:inline-block;width:300px;height:250px';
+      d.style.cssText = 'display:inline-block';
       box.appendChild(d);
       (window.admaxads = window.admaxads || []).push({ admax_id: cfg.id, type: 'banner' });
       load('https://adm.shinobi.jp/st/t.js');
