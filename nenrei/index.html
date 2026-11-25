@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>思い出だけで、年齢を当てます。</title>
+<meta name="description" content="はい・いいえで答えるだけ。子どものころに流行ったものや学校の思い出から、あなたの年齢をピタリと当てます。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="思い出だけで、年齢を当てます。">
+<meta property="og:description" content="はい・いいえで答えるだけで、年齢をピタリと当てます。">
+<meta property="og:url" content="https://tapitta.com/nenrei/">
+<meta property="og:image" content="https://tapitta.com/nenrei/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* A crystal ball that guesses your age from what you remember. */
+:root{
+  --ink:#2a2140; --muted:#8b84a3; --paper:#fbf7ef; --red:#d4452f; --red-d:#8f2a1b; --gold:#ffd36a; --gold-d:#b8862b;
+  --night:#1a1430; --violet:#6d4fc2;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#120e22}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:var(--night);touch-action:manipulation}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;padding:24px max(18px,env(safe-area-inset-right,0px)) 24px max(18px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+/* the title sits on the scene: a card over the lower half, the ball stays visible above */
+#title{justify-content:flex-end;padding-bottom:calc(26px + env(safe-area-inset-bottom,0px))}
+#title .tcard{width:min(100%,360px);background:rgba(251,247,239,.96);border-radius:18px;padding:22px 18px 16px;box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 1px rgba(255,211,106,.35)}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(25px,7.6vw,34px);line-height:1.38;margin:0 0 6px;text-wrap:balance}
+#title .lead{margin:0 0 18px;font-size:13.5px;font-weight:700;color:#6b6385}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #cfc6ba}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,.ans:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin:14px 0 0;font-size:11px;color:var(--muted);line-height:1.7}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;display:inline-block;padding:3px 0}
+
+/* play: bar / the ball (drawn on the canvas into #stage) / the question / the answers */
+#play{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 14px calc(12px + env(safe-area-inset-bottom,0px))}
+#play[hidden]{display:none}
+#bar{height:28px;display:flex;align-items:center;color:#e9e1ff;font-weight:900;font-size:13px;letter-spacing:.06em;margin:0 64px 0 2px;flex:none}
+#bar b{font-family:var(--display);font-weight:400;font-size:20px;margin-left:6px;color:var(--gold);font-variant-numeric:tabular-nums}
+#stage{flex:1 1 auto;min-height:150px}
+#qcard{flex:none;position:relative;background:var(--paper);border-radius:16px;padding:14px 16px 14px;box-shadow:0 6px 0 rgba(0,0,0,.28),0 0 24px rgba(160,120,255,.25);min-height:92px;display:flex;align-items:center;justify-content:center;margin-top:6px}
+#qcard::before{content:"";position:absolute;left:50%;top:-9px;width:18px;height:18px;background:var(--paper);transform:translateX(-50%) rotate(45deg);border-radius:3px}
+#qtext{position:relative;margin:0;font-size:clamp(16px,calc(1.6vh + 7px),19px);font-weight:900;line-height:1.55;text-align:center;text-wrap:balance;word-break:auto-phrase;transition:opacity .18s}
+#qtext.fade{opacity:0}
+#qtext .big{display:block;font-family:var(--display);font-weight:400;font-size:clamp(44px,calc(5vh + 14px),60px);line-height:1.1;color:var(--red);margin:2px 0 0}
+#qtext .big small{font-size:.42em;margin-left:4px;color:var(--ink)}
+#answers{flex:none;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
+.ans{grid-column:span 3;border:0;border-radius:14px;background:#fff;color:var(--ink);font:900 19px var(--body);padding:clamp(11px,1.9vh,16px) 4px;cursor:pointer;box-shadow:0 4px 0 #b9b0d6}
+.ans.yes{background:var(--red);color:#fff;box-shadow:0 4px 0 var(--red-d)}
+.ans.no{background:#3b5bcc;color:#fff;box-shadow:0 4px 0 #22378a}
+.ans.sm{grid-column:span 2;font-size:13.5px;padding:clamp(9px,1.4vh,12px) 2px;background:rgba(255,255,255,.88)}
+.ans:active{transform:translateY(2px);box-shadow:0 2px 0 #b9b0d6}
+.ans.yes:active{box-shadow:0 2px 0 var(--red-d)}.ans.no:active{box-shadow:0 2px 0 #22378a}
+.ans:disabled{opacity:.82;cursor:default}
+#answers.guess .ans.sm{display:none}
+#answers[hidden]{display:none}
+
+#result{background:#f6f1e8;justify-content:flex-start;overflow-y:auto;padding-top:0}
+#result .rtop{display:flex;flex-direction:column;gap:10px;align-items:center;background:linear-gradient(#2d1f5a,#1a1430);margin:0 -18px 4px;padding:calc(18px + env(safe-area-inset-top,0px)) 18px 22px;border-radius:0 0 22px 22px}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:center}
+#rHead{color:#f3ecff;margin:6px 0 0;font-size:15px;font-weight:900;line-height:1.2}
+#rAge{font-family:var(--display);font-weight:400;font-size:84px;line-height:1;color:var(--gold);margin:0;font-variant-numeric:tabular-nums;text-shadow:0 0 24px rgba(255,211,106,.35)}
+#rAge small{font-size:32px;margin-left:4px;color:#f3ecff}
+#rAge.lost{font-size:40px;line-height:1.25;color:#f3ecff}
+#rSub{margin:0;font-size:13.5px;font-weight:700;color:#c9bfe8}
+#rTitle{font-size:18px;font-weight:900;color:#fff;margin:0;background:var(--violet);border-radius:999px;padding:7px 14px;align-self:center;box-shadow:0 3px 0 #3f2b80}
+#rKeys{margin:4px 0 0;font-size:13.5px;font-weight:700;color:#5c5475;line-height:1.75;text-align:left;background:#fff;border-radius:12px;padding:10px 14px;border:1px solid #e3dcef}
+#rKeys b{color:var(--ink)}
+#card{width:100%;border-radius:10px;border:1px solid #ddd3c4;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:#7d7590;font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:#7d7590;font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:#7d7590;text-align:center;margin:6px 0 10px;line-height:1.7}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+#tap{position:absolute;z-index:60;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid #fff;pointer-events:none;opacity:0;transition:opacity .15s}
+@media (prefers-reduced-motion:reduce){#qtext{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-hidden="true"></canvas>
+  <div id="play" hidden>
+    <div id="bar">質問<b id="qn">1</b></div>
+    <div id="stage"></div>
+    <div id="qcard"><p id="qtext" aria-live="polite"></p></div>
+    <div id="answers">
+      <button type="button" class="ans yes" data-a="0">はい</button>
+      <button type="button" class="ans no" data-a="4">いいえ</button>
+      <button type="button" class="ans sm" data-a="1">たぶんそう</button>
+      <button type="button" class="ans sm" data-a="2">わからない</button>
+      <button type="button" class="ans sm" data-a="3">たぶんちがう</button>
+    </div>
+  </div>
+  <div id="title" class="panel">
+    <div class="tcard">
+      <h1>思い出だけで、年齢を当てます。</h1>
+      <p class="lead">はい・いいえで答えてください。</p>
+      <button class="btn" id="startBtn">はじめる</button>
+      <p class="fine">商品名・作品名は各社の商標です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <div class="rtop">
+        <p id="rHead"></p>
+        <p id="rAge"></p>
+        <p id="rSub"></p>
+        <p id="rTitle"></p>
+      </div>
+      <div class="btns">
+        <button class="btn" id="retry">もう一回</button>
+        <button class="btn x" id="shareX">Xで共有</button>
+        <button class="btn ghost" id="saveImg" hidden>画像を保存</button>
+        <button class="link" id="textOnly" hidden>文字だけでXに投稿</button>
+      </div>
+      <p id="rKeys"></p>
+      <p class="cap" id="cap"></p>
+      <img id="card" alt="結果画像">
+      <p class="fine"><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+  <div id="tap"></div>
+</div>
+<script>
+/* ===== 年齢当て: 質問と推理のしくみ（ゲームと sim.js で同じものを使う） =====
+   生まれ年 Y（と「今年の誕生日がもう来たか」）の確率を持ち、答えのたびにベイズで更新する。
+   次の質問は「答えを聞いたあと、どれだけ迷いが減るか（情報量）」が一番大きいものを選ぶ。
+   質問の書き方:
+     e: 出来事の年 [[始め,終わり,重み], ...] と、そのとき何歳だった人が「はい」になるか a:[下,上]
+     now: いまの年齢が a:[下,上] なら「はい」
+     born: 生まれ年が r:[下,上] なら「はい」
+     p: 当てはまる人が「はい」と答える割合、b: 当てはまらない人が「はい」と答える割合
+     t: 結果に出す短い名前（「〇〇世代」の〇〇になる） */
+const NR = (function(){
+const NOW = new Date();
+const CUR = NOW.getFullYear();
+const DOY = Math.floor((NOW - new Date(CUR,0,1)) / 864e5);           // 今年の何日目か
+const BD_CAME = Math.min(.98, Math.max(.02, (DOY + .5) / 365));     // 誕生日がもう来た人の割合
+
+const Q = [
+ // いまの年齢そのものにかかわる質問
+ {id:'gakusei',q:'いま、学生ですか？（小学生〜大学生・専門学生）',now:[6,22],p:.9,b:.05,t:''},
+ {id:'sake',q:'お酒を飲んでもいい年齢ですか？',now:[20,200],p:.99,b:.01,t:''},
+ {id:'senkyo',q:'選挙で投票できる年齢ですか？',now:[18,200],p:.99,b:.01,t:''},
+ {id:'nenkin',q:'年金をもらう年齢になっていますか？',now:[65,200],p:.95,b:.02,t:''},
+ {id:'showa',q:'昭和生まれですか？',born:[1900,1988],p:.98,b:.02,t:'昭和'},
+ {id:'seijin18',q:'18歳で「成人」になる世代ですか？',born:[2004,2100],p:.9,b:.05,t:'18歳成人'},
+ {id:'yutori',q:'「ゆとり世代」と言われたことがありますか？',born:[1987,2004],p:.8,b:.06,t:'ゆとり'},
+ // 子どものころの遊び
+ {id:'tamagotchi',q:'子どものころ、たまごっちを持っていた（または、すごく欲しかった）？',e:[[1996,1998,1],[2005,2008,.6]],a:[6,16],p:.85,b:.08,t:'たまごっち'},
+ {id:'pokemon1',q:'初代ポケモン（赤・緑）を、子どものころに遊んだ？',e:[[1996,1999,1]],a:[6,14],p:.8,b:.07,t:'初代ポケモン'},
+ {id:'bikkuri',q:'ビックリマンシールを集めていた？',e:[[1985,1988,1]],a:[5,14],p:.8,b:.05,t:'ビックリマン'},
+ {id:'famicom',q:'子どものころ、ファミコンで遊んでいた？',e:[[1983,1990,1]],a:[5,14],p:.85,b:.07,t:'ファミコン'},
+ {id:'yonku',q:'ミニ四駆に夢中になった？',e:[[1988,1989,1],[1994,1998,1]],a:[6,14],p:.7,b:.08,t:'ミニ四駆'},
+ {id:'yoyo',q:'ハイパーヨーヨーの技を練習した？',e:[[1997,1998,1]],a:[7,14],p:.65,b:.04,t:'ハイパーヨーヨー'},
+ {id:'beyblade',q:'ベイブレードで遊んだ？',e:[[2000,2002,1],[2015,2016,.7],[2023,2026,.6]],a:[5,12],p:.7,b:.06,t:'ベイブレード'},
+ {id:'mushiking',q:'ゲームセンターで、ムシキングかラブandベリーをやった？',e:[[2003,2007,1]],a:[5,11],p:.75,b:.05,t:'ムシキング'},
+ {id:'youkai',q:'妖怪ウォッチのメダルを集めた？',e:[[2014,2015,1]],a:[4,11],p:.8,b:.05,t:'妖怪ウォッチ'},
+ {id:'ds',q:'子どものころ、ニンテンドーDSで遊んでいた？',e:[[2004,2011,1]],a:[6,12],p:.85,b:.06,t:'DS'},
+ {id:'gameboy',q:'子どものころ、ゲームボーイ（白黒の画面）で遊んでいた？',e:[[1989,1997,1]],a:[6,14],p:.8,b:.07,t:'ゲームボーイ'},
+ {id:'n64',q:'子どものころ、64（ロクヨン）で4人対戦した？',e:[[1996,2001,1]],a:[7,15],p:.75,b:.08,t:'ロクヨン'},
+ {id:'ps2',q:'子どものころ、プレステ2で遊んだ？',e:[[2000,2006,1]],a:[7,15],p:.75,b:.1,t:'プレステ2'},
+ {id:'yugioh',q:'子どものころ、遊戯王カードで友達と対戦した？',e:[[1999,2006,1]],a:[7,14],p:.7,b:.1,t:'遊戯王'},
+ {id:'switch',q:'子どものころ（または今）、Switchで友達と遊んだ？',e:[[2017,CUR,1]],a:[5,15],p:.9,b:.12,t:'Switch'},
+ {id:'minecraft',q:'小学生のころ（または今）、マインクラフトかフォートナイトにハマった？',e:[[2014,CUR,1]],a:[6,12],p:.8,b:.07,t:'マイクラ'},
+ {id:'spinner',q:'子どものころ、ハンドスピナーを回していた？',e:[[2017,2017,1]],a:[6,15],p:.6,b:.07,t:'ハンドスピナー'},
+ {id:'supercar',q:'スーパーカー消しゴムを、ボールペンのノックで飛ばした？',e:[[1976,1978,1]],a:[6,13],p:.75,b:.04,t:'スーパーカー消しゴム'},
+ {id:'gamewatch',q:'ゲーム&ウオッチで遊んだ？',e:[[1980,1983,1]],a:[6,15],p:.7,b:.05,t:'ゲーム&ウオッチ'},
+ {id:'menko',q:'メンコやベーゴマで遊んでいた？',e:[[1950,1966,1]],a:[5,12],p:.85,b:.05,t:'メンコ'},
+ {id:'rubik',q:'ルービックキューブの最初の大ブームを覚えている？',e:[[1980,1981,1]],a:[8,25],p:.6,b:.05,t:'ルービックキューブ'},
+ // うわさ・テレビ・マンガ
+ {id:'kuchisake',q:'子どものころ「口裂け女」のうわさが本気で怖かった？',e:[[1979,1979,1]],a:[6,13],p:.8,b:.07,t:'口裂け女'},
+ {id:'jinmenken',q:'「人面犬」のうわさを、学校で聞いた？',e:[[1989,1990,1]],a:[7,15],p:.6,b:.05,t:'人面犬'},
+ {id:'nostra',q:'「1999年7月に世界が滅亡する」という予言に、ちょっとドキドキした？',e:[[1998,1999,1]],a:[8,16],p:.65,b:.1,t:'ノストラダムス'},
+ {id:'drif',q:'土曜の夜8時は「8時だョ!全員集合」を見ていた？',e:[[1970,1985,1]],a:[5,14],p:.85,b:.05,t:'全員集合'},
+ {id:'jump',q:'ジャンプにドラゴンボール・スラムダンク・幽☆遊☆白書が同時に載っていたころ、毎週読んでいた？',e:[[1991,1994,1]],a:[8,20],p:.7,b:.06,t:'ジャンプ黄金期'},
+ {id:'sailor',q:'子どものころ、セーラームーンを毎週見ていた？',e:[[1992,1996,1]],a:[4,11],p:.7,b:.07,t:'セーラームーン'},
+ {id:'precure',q:'子どものころ、おジャ魔女どれみか初代プリキュアを見ていた？',e:[[1999,2005,1]],a:[4,10],p:.7,b:.06,t:'どれみ'},
+ {id:'jleague',q:'Jリーグが始まったとき、子どもながらに大興奮した？',e:[[1993,1993,1]],a:[6,16],p:.65,b:.1,t:'Jリーグ開幕'},
+ {id:'youtuber',q:'小学生のころ（または今）、YouTuberにあこがれた？',e:[[2013,CUR,1]],a:[6,12],p:.65,b:.05,t:'YouTuber'},
+ {id:'tokyo64',q:'1964年の東京オリンピックを、テレビで見た記憶がある？',e:[[1964,1964,1]],a:[5,40],p:.8,b:.02,t:'東京五輪1964'},
+ {id:'moon',q:'人類が月に降り立った中継を、テレビで見た？',e:[[1969,1969,1]],a:[6,40],p:.75,b:.03,t:'月面着陸'},
+ {id:'banpaku',q:'1970年の大阪万博に、行った（または行きたくてたまらなかった）？',e:[[1970,1970,1]],a:[5,40],p:.7,b:.04,t:'大阪万博'},
+ {id:'colortv',q:'家にカラーテレビが来た日を覚えている？',e:[[1963,1972,1]],a:[5,20],p:.7,b:.03,t:'カラーテレビ'},
+ {id:'heisei',nt:1,q:'「平成」と書かれた額を掲げる、改元の発表を当時テレビで見た？',e:[[1989,1989,1]],a:[6,99],p:.75,b:.08,t:'平成改元'},
+ // 中高生・若いころ
+ {id:'loose',q:'中高生のころ、まわりでルーズソックスが流行っていた？',e:[[1994,2000,1]],a:[13,18],p:.85,b:.05,t:'ルーズソックス'},
+ {id:'pager',q:'ポケベルで、数字のメッセージを送ったことがある？',e:[[1993,1998,1]],a:[14,30],p:.65,b:.03,t:'ポケベル'},
+ {id:'chakumero',q:'着メロを自分で打ち込んだことがある？',e:[[1997,2002,1]],a:[12,25],p:.55,b:.04,t:'着メロ'},
+ {id:'garakei',s:1,q:'高校生のとき、ガラケー（パカパカ携帯）でメールしていた？',e:[[2000,2010,1]],a:[15,18],p:.88,b:.05,t:'ガラケー'},
+ {id:'smaho',s:1,q:'高校生のとき（または今）、スマホを持っていた？',e:[[2012,CUR,1]],a:[15,18],p:.9,b:.05,t:'スマホ'},
+ {id:'line',s:1,q:'中学生のころ（または今）、友達とLINEで連絡していた？',e:[[2012,CUR,1]],a:[12,15],p:.9,b:.05,t:'LINE'},
+ {id:'tiktok',s:1,q:'中高生のころ（または今）、TikTokで流行りのダンスを見ていた？',e:[[2018,CUR,1]],a:[12,18],p:.85,b:.08,t:'TikTok'},
+ {id:'mixi',q:'mixiの日記に「足あと」がつくのを気にしていた？',e:[[2005,2010,1]],a:[16,30],p:.6,b:.04,t:'mixi'},
+ {id:'purikura',q:'中高生のころ（または今）、プリクラをよく撮っていた？',e:[[1996,CUR,1]],a:[13,18],p:.8,b:.08,t:'プリクラ'},
+ {id:'tapioca',q:'学生のころ、タピオカを飲むために行列に並んだ？',e:[[2018,2019,1]],a:[13,22],p:.65,b:.12,t:'タピオカ'},
+ {id:'chobeliba',q:'「チョベリバ」「MK5」を、まわりで使っていた？',e:[[1996,1997,1]],a:[12,22],p:.6,b:.05,t:'チョベリバ'},
+ {id:'nau',q:'「ナウい」を、本気で使っていた？',e:[[1979,1985,1]],a:[12,30],p:.55,b:.04,t:'ナウい'},
+ {id:'ky',q:'「KY（空気読めない）」が流行語になったとき、学生だった？',e:[[2007,2007,1]],a:[12,22],p:.75,b:.06,t:'KY'},
+ {id:'tiramisu',q:'ティラミスやナタデココのブームを、中高生か大人として覚えている？',e:[[1990,1993,1]],a:[13,99],p:.6,b:.05,t:'ティラミス'},
+ // 音楽・道具
+ {id:'cassette',q:'ラジオの曲を、カセットテープに録音していた？',e:[[1970,1992,1]],a:[10,25],p:.85,b:.07,t:'カセットテープ'},
+ {id:'md',q:'好きな曲をMDに入れて持ち歩いていた？',e:[[1995,2005,1]],a:[12,25],p:.8,b:.06,t:'MD'},
+ {id:'cd8',q:'細長い8cmのシングルCDを買ったことがある？',e:[[1988,1999,1]],a:[10,30],p:.8,b:.08,t:'8cmCD'},
+ {id:'dialup',nt:1,q:'インターネットにつなぐとき「ピーヒョロロ…」と鳴っていたのを覚えている？',e:[[1996,2004,1]],a:[9,60],p:.7,b:.05,t:'ダイヤルアップ'},
+ {id:'kurodenwa',q:'子どものころ、家の電話はダイヤルを回す黒電話だった？',e:[[1950,1982,1]],a:[3,10],p:.85,b:.06,t:'黒電話'},
+ {id:'telcard',q:'テレホンカードを使って、公衆電話からよく電話した？',e:[[1985,2000,1]],a:[12,40],p:.8,b:.06,t:'テレカ'},
+ {id:'vhs',nt:1,q:'レンタルビデオを「巻き戻して」返したことがある？',e:[[1985,2008,1]],a:[12,60],p:.85,b:.06,t:'ビデオテープ'},
+ {id:'invader',q:'インベーダーゲームを、喫茶店やゲームセンターでやった？',e:[[1978,1980,1]],a:[10,30],p:.7,b:.04,t:'インベーダー'},
+ {id:'utsurun',nt:1,q:'修学旅行に、使い捨てのフィルムカメラを持っていった？',e:[[1987,2005,1]],a:[10,17],p:.85,b:.12,t:'使い捨てカメラ'},
+ {id:'kippu',nt:1,q:'駅の改札で、駅員さんに切符をハサミで切ってもらった？',e:[[1950,1990,1]],a:[6,99],p:.8,b:.05,t:'改札のハサミ'},
+
+ // 追加の流行りもの
+ {id:'wii',q:'子どものころ、Wiiで家族とスポーツのゲームをした？',e:[[2006,2011,1]],a:[5,13],p:.75,b:.15,t:'Wii'},
+ {id:'pokemondp',q:'ポケモンのダイヤモンド・パールで遊んだ？',e:[[2006,2009,1]],a:[7,14],p:.65,b:.06,t:'ダイパ'},
+ {id:'aikatsu',q:'子どものころ、アイカツ！かプリパラのカードを集めた？',e:[[2012,2018,1]],a:[5,11],p:.6,b:.05,t:'アイカツ'},
+ {id:'takeshijo',q:'子どものころ、「風雲!たけし城」を見ていた？',e:[[1986,1989,1]],a:[6,14],p:.7,b:.06,t:'たけし城'},
+ {id:'kinkeshi',q:'キン消し（キン肉マンの消しゴム人形）を集めた？',e:[[1983,1986,1]],a:[5,13],p:.7,b:.05,t:'キン消し'},
+ {id:'dragonball',q:'子どものころ、ドラゴンボールのアニメを毎週見ていた？',e:[[1986,1996,1]],a:[5,12],p:.8,b:.1,t:'ドラゴンボール'},
+ {id:'walkman',q:'カセットの携帯プレーヤーで、音楽を聴きながら歩いた？',e:[[1980,1995,1]],a:[12,30],p:.75,b:.07,t:'カセットウォークマン'},
+ {id:'ipod',q:'学生のころ、iPodで音楽を聴いていた？',e:[[2004,2012,1]],a:[13,22],p:.7,b:.1,t:'iPod'},
+ {id:'taiko',q:'子どものころ、ゲームセンターで太鼓の達人をたたいた？',e:[[2001,2012,1]],a:[6,14],p:.65,b:.2,t:'太鼓の達人'},
+ {id:'hanako',q:'「学校の怪談」や「トイレの花子さん」のブームが、子どものころにあった？',e:[[1994,1996,1]],a:[6,12],p:.65,b:.08,t:'学校の怪談'},
+ // 学校
+ {id:'saturday',nt:1,q:'小学校や中学校で、土曜日にも授業がある週があった？',e:[[1950,2001,1]],a:[6,15],p:.95,b:.04,t:'土曜授業'},
+ {id:'english',nt:1,q:'小学校で、英語の授業（英語活動）があった？',e:[[2009,CUR,1]],a:[10,12],p:.85,b:.12,t:'小学校英語'},
+ {id:'tablet',nt:1,q:'学校で、1人1台のタブレットやパソコンを使った？',e:[[2021,CUR,1]],a:[6,18],p:.92,b:.06,t:'1人1台タブレット'},
+ {id:'gyouchu',nt:1,q:'小学校で、おしりにペタッと貼る「ぎょう虫検査」をした？',e:[[1958,2015,1]],a:[6,9],p:.9,b:.05,t:'ぎょう虫検査'},
+ {id:'koshiarai',nt:1,q:'プールの前に、腰までつかる冷たい消毒の水そうに入った？',e:[[1960,1998,1]],a:[6,15],p:.7,b:.1,t:'腰洗い槽'},
+ {id:'randoseru',nt:1,q:'小学校に入ったころ、ランドセルはほぼ赤と黒の2色だけだった？',e:[[1950,2000,1]],a:[6,6],p:.85,b:.1,t:'赤と黒のランドセル'},
+ {id:'sakiware',nt:1,q:'給食で、先が割れた「先割れスプーン」を使った？',e:[[1965,1990,1]],a:[6,12],p:.75,b:.08,t:'先割れスプーン'},
+ {id:'dasshi',q:'給食で、脱脂粉乳を飲んだ？',e:[[1946,1965,1]],a:[6,12],p:.85,b:.03,t:'脱脂粉乳'},
+ {id:'center',s:1,q:'高校3年生のころ、大学入試の共通の試験は「センター試験」と呼ばれていた？',e:[[1990,2020,1]],a:[17,18],p:.9,b:.06,t:'センター試験'},
+ {id:'kyoutsu1',s:1,q:'大学入試の共通の試験が「共通一次」と呼ばれていたころに、高校生だった？',e:[[1979,1989,1]],a:[15,18],p:.85,b:.03,t:'共通一次'},
+ // 大人になってから
+ {id:'bubble',s:1,q:'社会人として、バブル景気を経験した？',e:[[1987,1991,1]],a:[21,45],p:.88,b:.04,t:'バブル'},
+ {id:'hyougaki',s:1,q:'就職活動のころ「就職氷河期」と言われていた？',e:[[1993,2004,1]],a:[21,22],p:.8,b:.08,t:'就職氷河期'},
+ {id:'tax3',s:1,q:'消費税が3%だったころの買い物を、覚えている？',e:[[1989,1996,1]],a:[9,99],p:.85,b:.05,t:'消費税3%'},
+];
+const BYID = {}; Q.forEach(q => BYID[q.id] = q);
+
+const ETO = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const ETO_YOMI = ['ね','うし','とら','う','たつ','み','うま','ひつじ','さる','とり','いぬ','い'];
+function etoOf(y){ return ((y - 4) % 12 + 12) % 12; }
+
+const Y0 = CUR - 86, Y1 = CUR - 6, NY = Y1 - Y0 + 1;   // 6〜86歳
+// 遊んでくれそうな人の年齢の見込み（最初の重み）
+function priorAge(a){ return a<10?.25 : a<13?.5 : a<18?.85 : a<40?1 : a<50?.9 : a<60?.6 : a<70?.32 : .12; }
+
+// 生まれ年ごとの「はい」の割合（誕生日がもう来たか bd=1/まだ bd=0 で分けるのは now だけ）
+const soft = d => d<=0 ? 1 : Math.exp(-d*d/1.4);
+function gEra(q, y){
+  let g = 0;
+  for(const [s0,e0,w] of q.e){
+    const e1 = Math.min(e0, CUR);
+    if(e1 < s0) continue;
+    // 出来事の年 t の中で、t-y が年齢の幅 [a0,a1] に一番近いもの
+    const lo = s0 - y, hi = e1 - y;           // その期間の年齢の幅
+    const d = Math.max(0, q.a[0] - hi, lo - q.a[1]);
+    g = Math.max(g, w * soft(d));
+  }
+  return g;
+}
+function pYes(q, y, bd){
+  let g;
+  if(q.now){ const age = CUR - y - (bd ? 0 : 1); g = (age >= q.now[0] && age <= q.now[1]) ? 1 : 0; }
+  else if(q.born){ g = (y >= q.born[0] && y <= q.born[1]) ? 1 : 0; }
+  else if(q.eto != null){ g = etoOf(y) === q.eto ? 1 : 0; }
+  else if(q.bday){ g = bd ? 1 : 0; }
+  else { g = .75 * gEra(q, y) + .25 * gEra(q, y - 1); }   // 早生まれは1つ上の学年
+  return Math.min(.98, Math.max(.02, q.b + (q.p - q.b) * g));
+}
+// 答え: 0 はい / 1 たぶんそう / 2 わからない / 3 たぶんちがう / 4 いいえ
+function like(p, ans){
+  const L = ans===0 ? p : ans===1 ? .7*p + .3*(1-p) : ans===2 ? 1 : ans===3 ? .3*p + .7*(1-p) : 1-p;
+  return .96 * L + .04 * .5;
+}
+
+function newState(){
+  const P = new Float64Array(NY * 2);
+  for(let i=0;i<NY;i++){ const y = Y0 + i, a = CUR - y;
+    P[i*2+1] = priorAge(a) * BD_CAME; P[i*2] = priorAge(a - 1) * (1 - BD_CAME); }
+  norm(P);
+  return { P, asked: new Set(), hist: [], wrong: new Set() };
+}
+function norm(P){ let s=0; for(const v of P) s+=v; for(let i=0;i<P.length;i++) P[i]/=s; }
+function ent(P){ let h=0; for(const v of P) if(v>1e-12) h-=v*Math.log2(v); return h; }
+function ageDist(S){ const A = {}; for(let i=0;i<NY;i++) for(let bd=0;bd<2;bd++){ const a = CUR-(Y0+i)-(bd?0:1); A[a]=(A[a]||0)+S.P[i*2+bd]; } return A; }
+function yearDist(S){ const Y = new Float64Array(NY); for(let i=0;i<NY;i++) Y[i]=S.P[i*2]+S.P[i*2+1]; return Y; }
+function best(S){ const A = ageDist(S); let ba=null,bp=-1; for(const a in A) if(!S.wrong.has(+a) && A[a]>bp){bp=A[a];ba=+a;} return {age:ba,p:bp}; }
+// 年齢 a を当てたときに一番ありそうな生まれ年
+function yearFor(S, a){ let by=null,bp=-1; for(let i=0;i<NY;i++) for(let bd=0;bd<2;bd++){ const y=Y0+i; if(CUR-y-(bd?0:1)!==a) continue; if(S.P[i*2+bd]>bp){bp=S.P[i*2+bd];by=y;} } return by; }
+
+function update(S, q, ans){
+  for(let i=0;i<NY;i++) for(let bd=0;bd<2;bd++) S.P[i*2+bd] *= like(pYes(q, Y0+i, bd), ans);
+  norm(S.P);
+  S.asked.add(q.id); S.hist.push({id:q.id, ans});
+}
+// 迷いの量は「年齢」で測る（生まれ年と誕生日の組み合わせではなく）
+function ageEnt(P){ const A=new Float64Array(NY+2); for(let i=0;i<NY;i++){ A[i+1]+=P[i*2+1]; A[i+2]+=P[i*2]; } return ent(A); }
+function gain(S, q){
+  let py = 0; const Pyes = new Float64Array(S.P.length), Pno = new Float64Array(S.P.length);
+  for(let i=0;i<NY;i++) for(let bd=0;bd<2;bd++){ const k=i*2+bd, p = pYes(q, Y0+i, bd), v = S.P[k];
+    py += v*p; Pyes[k] = v*like(p,0); Pno[k] = v*like(p,4); }
+  norm(Pyes); norm(Pno);
+  return ageEnt(S.P) - (py*ageEnt(Pyes) + (1-py)*ageEnt(Pno));
+}
+// その時点で聞ける質問。干支は「数年まで絞れてから」、多くても4回（はいが出たら終わり）。誕生日はだいぶ絞れてから
+function candidates(S){
+  const out = Q.filter(q => !S.asked.has(q.id));
+  const Y = yearDist(S);
+  let top = 0; for(const v of Y) top = Math.max(top, v);
+  let w3 = 0; for(let i=0;i+2<NY;i++) w3 = Math.max(w3, Y[i]+Y[i+1]+Y[i+2]);
+  const etoAsked = S.hist.filter(h => /^eto/.test(h.id));
+  if(w3 > .4 && top > .15 && etoAsked.length < 4 && !etoAsked.some(h => h.ans <= 1)){
+    const order = [...Y.keys()].sort((a,b)=>Y[b]-Y[a]).slice(0,2);
+    for(const i of order){ const e = etoOf(Y0+i), id = 'eto'+e; if(S.asked.has(id) || out.some(q=>q.id===id)) continue;
+      out.push({id, q: ETO_Q[Math.min(etoAsked.length,2)](e), eto:e, p:.95, b:.03, t:'', w:.7}); }
+  }
+  if(top > .3 && !S.asked.has('bday')) out.push({id:'bday', q:`今年（${CUR}年）の誕生日は、もう来ましたか？`, bday:1, p:.99, b:.01, t:''});
+  return out;
+}
+const ETO_Q = [
+  e => `ひょっとして…干支は「${ETO[e]}（${ETO_YOMI[e]}）」ですか？`,
+  e => `では…干支は「${ETO[e]}（${ETO_YOMI[e]}）」ですか？`,
+  e => `それなら…干支は「${ETO[e]}（${ETO_YOMI[e]}）」ですね？`,
+];
+function nextQ(S, rnd){
+  rnd = rnd || Math.random;
+  // 年齢そのものを聞く質問（お酒・選挙・昭和生まれ等）は、思い出の質問より後回しにする
+  // 流行りもの（たまごっち等）を一番に、学校の決まりごと（nt）はその次に
+  const C = candidates(S).map(q => ({q, g: gain(S, q) * (q.w || ((q.now || q.born) ? .4 : q.nt ? .7 : q.s ? .85 : 1.15)) * (1 + .15*rnd())}));
+  C.sort((a,b) => b.g - a.g);
+  // 最初の2問は上位4つからくじで選ぶ（毎回同じ始まりにしない）
+  if(S.hist.length < 2 && C.length > 4) return C[Math.floor(rnd()*4)].q;
+  return C.length && C[0].g > .02 ? C[0].q : null;
+}
+// はずれた年齢を消す
+function miss(S, a){ S.wrong.add(a); for(let i=0;i<NY;i++) for(let bd=0;bd<2;bd++) if(CUR-(Y0+i)-(bd?0:1)===a) S.P[i*2+bd]*=.02; norm(S.P); }
+// 当てにいくか
+function ready(S){ const b = best(S); return b.p >= .86 || S.hist.length >= 25 ? b : null; }
+
+return {miss, Q, BYID, CUR, Y0, Y1, NY, ETO, ETO_YOMI, etoOf, pYes, like, newState, update, nextQ, ready, best, ageDist, yearDist, yearFor, gain, candidates, BD_CAME};
+})();
+
+
+</script>
+<script>
+const $=id=>document.getElementById(id);
+const GAME='思い出だけで、年齢を当てます。', CREATOR='@ordwxjhj', SLUG='nenrei';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent|localhost|127\.0\.0\.1|file:/.test(h))return h.split('#')[0].split('?')[0];return 'https://tapitta.com/nenrei/';})();
+const app=$('app'),cv=$('cv'),ctx=cv.getContext('2d');
+let W=360,H=640,DPR=1;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const rand=(a,b)=>a+Math.random()*(b-a);
+
+/* ---------- layout ---------- */
+function resize(){
+  W=app.clientWidth||360;H=app.clientHeight||640;DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  bg=null;
+}
+window.addEventListener('resize',resize);
+if(window.visualViewport)visualViewport.addEventListener('resize',resize);
+/* where the ball goes: inside #stage while playing, over the title card otherwise */
+function L(){
+  if(window.__ogL)return window.__ogL(W,H);
+  const st=$('stage');
+  if(!$('play').hidden&&st.offsetHeight){
+    const a=app.getBoundingClientRect(),r=st.getBoundingClientRect(),z=a.width/(app.clientWidth||a.width)||1;
+    const sx=(r.left-a.left)/z,sy=(r.top-a.top)/z,sw=r.width/z,sh=r.height/z;
+    const avail=sh-26,R=Math.max(40,Math.min(sw*.34,avail/2.5,128));
+    const cy=sy+Math.max(0,(avail-2.45*R)/2)+R+4;
+    return {cx:sx+sw/2,cy,R,tl:{x0:sx+12,x1:sx+sw-12,y:sy+sh-14}};
+  }
+  const card=document.querySelector('#title .tcard');
+  const ar=app.getBoundingClientRect(),z=ar.width/(app.clientWidth||ar.width)||1;
+  const top=card&&!$('title').hidden?(card.getBoundingClientRect().top-ar.top)/z:H*.62;
+  const avail=Math.max(160,top-24),R=Math.max(50,Math.min(W*.3,avail/2.75,130));
+  return {cx:W/2,cy:Math.max(R+20,(avail-2.45*R)/2+R+14),R,tl:null};
+}
+
+/* ---------- background: a fortune teller's tent at night ---------- */
+let bg=null;
+const STARS=[...Array(70)].map(()=>({x:Math.random(),y:Math.random()*.75,r:rand(.4,1.4),ph:rand(0,6.28),sp:rand(.6,1.8)}));
+function drawBg(){
+  bg=document.createElement('canvas');bg.width=cv.width;bg.height=cv.height;const b=bg.getContext('2d');b.scale(DPR,DPR);
+  let g=b.createLinearGradient(0,0,0,H);g.addColorStop(0,'#2d1f5a');g.addColorStop(.55,'#1c1438');g.addColorStop(1,'#110c22');
+  b.fillStyle=g;b.fillRect(0,0,W,H);
+  /* soft light in the middle */
+  g=b.createRadialGradient(W/2,H*.32,10,W/2,H*.32,W*.9);g.addColorStop(0,'rgba(120,90,220,.28)');g.addColorStop(1,'rgba(120,90,220,0)');
+  b.fillStyle=g;b.fillRect(0,0,W,H);
+  /* velvet drapes on both sides */
+  for(const side of [0,1]){
+    const cw=Math.min(70,W*.17);b.save();
+    if(side){b.translate(W,0);b.scale(-1,1);}
+    b.beginPath();b.moveTo(0,0);b.lineTo(cw*1.25,0);
+    b.bezierCurveTo(cw*.55,H*.22,cw*.95,H*.55,cw*.42,H);b.lineTo(0,H);b.closePath();b.clip();
+    for(let i=0;i<6;i++){const x=i*cw*.24;g=b.createLinearGradient(x,0,x+cw*.24,0);
+      g.addColorStop(0,'#3a0f2c');g.addColorStop(.5,'#7a2350');g.addColorStop(1,'#3a0f2c');b.fillStyle=g;b.fillRect(x,0,cw*.25,H);}
+    g=b.createLinearGradient(0,0,cw*1.2,0);g.addColorStop(0,'rgba(0,0,0,.35)');g.addColorStop(1,'rgba(0,0,0,0)');b.fillStyle=g;b.fillRect(0,0,cw*1.3,H);
+    b.restore();
+    /* the gold edge of the drape */
+    b.save();if(side){b.translate(W,0);b.scale(-1,1);}
+    b.beginPath();b.moveTo(cw*1.25,0);b.bezierCurveTo(cw*.55,H*.22,cw*.95,H*.55,cw*.42,H);
+    b.strokeStyle='rgba(255,211,106,.55)';b.lineWidth=2;b.stroke();b.restore();
+  }
+  /* valance across the top */
+  b.fillStyle='#5a1a40';b.beginPath();b.moveTo(0,0);b.lineTo(W,0);b.lineTo(W,14);
+  const n=Math.ceil(W/46);for(let i=n;i>=0;i--){const x=i*W/n;b.quadraticCurveTo(x+W/n/2,34,x,14);}
+  b.closePath();b.fill();
+  b.strokeStyle='rgba(255,211,106,.7)';b.lineWidth=1.5;b.beginPath();b.moveTo(W,14);
+  for(let i=n;i>0;i--){const x=i*W/n;b.quadraticCurveTo(x-W/n/2,34,x-W/n,14);}b.stroke();
+  /* vignette */
+  g=b.createRadialGradient(W/2,H*.45,Math.min(W,H)*.3,W/2,H*.45,Math.max(W,H)*.8);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.5)');
+  b.fillStyle=g;b.fillRect(0,0,W,H);
+}
+
+/* ---------- the ball ---------- */
+const BLOBS=[['255,122,217',.0,.9],['111,227,255',2.1,.7],['255,211,106',4.2,.55],['160,120,255',1.1,.8]];
+let floaters=[];   // years drifting inside the ball: the likeliest in the middle, the rest on a slow ring
+function syncFloaters(){
+  let want;
+  if(G&&G.S){
+    const Y=NR.yearDist(G.S);let mx=0;for(const v of Y)mx=Math.max(mx,v);
+    want=[...Y.keys()].sort((a,b)=>Y[b]-Y[a]).slice(0,7).map(i=>({y:NR.Y0+i,w:Math.sqrt(Y[i]/mx)}));
+  }else{
+    want=[1985,1972,1996,2008,1964,1991,2013].map((y,i)=>({y,w:i?.55:.8}));
+  }
+  const keep=new Map(want.map((o,i)=>[o.y,{w:o.w,slot:i}]));
+  floaters.forEach(f=>{const k=keep.get(f.y);if(k){f.tw=k.w;f.slot=k.slot;keep.delete(f.y);}else f.tw=0;});
+  keep.forEach((k,y)=>floaters.push({y,tw:k.w,w:0,slot:k.slot,px:null,py:null,bob:rand(0,6.28)}));
+  floaters=floaters.filter(f=>f.tw>0||f.w>.01);
+}
+let ring=0;
+let swirl=0,reveal=null,shake=0,disp=null,flash=0;
+function drawBall(t,dt){
+  const {cx,cy,R,tl}=L();
+  const sx=shake>0?Math.sin(t*.07)*shake*R*.06:0;shake=Math.max(0,shake-dt*1.6);
+  const x0=cx+sx;
+  /* the cloth, the light under the ball */
+  let g=ctx.createRadialGradient(x0,cy+R*1.38,4,x0,cy+R*1.38,R*1.7);g.addColorStop(0,'rgba(190,160,255,.30)');g.addColorStop(1,'rgba(190,160,255,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x0,cy+R*1.38,R*1.7,R*.3,0,0,7);ctx.fill();
+  /* glow around */
+  const gl=.32+swirl*.35+flash*.5;
+  g=ctx.createRadialGradient(x0,cy,R*.7,x0,cy,R*1.75);g.addColorStop(0,`rgba(160,120,255,${gl})`);g.addColorStop(1,'rgba(160,120,255,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x0,cy,R*1.75,0,7);ctx.fill();
+  /* stand */
+  const sy=cy+R*.84;
+  g=ctx.createLinearGradient(x0-R*.7,0,x0+R*.7,0);
+  [['#5a3d12',0],['#c9962f',.22],['#fff1b8',.42],['#e9c46a',.55],['#9c7324',.8],['#4a300c',1]].forEach(([c,s])=>g.addColorStop(s,c));
+  ctx.fillStyle=g;ctx.beginPath();
+  ctx.moveTo(x0-R*.4,sy);ctx.lineTo(x0+R*.4,sy);ctx.bezierCurveTo(x0+R*.42,sy+R*.24,x0+R*.66,sy+R*.36,x0+R*.66,sy+R*.52);
+  ctx.lineTo(x0-R*.66,sy+R*.52);ctx.bezierCurveTo(x0-R*.66,sy+R*.36,x0-R*.42,sy+R*.24,x0-R*.4,sy);ctx.fill();
+  ctx.beginPath();ctx.ellipse(x0,sy+R*.52,R*.66,R*.1,0,0,7);ctx.fill();
+  ctx.strokeStyle='rgba(60,35,5,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(x0,sy+R*.3,R*.5,R*.07,0,0,Math.PI);ctx.stroke();
+  /* the glass */
+  ctx.save();ctx.beginPath();ctx.arc(x0,cy,R,0,7);ctx.clip();
+  g=ctx.createRadialGradient(x0-R*.2,cy-R*.25,R*.05,x0,cy,R);
+  g.addColorStop(0,'#9a86ff');g.addColorStop(.55,'#4b33a8');g.addColorStop(1,'#1b1042');
+  ctx.fillStyle=g;ctx.fillRect(x0-R,cy-R,R*2,R*2);
+  ctx.globalCompositeOperation='lighter';
+  const sp=.00035*(1+swirl*5);
+  BLOBS.forEach(([c,ph,a],i)=>{
+    const ang=t*sp*(i%2?1:-1.3)+ph,rr=R*(.28+.12*Math.sin(t*.0004+ph));
+    const bx=x0+Math.cos(ang)*rr,by=cy+Math.sin(ang*1.2)*rr*.8;
+    const gg=ctx.createRadialGradient(bx,by,0,bx,by,R*.75);
+    gg.addColorStop(0,`rgba(${c},${a*(.38+swirl*.3)})`);gg.addColorStop(1,`rgba(${c},0)`);
+    ctx.fillStyle=gg;ctx.fillRect(x0-R,cy-R,R*2,R*2);
+  });
+  ctx.globalCompositeOperation='source-over';
+  /* the years */
+  const fade=reveal?Math.max(0,1-(t-reveal.t0)/500):1;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ring+=dt*(.18+swirl*1.2);
+  floaters.forEach(f=>{
+    f.w+=(f.tw-f.w)*Math.min(1,dt*3);
+    let tx,ty;
+    if(f.slot===0){tx=0;ty=-.04;}else{const an=ring+(f.slot-1)/6*Math.PI*2;tx=Math.cos(an)*.66;ty=Math.sin(an)*.56;}
+    tx=x0+tx*R;ty=cy+ty*R+Math.sin(t*.0012+f.bob)*R*.03;
+    if(f.px==null){f.px=tx;f.py=ty;}f.px+=(tx-f.px)*Math.min(1,dt*4);f.py+=(ty-f.py)*Math.min(1,dt*4);
+    const a=Math.max(0,Math.min(1,f.w))*fade*(f.slot===0?1:.75);if(a<.02)return;
+    const fs=f.slot===0?R*(.14+.08*f.w):R*(.08+.05*f.w);
+    ctx.font=`400 ${Math.round(fs)}px "Dela Gothic One",sans-serif`;
+    ctx.fillStyle=`rgba(255,246,220,${a*.9})`;ctx.shadowColor='rgba(255,211,106,.9)';ctx.shadowBlur=R*.1*a;
+    ctx.fillText(String(f.y),f.px,f.py);
+  });
+  ctx.shadowBlur=0;
+  if(reveal){
+    const k=Math.min(1,(t-reveal.t0)/700),e=1-Math.pow(1-k,3);
+    ctx.globalAlpha=e;ctx.shadowColor='rgba(255,211,106,1)';ctx.shadowBlur=R*.3;
+    ctx.fillStyle='#fff6d8';ctx.font=`400 ${Math.round(R*(.6+.25*e))}px "Dela Gothic One",sans-serif`;
+    ctx.fillText(String(reveal.age),x0,cy-R*.06);
+    ctx.shadowBlur=R*.1;ctx.font=`900 ${Math.round(R*.2)}px "Zen Maru Gothic",sans-serif`;ctx.fillText('歳',x0,cy+R*.48);
+    ctx.shadowBlur=0;ctx.globalAlpha=1;
+  }
+  /* edge shade */
+  g=ctx.createRadialGradient(x0,cy,R*.72,x0,cy,R);g.addColorStop(0,'rgba(10,0,30,0)');g.addColorStop(1,'rgba(10,0,30,.55)');
+  ctx.fillStyle=g;ctx.fillRect(x0-R,cy-R,R*2,R*2);
+  if(flash>0){ctx.fillStyle=`rgba(255,240,255,${flash*.6})`;ctx.fillRect(x0-R,cy-R,R*2,R*2);flash=Math.max(0,flash-dt*2.2);}
+  ctx.restore();
+  /* rim and shine */
+  ctx.strokeStyle='rgba(230,215,255,.35)';ctx.lineWidth=Math.max(1.2,R*.02);ctx.beginPath();ctx.arc(x0,cy,R,0,7);ctx.stroke();
+  ctx.save();ctx.translate(x0-R*.4,cy-R*.46);ctx.rotate(-.65);
+  g=ctx.createRadialGradient(0,0,0,0,0,R*.3);g.addColorStop(0,'rgba(255,255,255,.75)');g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,R*.3,R*.15,0,0,7);ctx.fill();ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.arc(x0-R*.2,cy-R*.62,R*.035,0,7);ctx.fill();
+  g=ctx.createRadialGradient(x0+R*.1,cy+R*.78,0,x0+R*.1,cy+R*.78,R*.45);g.addColorStop(0,'rgba(255,200,255,.28)');g.addColorStop(1,'rgba(255,200,255,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x0+R*.1,cy+R*.74,R*.45,R*.16,0,0,7);ctx.fill();
+  swirl=Math.max(0,swirl-dt*1.4);
+  if(tl&&G&&G.S)drawTimeline(tl,dt);
+}
+/* the line of years under the ball: where the ball is looking now */
+function drawTimeline(tl,dt){
+  const Y=NR.yearDist(G.S);let mx=0;for(const v of Y)mx=Math.max(mx,v);
+  if(!disp||disp.length!==Y.length)disp=Float64Array.from(Y,v=>Math.sqrt(v/mx));
+  const n=Y.length,w=(tl.x1-tl.x0)/n;
+  ctx.fillStyle='rgba(255,255,255,.16)';ctx.fillRect(tl.x0,tl.y,tl.x1-tl.x0,1);
+  for(let i=0;i<n;i++){
+    disp[i]+=(Math.sqrt(Y[i]/mx)-disp[i])*Math.min(1,dt*5);
+    const h=Math.max(1,disp[i]*14);ctx.fillStyle=`rgba(255,211,106,${.25+.75*disp[i]})`;
+    ctx.fillRect(tl.x0+i*w+w*.15,tl.y-h,Math.max(1,w*.7),h);
+  }
+  ctx.font='700 9px "Zen Maru Gothic",sans-serif';ctx.textBaseline='alphabetic';ctx.fillStyle='rgba(235,225,255,.5)';
+  [[NR.Y0,'昭和','left'],[1989,'平成','left'],[2019,'令和','left']].forEach(([y,s,al])=>{
+    if(y<NR.Y0||y>NR.Y1)return;const x=tl.x0+(y-NR.Y0)*w;ctx.textAlign=al;
+    if(y>NR.Y0)ctx.fillRect(x,tl.y-3,1,14);ctx.fillText(s,x+3,tl.y+10);
+  });
+}
+const TW=[...Array(14)].map(()=>({x:Math.random(),y:Math.random(),ph:rand(0,6.28)}));
+let last=performance.now();
+function render(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(!bg)drawBg();
+  ctx.drawImage(bg,0,0,W,H);
+  STARS.forEach(s=>{const a=.25+.35*Math.sin(now*.001*s.sp+s.ph);if(a<=0)return;ctx.fillStyle=`rgba(255,250,235,${a})`;ctx.fillRect(s.x*W,s.y*H,s.r,s.r);});
+  drawBall(now,dt);
+}
+function loop(now){render(now);requestAnimationFrame(loop);}
+
+/* ---------- sound ---------- */
+let AC=null,muted=false,bgmOn=false,bgmT=0;
+try{muted=localStorage.getItem('nenrei-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function tone(f,a,d,vol,type,out){
+  if(muted||!AC)return;const t=AC.currentTime+a,o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=f;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g).connect(out||AC.destination);o.start(t);o.stop(t+d+.05);
+}
+function sfx(kind){
+  if(muted||!AC)return;
+  if(kind==='tap'){tone(1568,0,.18,.12);tone(2349,.02,.22,.05);}
+  else if(kind==='think'){[2093,2637,3136,2794].forEach((f,i)=>tone(f*rand(.98,1.02),i*.07+rand(0,.03),.5,.035));}
+  else if(kind==='reveal'){[523,659,784,1047,1319].forEach((f,i)=>tone(f,i*.09,1.2,.08,'triangle'));tone(2093,.5,1.6,.05);}
+  else if(kind==='win'){[784,988,1175,1568].forEach((f,i)=>tone(f,i*.1,.5,.11,'triangle'));[1568,1976,2349].forEach(f=>tone(f,.45,1.4,.06));}
+  else if(kind==='miss'){[392,370,330].forEach((f,i)=>tone(f,i*.16,.35,.1,'triangle'));}
+}
+/* a quiet, slow pad: Am - F - C - G */
+const CH=[[220,261.6,329.6],[174.6,220,261.6],[196,261.6,329.6],[196,246.9,293.7]];
+let bgmBus=null,bgmIdx=0,bgmTimer=null;
+function bgmStart(){
+  if(!AC||bgmTimer)return;
+  bgmBus=AC.createGain();bgmBus.gain.value=muted?0:1;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;bgmBus.connect(lp).connect(AC.destination);
+  const step=()=>{
+    const t=AC.currentTime+.05,ch=CH[bgmIdx++%CH.length];
+    ch.forEach((f,i)=>{[1,1.004].forEach(dt=>{const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=f*dt;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.016,t+1.2);g.gain.setValueAtTime(.016,t+3);g.gain.linearRampToValueAtTime(0,t+4.4);
+      o.connect(g).connect(bgmBus);o.start(t);o.stop(t+4.5);});});
+    [0,1,2].forEach(k=>{if(Math.random()<.7){const o=AC.createOscillator(),g=AC.createGain(),tt=t+k*1.3+rand(0,.4);o.type='sine';o.frequency.value=ch[Math.floor(rand(0,3))]*4;
+      g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(.012,tt+.02);g.gain.exponentialRampToValueAtTime(.0001,tt+1.4);o.connect(g).connect(bgmBus);o.start(tt);o.stop(tt+1.5);}});
+  };
+  step();bgmTimer=setInterval(step,4000);
+}
+function bgmStop(){if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;}if(bgmBus){const b=bgmBus;try{b.gain.setTargetAtTime(0,AC.currentTime,.3);}catch(e){}setTimeout(()=>{try{b.disconnect();}catch(e){}},2000);bgmBus=null;}}
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));if(bgmBus)bgmBus.gain.value=muted?0:1;}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('nenrei-mute',muted?'1':'0');}catch(err){}syncMute();});
+
+/* ---------- the game ---------- */
+let G=null,NEXT_RND=null;
+const ANS=$('answers'),btns=[...ANS.querySelectorAll('.ans')];
+function setQ(html){const q=$('qtext');q.classList.add('fade');setTimeout(()=>{q.innerHTML=html;q.classList.remove('fade');},170);}
+function lock(v){btns.forEach(b=>b.disabled=v);}
+function begin(){
+  G={S:NR.newState(),q:null,phase:'ask',misses:0,cap:25,busy:false,cardFile:null,guess:null,result:null,rnd:NEXT_RND||undefined};
+  reveal=null;disp=null;
+  $('title').hidden=true;$('result').hidden=true;$('play').hidden=false;$('mute').hidden=false;
+  ANS.classList.remove('guess');btns[0].textContent='はい';btns[1].textContent='いいえ';
+  syncFloaters();swirl=1;
+  askNext(true);
+}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function askNext(first){
+  const S=G.S,b=NR.best(S);
+  if(b.p>=.86||S.hist.length>=G.cap){guess(b);return;}
+  const q=NR.nextQ(S,G.rnd);
+  if(!q){guess(b);return;}
+  G.q=q;G.phase='ask';
+  $('qn').textContent=String(S.hist.length+1);
+  setQ(esc(q.q));
+  setTimeout(()=>{G.busy=false;lock(false);},first?0:180);
+}
+async function answer(a,fast){
+  if(!G||G.busy)return;G.busy=true;lock(true);
+  if(G.phase==='guess'){judge(a===0||a===1,fast);return;}
+  NR.update(G.S,G.q,a);
+  if(!fast){sfx('tap');swirl=Math.min(1.2,swirl+.8);}
+  syncFloaters();
+  if(!fast)await wait(260);
+  askNext();
+}
+async function guess(b){
+  G.phase='guess';G.guess=b.age;
+  ANS.classList.add('guess');btns[0].textContent='あたり！';btns[1].textContent='ちがう';
+  setQ('わかりました…');swirl=2;sfx('think');
+  await wait(G.fast?0:1100);
+  reveal={age:b.age,t0:performance.now()};flash=1;sfx('reveal');
+  setQ(`あなたは<span class="big">${b.age}<small>歳</small></span>ですね？`);
+  await wait(G.fast?0:450);
+  G.busy=false;lock(false);
+}
+async function judge(hit,fast){
+  if(hit){sfx('win');flash=1;await wait(fast?0:900);finish(true);return;}
+  G.misses++;sfx('miss');shake=1;
+  NR.miss(G.S,G.guess);
+  if(G.misses>=3){await wait(fast?0:900);finish(false);return;}
+  setQ(G.misses===1?'くっ…！もう少しだけ、質問させてください。':'まだです…あと少しで、見えそうです。');
+  await wait(fast?0:1300);
+  reveal=null;ANS.classList.remove('guess');btns[0].textContent='はい';btns[1].textContent='いいえ';
+  G.cap=Math.max(G.cap,G.S.hist.length+5);
+  syncFloaters();
+  askNext();
+}
+
+/* ---------- result ---------- */
+function yearOf(){return G.result.win?NR.yearFor(G.S,G.guess):null;}
+function eraYear(y){if(y>=2019)return `令和${y-2018===1?'元':y-2018}年`;if(y>=1989)return `平成${y-1988===1?'元':y-1988}年`;return `昭和${y-1925}年`;}
+/* the memories that gave you away: "yes" answers that say the most about the year we guessed */
+function keys(){
+  const y=G.result.win?yearOf():null,out=[];
+  for(const h of G.S.hist){
+    if(h.ans>1)continue;const q=NR.BYID[h.id];if(!q||!q.t)continue;
+    let s=1;if(y!=null){let avg=0,n=0;for(let yy=NR.Y0;yy<=NR.Y1;yy++){avg+=NR.pYes(q,yy,1);n++;}s=Math.log(Math.min(NR.pYes(q,y-1,1),NR.pYes(q,y,1),NR.pYes(q,y+1,1))/(avg/n));}
+    out.push({t:q.t,s,nt:!!q.nt});
+  }
+  return out.sort((a,b)=>b.s-a.s).filter(k=>k.s>0).slice(0,4);
+}
+function titleOf(){
+  if(!G.result.win)return '年齢不詳の人';
+  const k=G.result.keys.find(k=>!k.nt&&k.t!=='昭和');
+  if(k)return `${k.t}世代`;
+  return `${eraYear(yearOf())}生まれ`;
+}
+function nQ(){return G.S.hist.length;}
+function shareText(){
+  return G.result.win?`${GAME}　${nQ()}問で${G.guess}歳を当てられた【${titleOf()}】\n${SHARE_URL}`
+    :`${GAME}　${nQ()}問でも年齢を当てられなかった【${titleOf()}】\n${SHARE_URL}`;
+}
+function subLine(){
+  const y=yearOf();
+  if(!G.result.win)return `${nQ()}問・3回はずしました`;
+  return `${y}年（${eraYear(y)}）生まれ・${NR.ETO[NR.etoOf(y)]}年｜${nQ()}問${G.misses?`・${G.misses+1}回目`:''}で当てました`;
+}
+async function finish(win){
+  G.result={win};G.result.keys=keys();
+  takeSnap();
+  bgmStop();
+  $('play').hidden=true;
+  $('rHead').textContent=win?'あなたは':'まいりました…';
+  const ra=$('rAge');ra.className=win?'':'lost';
+  ra.innerHTML=win?`${G.guess}<small>歳</small>`:'当てられません<br>でした';
+  $('rSub').textContent=subLine();
+  $('rTitle').textContent='【'+titleOf()+'】';
+  const k=G.result.keys;
+  $('rKeys').innerHTML=k.length?`${win?'決め手になった思い出':'答えてくれた思い出'}：`+k.map(s=>`<b>${esc(s.t)}</b>`).join('、'):(win?'決め手：「いいえ」の答えの積み重ね':'「はい」の思い出が、ひとつもありませんでした');
+  $('card').style.visibility='hidden';$('result').hidden=false;$('result').scrollTop=0;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(r=>G.cardCanvas.toBlob(r,'image/png'));if(b)G.cardFile=new File([b],'nenrei-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+/* the ball as it was when it named your age */
+function takeSnap(){
+  try{render(performance.now());}catch(e){}
+  try{const {cx,cy,R}=L(),x0=Math.max(0,cx-R*1.5),y0=Math.max(0,cy-R*1.25),w=Math.min(W-x0,R*3),h=Math.min(H-y0,R*2.75);
+    const c=document.createElement('canvas');c.width=Math.round(w*DPR);c.height=Math.round(h*DPR);
+    c.getContext('2d').drawImage(cv,x0*DPR,y0*DPR,w*DPR,h*DPR,0,0,c.width,c.height);G.snap=c;}catch(e){G.snap=null;}
+}
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;$('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){const a=document.createElement('a');a.href='https://x.com/intent/post?text='+encodeURIComponent(shareText());a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}
+async function shareTextOnly(){if(!canShareText()){openIntent();return;}try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}}
+$('shareX').addEventListener('click',async()=>{if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='nenrei-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);});
+$('retry').addEventListener('click',()=>{ac();bgmStart();begin();});
+
+/* share image: the age big on top, the ball as it named it, the memories, the game name. 360 wide at 3x. */
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const win=G.result.win,kk=G.result.keys;
+  const top=win?176:150,snapH=200,listH=kk.length?40+kk.length*26:0,foot=34,band=46;
+  const hgt=top+snapH+listH+foot+band;
+  const c=document.createElement('canvas');c.width=w*k;c.height=hgt*k;const x=c.getContext('2d');x.scale(k,k);
+  let g=x.createLinearGradient(0,0,0,top+snapH);g.addColorStop(0,'#2d1f5a');g.addColorStop(1,'#140f26');x.fillStyle=g;x.fillRect(0,0,w,top+snapH);
+  x.textAlign='center';x.textBaseline='alphabetic';
+  if(win){
+    x.fillStyle='#d9ceff';x.font=`900 15px ${F}`;x.fillText('あなたは',w/2,32);
+    const n=String(G.guess);x.font=`400 76px ${D}`;const nw=x.measureText(n).width;x.font=`400 28px ${D}`;const sw=x.measureText('歳').width;
+    const sx=(w-nw-sw-6)/2;x.textAlign='left';x.fillStyle='#ffd36a';x.font=`400 76px ${D}`;x.fillText(n,sx,110);
+    x.fillStyle='#f3ecff';x.font=`400 28px ${D}`;x.fillText('歳',sx+nw+6,110);x.textAlign='center';
+  }else{
+    x.fillStyle='#d9ceff';x.font=`900 15px ${F}`;x.fillText('まいりました…',w/2,32);
+    x.fillStyle='#f3ecff';x.font=`400 30px ${D}`;x.fillText('当てられませんでした',w/2,84);
+  }
+  /* the title pill */
+  const tt='【'+titleOf()+'】';x.font=`900 16px ${F}`;const tw=Math.min(w-40,x.measureText(tt).width+28),ty=top-44;
+  x.fillStyle='#6d4fc2';x.beginPath();x.roundRect?x.roundRect(w/2-tw/2,ty,tw,32,16):x.rect(w/2-tw/2,ty,tw,32);x.fill();
+  x.fillStyle='#fff';x.fillText(tt,w/2,ty+22,w-56);
+  /* the ball */
+  if(G.snap){const s=G.snap,sc=Math.min(snapH/(s.height/DPR),(w-20)/(s.width/DPR)),dw=s.width/DPR*sc,dh=s.height/DPR*sc;
+    x.drawImage(s,(w-dw)/2,top+(snapH-dh)/2,dw,dh);}
+  /* memories */
+  let y=top+snapH;
+  x.fillStyle='#fbf7ef';x.fillRect(0,y,w,listH+foot);
+  if(kk.length){
+    x.textAlign='left';x.fillStyle='#8b84a3';x.font=`900 12px ${F}`;x.fillText(win?'決め手になった思い出':'答えてくれた思い出',20,y+26);
+    kk.forEach((o,i)=>{const s=o.t;const yy=y+50+i*26;x.strokeStyle='#d4452f';x.lineWidth=2.6;x.beginPath();x.arc(29,yy-5,7,0,7);x.stroke();
+      x.fillStyle='#2a2140';x.font=`900 16px ${F}`;x.fillText(s,46,yy,w-66);});
+    y+=listH;
+  }
+  x.textAlign='center';x.fillStyle='#5c5475';x.font=`900 13px ${F}`;
+  x.fillText(win?`${nQ()}問${G.misses?`・${G.misses+1}回目`:''}で当てられた`:`${nQ()}問・3回はずした`,w/2,y+22);
+  y+=foot;
+  x.fillStyle='#16102a';x.fillRect(0,y,w,band);
+  x.textBaseline='middle';x.textAlign='left';x.fillStyle='#fff';let gs=15;x.font=`400 ${gs}px ${D}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>9){gs-=.5;x.font=`400 ${gs}px ${D}`;}
+  x.fillText(GAME,12,y+band/2);
+  x.textAlign='right';x.fillStyle='#ffd36a';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,y+band/2);
+  G.cardCanvas=c;return c.toDataURL('image/png');
+}
+
+/* ---------- wiring ---------- */
+btns.forEach(b=>b.addEventListener('click',()=>answer(+b.dataset.a)));
+$('startBtn').addEventListener('click',()=>{ac();bgmStart();begin();});
+resize();syncFloaters();requestAnimationFrame(loop);
+try{document.fonts.load('400 40px "Dela Gothic One"');}catch(e){}
+
+/* for checks and the promo video */
+window.__nenrei={get G(){return G;},setRnd(f){NEXT_RND=f;},tapAt(sel){const el=document.querySelector(sel),a=app.getBoundingClientRect(),r=el.getBoundingClientRect(),t=$('tap');const z=a.width/(app.clientWidth||a.width)||1;t.style.left=((r.left-a.left+r.width/2)/z)+'px';t.style.top=((r.top-a.top+r.height/2)/z)+'px';t.style.opacity=1;setTimeout(()=>t.style.opacity=0,260);},NR,begin,answer,shareText,titleOf,L,
+  /* answers as a person born in year y would (bd: birthday already came this year) */
+  pick(y,bd){const q=G.q;if(G.phase==='guess'){const age=NR.CUR-y-(bd?0:1);return G.guess===age?0:4;}const p=NR.pYes(q,y,bd);return p>.5?0:4;},
+  async run(y,bd){begin();G.fast=true;for(let n=0;n<90&&!G.result;n++){while(G.busy&&!G.result)await wait(5);if(G.result)break;await answer(this.pick(y,bd),true);}}};
+
+</script>
+<!--moregames:v1 タイトル画面の左上に「他のゲーム」、結果画面のボタンの下に「ほかのゲームで遊ぶ」。遊んでいる最中は出さない。-->
+<style>
+#moreGames{position:absolute;left:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:#24262b;border-radius:999px;font:700 11px "Zen Maru Gothic","Hiragino Sans",sans-serif;line-height:1.5;padding:4px 10px;text-decoration:none}
+#moreGames[hidden]{display:none}
+#moreGames:focus-visible,#moreGamesBtn:focus-visible{outline:3px solid #ffd23f;outline-offset:3px}
+#result .btns a.btn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
+</style>
+<script>
+(function(){
+  var title=document.getElementById('title'),result=document.getElementById('result');
+  var mute=document.getElementById('mute'),host=(mute&&mute.parentNode)||document.getElementById('app')||document.body;
+  var a=document.createElement('a');a.id='moreGames';a.href='/';a.textContent='‹ 他のゲーム';host.appendChild(a);
+  function sync(){a.hidden=title?title.hidden:!!(result&&!result.hidden);}
+  [title,result].forEach(function(el){if(el)new MutationObserver(sync).observe(el,{attributes:true,attributeFilter:['hidden']});});
+  sync();
+  var btns=result&&result.querySelector('.btns');
+  if(btns){var b=document.createElement('a');b.id='moreGamesBtn';b.className='btn ghost';b.href='/';b.textContent='ほかのゲームで遊ぶ';btns.appendChild(b);}
+})();
+</script>
+<script src="/ads/ads.js" defer></script>
+
+</body>
+</html>
