@@ -1,0 +1,90 @@
+/* tapitta の広告枠（全ページ共通）。
+   広告会社を変えるときは、下の SLOTS だけ直せばよい（ゲームの HTML は触らない）。
+   - result: ゲームの結果画面、「ほかのゲームで遊ぶ」の下
+   - list:   一覧ページ、6本目のあと
+   各枠の値:
+     null                                    … 広告なし
+     {type:'admax',   id:'忍者AdMaxの広告枠ID'}
+     {type:'imobile', pid:1, mid:2, asid:3}   … i-mobile の広告スポット
+     {type:'adsense', slot:'AdSenseの広告ユニットID'}
+     [ {...}, {...} ]                         … 配列なら表示のたびにどれか1つ（併用・比較用）
+   遊んでいる最中は出さない。結果画面が開いたときに1回だけ読み込む。 */
+(function () {
+  var SLOTS = {
+    result: null,
+    list: null
+  };
+  var ADSENSE_CLIENT = 'ca-pub-2540616238933875';
+  var NO_ADS = /\/(ai-tegara-binta|ronten-binta|potechi)\//;
+
+  if (NO_ADS.test(location.pathname)) return;
+
+  function pick(v) { return Array.isArray(v) ? v[Math.floor(Math.random() * v.length)] : v; }
+
+  function style() {
+    if (document.getElementById('tpAdStyle')) return;
+    var s = document.createElement('style'); s.id = 'tpAdStyle';
+    s.textContent = '.tpAd{margin:28px auto 8px;text-align:center;width:100%;max-width:336px}' +
+      '.tpAd small{display:block;font-size:10px;letter-spacing:.1em;color:#8a8f99;margin-bottom:4px}' +
+      '.tpAd .tpAdBox{min-height:250px;display:flex;align-items:center;justify-content:center}';
+    document.head.appendChild(s);
+  }
+
+  function load(src) {
+    if (document.querySelector('script[src="' + src + '"]')) return;
+    var sc = document.createElement('script'); sc.async = true; sc.src = src; sc.charset = 'utf-8';
+    document.head.appendChild(sc);
+  }
+
+  function render(host, cfg, name) {
+    cfg = pick(cfg);
+    if (!cfg || !host) return;
+    style();
+    var wrap = document.createElement('div'); wrap.className = 'tpAd'; wrap.setAttribute('data-slot', name);
+    wrap.innerHTML = '<small>広告</small><div class="tpAdBox"></div>';
+    host.appendChild(wrap);
+    var box = wrap.lastChild;
+    if (cfg.type === 'admax') {
+      var d = document.createElement('div');
+      d.className = 'admax-ads'; d.setAttribute('data-admax-id', cfg.id);
+      d.style.cssText = 'display:inline-block;width:300px;height:250px';
+      box.appendChild(d);
+      (window.admaxads = window.admaxads || []).push({ admax_id: cfg.id, type: 'banner' });
+      load('https://adm.shinobi.jp/st/t.js');
+    } else if (cfg.type === 'imobile') {
+      var id = 'im-' + cfg.asid + '-' + name;
+      var i = document.createElement('div'); i.id = id; box.appendChild(i);
+      (window.adsbyimobile = window.adsbyimobile || []).push({ pid: cfg.pid, mid: cfg.mid, asid: cfg.asid, type: 'banner', display: 'inline', elementid: id });
+      load('https://imp-adedge.i-mobile.co.jp/script/v1/spot.js?20220104');
+    } else if (cfg.type === 'adsense') {
+      var a = document.createElement('ins');
+      a.className = 'adsbygoogle'; a.style.cssText = 'display:inline-block;width:300px;height:250px';
+      a.setAttribute('data-ad-client', ADSENSE_CLIENT); a.setAttribute('data-ad-slot', cfg.slot);
+      box.appendChild(a);
+      load('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADSENSE_CLIENT);
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    }
+  }
+
+  function init() {
+    // 一覧ページ
+    var list = document.getElementById('adList');
+    if (list) render(list, SLOTS.list, 'list');
+    // ゲームの結果画面
+    var result = document.getElementById('result');
+    var btns = result && result.querySelector('.btns');
+    if (!btns || !SLOTS.result) return;
+    var done = false;
+    function show() {
+      if (done || result.hidden) return;
+      done = true;
+      var host = document.createElement('div');
+      btns.parentNode.insertBefore(host, btns.nextSibling);
+      render(host, SLOTS.result, 'result');
+    }
+    new MutationObserver(show).observe(result, { attributes: true, attributeFilter: ['hidden'] });
+    show();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();

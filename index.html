@@ -27,6 +27,8 @@ ul.games a{display:block;height:100%;background:var(--card);border:1px solid var
 ul.games a:hover{border-color:var(--red)}
 ul.games img{display:block;width:100%;height:auto;aspect-ratio:1200/630;object-fit:cover;background:var(--line)}
 ul.games h2{font-size:16px;font-weight:900;line-height:1.45;margin:10px 12px 4px}
+ul.games li.adrow{grid-column:1/-1}
+ul.games li.adrow:empty{display:none}
 ul.games p{font-size:13px;color:var(--muted);margin:0 12px 12px;line-height:1.6}
 main.doc h2{font-size:18px;font-weight:900;margin:28px 0 6px}
 main.doc p,main.doc li{font-size:15px}
@@ -72,6 +74,7 @@ footer a{color:var(--muted);margin-right:16px}
       <h2>コンビニおにぎりの海苔を、破らずに開けろ。</h2>
       <p>②を左へ、③を右へ。フィルムを横に引き抜いて、海苔を破らずに開けられるか。</p>
     </a></li>
+    <li id="adList" class="adrow"></li>
     <li><a href="/hamigaki/">
       <img src="/hamigaki/play.png" alt="" width="1200" height="630" loading="lazy">
       <h2>歯みがき粉を、はみ出さずに歯ブラシいっぱいに出せ。</h2>
@@ -140,5 +143,6 @@ footer a{color:var(--muted);margin-right:16px}
 </ul>
 <footer><a href="/">ゲーム一覧</a><a href="/about/">このサイトについて・お問い合わせ</a><a href="/privacy/">プライバシーポリシー</a><br>© 2026 kzaaa00</footer>
 </div>
+<script src="/ads/ads.js" defer></script>
 </body>
 </html>
