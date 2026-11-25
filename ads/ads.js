@@ -17,6 +17,37 @@
   var ADSENSE_CLIENT = 'ca-pub-2540616238933875';
   var NO_ADS = /\/(ai-tegara-binta|ronten-binta|potechi)\//;
 
+  // アクセス計測（GoatCounter、Cookieなし）。ページ表示と、広告の表示・タップの目安を数える。
+  var GC = 'https://tapitta.goatcounter.com/count';
+  var gcQueue = [];
+  function track(name) {
+    var ev = { path: name, title: location.pathname, event: true };
+    if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(ev); else gcQueue.push(ev);
+  }
+  (function () {
+    if (!/tapitta\.com$/.test(location.hostname)) return;   // 手元での確認は数えない
+    var sc = document.createElement('script');
+    sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.setAttribute('data-goatcounter', GC);
+    sc.onload = function () {
+      var t = setInterval(function () {
+        if (!window.goatcounter || !window.goatcounter.count) return;
+        clearInterval(t);
+        while (gcQueue.length) window.goatcounter.count(gcQueue.shift());
+      }, 200);
+    };
+    document.head.appendChild(sc);
+  })();
+  // 広告の中（別サイトの枠）をタップしてページから離れたら「タップの目安」として数える
+  window.addEventListener('blur', function () {
+    setTimeout(function () {
+      var a = document.activeElement;
+      if (a && a.tagName === 'IFRAME') {
+        var w = a.closest && a.closest('.tpAd');
+        if (w) track('ad-tap-' + w.getAttribute('data-slot'));
+      }
+    }, 0);
+  });
+
   if (NO_ADS.test(location.pathname)) return;
 
   function pick(v) { return Array.isArray(v) ? v[Math.floor(Math.random() * v.length)] : v; }
@@ -43,6 +74,7 @@
     var wrap = document.createElement('div'); wrap.className = 'tpAd'; wrap.setAttribute('data-slot', name);
     wrap.innerHTML = '<small>広告</small><div class="tpAdBox"></div>';
     host.appendChild(wrap);
+    track('ad-show-' + name);
     var box = wrap.lastChild;
     if (cfg.type === 'admax') {
       var d = document.createElement('div');
