@@ -66,6 +66,11 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 @media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
 
 
+#result{background:linear-gradient(#fff8ec,#fbe9cc)}
+#result h2{color:#3a1608;border-bottom-color:#b8140f}
+#rScore b{color:#b8140f;text-shadow:0 3px 0 rgba(110,9,4,.18)}
+#card{border:0;box-shadow:0 8px 24px rgba(80,30,0,.22)}
+
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
 </head>
@@ -288,15 +293,20 @@ function bg(){
   g=x.createRadialGradient(ox-34,oy-38,8,ox,oy,EA*1.02);g.addColorStop(0,'#fff0a3');g.addColorStop(.35,'#ffdc62');g.addColorStop(.75,'#f8c23e');g.addColorStop(1,'#e59a24');
   x.fillStyle=g;eggPath(x,ox,oy,EA,EB);x.fill();
   x.save();eggPath(x,ox,oy,EA,EB);x.clip();
-  /* folds of the thin egg, running along its length */
-  for(let i=0;i<16;i++){const yy=oy+(rnd(i+20)-.5)*EB*1.8,len=60+rnd(i+21)*120,xx=ox+(rnd(i+22)-.5)*EA*1.2,d=rnd(i+23)<.5;
-    x.strokeStyle=d?`rgba(205,120,20,${.08+rnd(i+24)*.08})`:`rgba(255,250,210,${.14+rnd(i+24)*.12})`;x.lineWidth=3+rnd(i+25)*9;x.lineCap='round';
-    x.beginPath();x.moveTo(xx-len/2,yy+rnd(i+26)*10-5);x.bezierCurveTo(xx-len/6,yy-8+rnd(i+27)*16,xx+len/6,yy-8+rnd(i+28)*16,xx+len/2,yy+rnd(i+29)*10-5);x.stroke();}
+  /* soft wrapped folds: partial arcs that follow the egg's own shape */
+  x.lineCap='round';
+  for(let i=0;i<11;i++){const k=.42+rnd(i+20)*.5,t0=rnd(i+21)*7,span=.5+rnd(i+22)*1.1,d=rnd(i+23)<.45;
+    x.strokeStyle=d?`rgba(214,128,24,${.07+rnd(i+24)*.07})`:`rgba(255,248,205,${.16+rnd(i+24)*.14})`;x.lineWidth=4+rnd(i+25)*10;
+    x.beginPath();for(let j=0;j<=24;j++){const t=t0+span*j/24,c=Math.cos(t),sn=Math.sin(t);const X=ox+EA*k*c,Y=oy+EB*k*sn*(1-.24*c*c);j?x.lineTo(X,Y):x.moveTo(X,Y);}x.stroke();}
+  /* a few lightly browned spots */
+  for(let i=0;i<14;i++){const a=rnd(i+500)*7,r=.62+rnd(i+501)*.3,X=ox+Math.cos(a)*EA*r,Y=oy+Math.sin(a)*EB*r*.95;const g2=x.createRadialGradient(X,Y,0,X,Y,6+rnd(i+502)*8);g2.addColorStop(0,'rgba(196,110,20,.22)');g2.addColorStop(1,'rgba(196,110,20,0)');x.fillStyle=g2;x.fillRect(X-16,Y-16,32,32);}
   /* tiny bubbles and specks */
   for(let i=0;i<220;i++){const a=rnd(i+300)*7,r=Math.sqrt(rnd(i+301));const X=ox+Math.cos(a)*r*EA*.95,Y=oy+Math.sin(a)*r*EB*.95;
     x.fillStyle=rnd(i+302)<.5?'rgba(255,255,225,.35)':'rgba(200,120,30,.16)';x.beginPath();x.arc(X,Y,.5+rnd(i+303)*1.4,0,7);x.fill();}
-  /* browned edge */
-  x.lineWidth=26;g=x.createLinearGradient(ox-EA,oy-EB,ox+EA,oy+EB);g.addColorStop(0,'rgba(220,140,30,.25)');g.addColorStop(1,'rgba(170,90,15,.55)');x.strokeStyle=g;eggPath(x,ox,oy,EA,EB);x.stroke();
+  /* depth: an inner shadow along the lower right edge, a rim light along the upper left */
+  for(const [col,bl,dx,dy] of [['rgba(170,80,0,.85)',30,-8,-12],['rgba(150,70,0,.5)',8,-2,-3],['rgba(255,252,225,.75)',14,6,9]]){x.save();x.shadowColor=col;x.shadowBlur=bl*SC*DPR;x.shadowOffsetX=dx*SC*DPR;x.shadowOffsetY=dy*SC*DPR;x.fillStyle='#000';
+    x.beginPath();x.rect(ox-EA-120,oy-EB-120,EA*2+240,EB*2+240);for(let i=96;i>=0;i--){const t=i/96*Math.PI*2,c=Math.cos(t),sn=Math.sin(t);x.lineTo(ox+EA*c,oy+EB*sn*(1-.24*c*c));}x.closePath();x.fill('evenodd');x.restore();}
+  x.lineWidth=18;g=x.createLinearGradient(ox-EA,oy-EB,ox+EA,oy+EB);g.addColorStop(0,'rgba(230,150,40,.18)');g.addColorStop(1,'rgba(180,95,15,.42)');x.strokeStyle=g;eggPath(x,ox,oy,EA,EB);x.stroke();
   /* soft gloss from the light */
   x.save();x.translate(ox-48,oy-52);x.rotate(-.35);g=x.createRadialGradient(0,0,0,0,0,70);g.addColorStop(0,'rgba(255,255,245,.55)');g.addColorStop(1,'rgba(255,255,245,0)');x.fillStyle=g;x.scale(1.8,.6);x.beginPath();x.arc(0,0,70,0,7);x.fill();x.restore();
   x.fillStyle='rgba(255,255,255,.75)';x.beginPath();x.ellipse(ox-82,oy-70,10,3,-.5,0,7);x.fill();x.beginPath();x.ellipse(ox-62,oy-80,4,1.6,-.5,0,7);x.fill();
