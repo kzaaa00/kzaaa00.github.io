@@ -451,7 +451,7 @@ function placeSun(cy){
   glow.position.copy(c).addScaledVector(CAM.position.clone().sub(c).normalize(),-4);glow.scale.setScalar(r*9);glow.lookAt(CAM.position);
   /* light comes from the sun's direction; the glitter path runs from the sun towards us */
   const d=c.clone().sub(CAM.position).normalize();sunL.position.copy(V(0,0,0)).addScaledVector(d,10);sunL.position.y=Math.max(.5,sunL.position.y+1.2);sunL.target.position.set(0,0,0);
-  const az=Math.atan2(d.x,-d.z);const len=600;glit.position.set(CAM.position.x+Math.sin(az)*(len/2+8),.0,CAM.position.z-Math.cos(az)*(len/2+8));
+  const az=Math.atan2(d.x,-d.z);const len=600;glit.position.set(CAM.position.x+Math.sin(az)*(len/2+32),-.015,CAM.position.z-Math.cos(az)*(len/2+32));
   glit.rotation.set(-Math.PI/2,0,-az);const hz=horizon();const vis=clamp((hz-cy)/DSUN+.6,0,1.4);glit.scale.set(14*(.5+.5*vis),len,1);glit.material.opacity=.35+.45*vis;
 }
 
