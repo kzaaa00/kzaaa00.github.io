@@ -8,7 +8,7 @@
      {type:'imobile', pid:1, mid:2, asid:3}   … i-mobile の広告スポット
      {type:'adsense', slot:'AdSenseの広告ユニットID'}
      [ {...}, {...} ]                         … 配列なら表示のたびにどれか1つ（併用・比較用）
-   遊んでいる最中は出さない。結果画面が開いたときに1回だけ読み込む。 */
+   遊んでいる最中は出さない。結果画面が開くたびに読み込み直す（AdMax のみ。AdSense は最初の1回だけ）。 */
 (function () {
   var SLOTS = {
     result: { type: 'admax', id: 'eb89faf517e68b4d7d00f6f53c60414c' },  // 忍者AdMax「tapitta結果画面」
@@ -67,22 +67,29 @@
     document.head.appendChild(sc);
   }
 
+  // 広告を1つ描く。refresh=true の枠は、呼ぶたびに中身を新しい広告に入れ替える。
   function render(host, cfg, name) {
     cfg = pick(cfg);
     if (!cfg || !host) return;
     style();
-    var wrap = document.createElement('div'); wrap.className = 'tpAd'; wrap.setAttribute('data-slot', name);
-    wrap.innerHTML = '<small>広告</small><div class="tpAdBox"></div>';
-    host.appendChild(wrap);
+    var wrap = host.querySelector('.tpAd');
+    if (wrap) {
+      if (!canRefresh(cfg)) return;          // AdSense は勝手に入れ替えない
+      wrap.lastChild.innerHTML = '';
+    } else {
+      wrap = document.createElement('div'); wrap.className = 'tpAd'; wrap.setAttribute('data-slot', name);
+      wrap.innerHTML = '<small>広告</small><div class="tpAdBox"></div>';
+      host.appendChild(wrap);
+    }
     track('ad-show-' + name);
     var box = wrap.lastChild;
     if (cfg.type === 'admax') {
-      var d = document.createElement('div');
-      d.className = 'admax-ads'; d.setAttribute('data-admax-id', cfg.id);
-      d.style.cssText = 'display:inline-block';
-      box.appendChild(d);
-      (window.admaxads = window.admaxads || []).push({ admax_id: cfg.id, type: 'banner' });
-      load('https://adm.shinobi.jp/st/t.js');
+      // 小窓（同じサイトのページ）の中で読み込むので、毎回まっさらな広告になる
+      var f = document.createElement('iframe');
+      f.src = '/ads/frame.html?admax=' + cfg.id;
+      f.title = '広告'; f.width = 300; f.height = 250; f.scrolling = 'no'; f.loading = 'eager';
+      f.style.cssText = 'border:0;display:block;width:300px;height:250px;overflow:hidden';
+      box.appendChild(f);
     } else if (cfg.type === 'imobile') {
       var id = 'im-' + cfg.asid + '-' + name;
       var i = document.createElement('div'); i.id = id; box.appendChild(i);
@@ -97,25 +104,29 @@
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     }
   }
+  function canRefresh(cfg) { return cfg.type === 'admax'; }
 
   function init() {
     // 一覧ページ
     var list = document.getElementById('adList');
     if (list) render(list, SLOTS.list, 'list');
-    // ゲームの結果画面
+    // ゲームの結果画面：開くたびに広告を読み直す（遊び直すと新しい広告）
     var result = document.getElementById('result');
     var btns = result && result.querySelector('.btns');
     if (!btns || !SLOTS.result) return;
-    var done = false;
-    function show() {
-      if (done || result.hidden) return;
-      done = true;
-      var host = document.createElement('div');
-      btns.parentNode.insertBefore(host, btns.nextSibling);
+    var host = null, shown = false;
+    function check() {
+      if (result.hidden) { shown = false; return; }
+      if (shown) return;
+      shown = true;
+      if (!host) {
+        host = document.createElement('div');
+        btns.parentNode.insertBefore(host, btns.nextSibling);
+      }
       render(host, SLOTS.result, 'result');
     }
-    new MutationObserver(show).observe(result, { attributes: true, attributeFilter: ['hidden'] });
-    show();
+    new MutationObserver(check).observe(result, { attributes: true, attributeFilter: ['hidden'] });
+    check();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

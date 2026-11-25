@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>広告</title>
+<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}body{display:flex;justify-content:center}</style>
+</head><body>
+<!-- tapitta の広告枠を1つだけ表示する小窓。ads.js が結果画面のたびに読み直す。 -->
+<script>
+(function () {
+  var id = (location.search.match(/[?&]admax=([0-9a-f]{32})/) || [])[1];
+  if (!id) return;
+  var d = document.createElement('div');
+  d.className = 'admax-ads'; d.setAttribute('data-admax-id', id); d.style.display = 'inline-block';
+  document.body.appendChild(d);
+  (window.admaxads = window.admaxads || []).push({ admax_id: id, type: 'banner' });
+  var s = document.createElement('script');
+  s.src = 'https://adm.shinobi.jp/st/t.js'; s.async = true; s.charset = 'utf-8';
+  document.body.appendChild(s);
+})();
+</script>
+</body></html>
