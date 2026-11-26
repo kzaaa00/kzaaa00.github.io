@@ -72,7 +72,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
   <div id="title" class="panel">
     <h1>Crack an egg with one hand. No shell allowed.</h1>
     <button class="btn" id="startBtn" type="button">Start</button>
-    <p class="fine">Everything in this game is made up. This game has sound.<br><a class="me" href="/en/" target="_blank" rel="noopener">made by tapitta.com</a></p>
+    <p class="fine">Everything in this game is made up. This game has sound.<br><a class="me" href="https://x.com/tapitta_games" target="_blank" rel="noopener">made by @tapitta_games</a></p>
   </div>
 
   <div id="result" class="panel" hidden>
@@ -90,7 +90,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
         <button class="link" id="textOnly" type="button" hidden>Post text only</button>
       </div>
       <img id="card" alt="Your result and the bowl and egg at that moment">
-      <p class="fine">Everything in this game is made up.<a class="me" href="/en/" target="_blank" rel="noopener">made by tapitta.com</a></p>
+      <p class="fine">Everything in this game is made up.<a class="me" href="https://x.com/tapitta_games" target="_blank" rel="noopener">made by @tapitta_games</a></p>
     </div>
   </div>
 
@@ -100,7 +100,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 <script>
 const $=id=>document.getElementById(id);
 const GAME='Crack an egg with one hand. No shell allowed.';
-const CREATOR='tapitta.com';
+const CREATOR='@tapitta_games';
 const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://tapitta.com/en/egg/';})();
 const DISP=fontVar('--display'),BODY=fontVar('--body');
 function fontVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n);}
@@ -443,10 +443,10 @@ async function drawCard(){
   x.fillStyle='#6f7480';let ff=14;x.font=`700 ${ff}px ${F}`;while(x.measureText(feedback()).width>w-20&&ff>10){ff-=.5;x.font=`700 ${ff}px ${F}`;}x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
   x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
   x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${D}`;
-  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('made by '+CREATOR).width;x.restore();
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText(CREATOR).width;x.restore();
   while(x.measureText(GAME).width>w-28-cw-10&&gs>9){gs-=.5;x.font=`400 ${gs}px ${D}`;}
   x.fillText(GAME,12,bottom+band/2);
-  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('made by '+CREATOR,w-12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText(CREATOR,w-12,bottom+band/2);
   G.cardCanvas=c;
   return c.toDataURL('image/png');
 }

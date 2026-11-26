@@ -82,7 +82,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
     <h1>Draw a ketchup heart without going over the lines.</h1>
     <p style="margin:0 0 14px;font-size:13px;line-height:1.6">Trace the dotted heart in one stroke.<br>Slow = thick line, fast = thin line.<br><b>Cover the whole dotted line without<br>leaving the pale band = 100%</b>.</p>
     <button class="btn" id="startBtn" type="button">Start</button>
-    <p class="fine">Everything in this game is made up. This game has sound.<br><a class="me" href="/en/" target="_blank" rel="noopener">made by tapitta.com</a></p>
+    <p class="fine">Everything in this game is made up. This game has sound.<br><a class="me" href="https://x.com/tapitta_games" target="_blank" rel="noopener">made by @tapitta_games</a></p>
   </div></div>
 
   <div id="result" class="panel" hidden>
@@ -100,7 +100,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
         <button class="link" id="textOnly" type="button" hidden>Post text only</button>
       </div>
       <img id="card" alt="Your result and the heart you drew on the omelette">
-      <p class="fine">Everything in this game is made up.<a class="me" href="/en/" target="_blank" rel="noopener">made by tapitta.com</a></p>
+      <p class="fine">Everything in this game is made up.<a class="me" href="https://x.com/tapitta_games" target="_blank" rel="noopener">made by @tapitta_games</a></p>
     </div>
   </div>
 
@@ -110,7 +110,7 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 <script>
 const $=id=>document.getElementById(id);
 const GAME='Draw a ketchup heart without going over the lines.';
-const CREATOR='tapitta.com';
+const CREATOR='@tapitta_games';
 const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://tapitta.com/en/ketchup/';})();
 const BODYF=()=>getComputedStyle(document.documentElement).getPropertyValue('--body');
 
@@ -497,10 +497,10 @@ async function drawCard(){
   x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
   x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
   x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${Df}`;
-  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('made by '+CREATOR).width;x.restore();
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText(CREATOR).width;x.restore();
   while(x.measureText(GAME).width>w-28-cw-10&&gs>8){gs-=.5;x.font=`400 ${gs}px ${Df}`;}
   x.fillText(GAME,12,bottom+band/2);
-  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('made by '+CREATOR,w-12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText(CREATOR,w-12,bottom+band/2);
   G.cardCanvas=c;
   return c.toDataURL('image/png');
 }
