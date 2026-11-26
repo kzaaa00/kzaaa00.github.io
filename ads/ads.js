@@ -14,6 +14,14 @@
     result: { type: 'admax', id: 'eb89faf517e68b4d7d00f6f53c60414c' },  // 忍者AdMax「tapitta結果画面」
     list:   { type: 'admax', id: '5c6f97434182620655874aee677c16c6' }   // 忍者AdMax「tapitta一覧ページ」
   };
+  // 英語版（/en/ 以下）の枠。今は日本語版と同じ。海外向けに別の広告（AdSense など）にするときはここだけ変える。
+  var SLOTS_EN = {
+    result: SLOTS.result,
+    list:   SLOTS.list
+  };
+  var EN = /^\/en\//.test(location.pathname);
+  if (EN) SLOTS = SLOTS_EN;
+  var AD_LABEL = EN ? 'Advertisement' : '広告';
   var ADSENSE_CLIENT = 'ca-pub-2540616238933875';
   var NO_ADS = /\/(ai-tegara-binta|ronten-binta|potechi)\//;
 
@@ -78,7 +86,7 @@
       wrap.lastChild.innerHTML = '';
     } else {
       wrap = document.createElement('div'); wrap.className = 'tpAd'; wrap.setAttribute('data-slot', name);
-      wrap.innerHTML = '<small>広告</small><div class="tpAdBox"></div>';
+      wrap.innerHTML = '<small>' + AD_LABEL + '</small><div class="tpAdBox"></div>';
       host.appendChild(wrap);
     }
     track('ad-show-' + name);
@@ -87,7 +95,7 @@
       // 小窓（同じサイトのページ）の中で読み込むので、毎回まっさらな広告になる
       var f = document.createElement('iframe');
       f.src = '/ads/frame.html?admax=' + cfg.id;
-      f.title = '広告'; f.width = 300; f.height = 250; f.scrolling = 'no'; f.loading = 'eager';
+      f.title = AD_LABEL; f.width = 300; f.height = 250; f.scrolling = 'no'; f.loading = 'eager';
       f.style.cssText = 'border:0;display:block;width:300px;height:250px;overflow:hidden';
       box.appendChild(f);
     } else if (cfg.type === 'imobile') {
