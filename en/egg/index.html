@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Crack an egg with one hand. No shell allowed.</title>
+<meta name="description" content="Flick down and crack the egg on the edge of the bowl in one go. Your score is how much shell ends up in the bowl. Free, no download, plays in your phone browser.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Crack an egg with one hand. No shell allowed.">
+<meta property="og:description" content="Flick down and crack it on the edge of the bowl. One try.">
+<meta property="og:url" content="https://tapitta.com/en/egg/">
+<meta property="og:image" content="https://tapitta.com/en/egg/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* An egg in one hand above a bowl. One flick down cracks it on the rim:
+   too soft and you have to dig it open, too hard and the shell goes in with it. */
+:root{
+  --ink:#24262b; --muted:#6f7480; --paper:#f7f6f2; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1f2228}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#e9e2d4;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app.shake{animation:shake .45s}
+@keyframes shake{15%{transform:translate(-9px,3px)}30%{transform:translate(8px,-3px)}45%{transform:translate(-6px,2px)}60%{transform:translate(4px,-1px)}75%{transform:translate(-2px,0)}}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:linear-gradient(#f6efe2,#eadfcb)}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,8.2vw,40px);line-height:1.4;margin:0 0 30px;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
+
+#result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:56px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#card{width:100%;border-radius:10px;border:1px solid #d6d8dc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-label="Holding an egg in one hand above a bowl in a kitchen"></canvas>
+
+  <div id="title" class="panel">
+    <h1>Crack an egg with one hand. No shell allowed.</h1>
+    <button class="btn" id="startBtn" type="button">Start</button>
+    <p class="fine">Everything in this game is made up. This game has sound.<br><a class="me" href="/en/" target="_blank" rel="noopener">made by tapitta.com</a></p>
+  </div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>Your egg result</h2>
+      <p id="rScore"></p>
+      <p id="rCount"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">Press and hold the image to save it (right-click on a computer).</p>
+      <div class="btns">
+        <button class="btn" id="retry" type="button">Play again</button>
+        <button class="btn x" id="shareX" type="button">Share on X</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>Save image</button>
+        <button class="link" id="textOnly" type="button" hidden>Post text only</button>
+      </div>
+      <img id="card" alt="Your result and the bowl and egg at that moment">
+      <p class="fine">Everything in this game is made up.<a class="me" href="/en/" target="_blank" rel="noopener">made by tapitta.com</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">Sound ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='Crack an egg with one hand. No shell allowed.';
+const CREATOR='tapitta.com';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://tapitta.com/en/egg/';})();
+const DISP=fontVar('--display'),BODY=fontVar('--body');
+function fontVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n);}
+
+
+/* ---------- the rules (sim.js uses the same numbers) ---------- */
+/* 11/20: the egg follows the finger and cracks when it reaches the rim; the strength is how fast it was
+   moving then (what you see), not when the finger lifts. The score drops 1 point per 1% off. */
+const BEST=1000;      /* egg speed at the rim (px/s, 360-wide space) that cracks it just right */
+const OK=.0006;       /* 100% only within this fraction of BEST */
+const NOCRACK=-.45;   /* this much weaker and it does not crack at all */
+const CRUSH=.45;      /* this much harder and you crush it in your hand */
+let PREV=null;        /* the last try, shown on the result so you can adjust */
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('tamago-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*1;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,vol,freq,delay=0,type='bandpass',q=1){
+  if(muted||!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=nbuf();f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur+.02);
+}
+function tone(f,dur,type='sine',vol=.05,delay=0,f2){
+  if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+}
+const SFX={
+  knock(){tone(1400,.05,'triangle',.06);tone(900,.05,'triangle',.03,.01);},
+  crack(){noise(.06,.3,2800,0,'highpass');tone(1100,.04,'triangle',.05);},
+  crush(){noise(.25,.4,1800,0,'bandpass',.6);noise(.12,.3,4000,.02,'highpass');tone(160,.15,'sine',.08,0,70);},
+  plop(d=0){noise(.12,.18,380,d,'lowpass');tone(190,.1,'sine',.06,d,90);},
+  tick(d=0){tone(2400+Math.random()*900,.03,'triangle',.025,d);}
+};
+function syncMute(){$('mute').textContent=muted?'Sound OFF':'Sound ON';$('mute').setAttribute('aria-pressed',String(muted));}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('tamago-mute',muted?'1':'0');}catch(err){}syncMute();});
+
+/* ---------- canvas ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=360,H=640,SC=1,DPR=1;
+function resize(){
+  const r=$('app').getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);
+  SC=r.width/360;W=360;H=r.height/SC;
+  cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+}
+addEventListener('resize',resize);try{visualViewport.addEventListener('resize',resize);}catch(e){}
+resize();
+/* the bowl: centre X, rim at Ry. The egg waits at (ex0, ey0) and cracks on the back of the rim. */
+function L(){const Ry=Math.max(330,Math.min(H-150,H*.6));return {X:180,Ry,rx:132,ry:34,ex0:196,ey0:Ry-185,ehit:Ry-34-38};}
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function ease(e){e=Math.max(0,Math.min(1,e));return e*e*(3-2*e);}
+function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);}
+
+/* ---------- state ---------- */
+let G=null;
+function newGame(){G={phase:'aim',t:0,drag:null,res:null,shown:false,snap:null,snapped:false,nudge:0};}
+
+/* ---------- input: one quick flick down ---------- */
+function pt(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/SC,y:(e.clientY-r.top)/SC};}
+cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='aim')return;ac();try{cv.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();const P=pt(e);G.drag={pts:[[e.timeStamp||performance.now(),P.y]],y0:P.y};});
+cv.addEventListener('pointermove',e=>{if(!G||!G.drag)return;
+  let evs=[e];try{const c=e.getCoalescedEvents&&e.getCoalescedEvents();if(c&&c.length)evs=c;}catch(err){}
+  for(const ev of evs){const P=pt(ev);G.drag.pts.push([ev.timeStamp||performance.now(),P.y]);}
+  /* the egg follows the finger 1:1, and cracks the moment it reaches the rim */
+  const P=pt(e),{ey0,ehit}=L(),TR=ehit-ey0;G.nudge=Math.max(-30,Math.min(TR,P.y-G.drag.y0));
+  if(P.y-G.drag.y0>=TR){const v=impactSpeed(G.drag.pts,G.drag.y0,TR);G.drag=null;G.nudge=0;flick(v,true);}});
+/* how fast the egg was going when it reached the rim: over the last 60 ms before it touched (what you see on screen) */
+const WIN=60;
+function yAt(pts,t){if(t<=pts[0][0])return pts[0][1];for(let i=1;i<pts.length;i++)if(pts[i][0]>=t){const a=pts[i-1],b=pts[i];return a[1]+(b[1]-a[1])*((t-a[0])/Math.max(1e-6,b[0]-a[0]));}return pts[pts.length-1][1];}
+function impactSpeed(pts,y0,TR){
+  let i=pts.findIndex(p=>p[1]-y0>=TR);if(i<1)i=pts.length-1;
+  const a=pts[i-1],b=pts[i];const tc=a[0]+(b[0]-a[0])*((y0+TR-a[1])/Math.max(1e-6,b[1]-a[1]));
+  const t0=Math.max(pts[0][0],tc-WIN);if(tc-t0<8)return 0;
+  return (y0+TR-yAt(pts,t0))/(tc-t0)*1000;
+}
+/* let go before the egg reaches the rim: it just goes back up, nothing happens */
+const up=()=>{if(!G||!G.drag)return;G.drag=null;G.nudge=0;};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+
+function flick(v,touched){
+  if(!G||G.phase!=='aim')return;
+  const r=v/BEST-1;
+  let kind;
+  if(Math.abs(r)<=OK)kind='clean';
+  else if(r<NOCRACK)kind='nocrack';
+  else if(r>CRUSH)kind='crush';
+  else kind=r<0?'weak':'strong';
+  const pieces=kind==='clean'||kind==='nocrack'?0:Math.min(15,Math.max(1,Math.ceil(Math.abs(r)*100/3)));
+  const yolkBroken=kind==='crush'||(kind==='strong'&&r>.25);
+  G.res={v,r,kind,pieces,yolkBroken};G.phase='hit';G.t=0;G.shells=[];
+  /* where the shell bits land: inside the bowl's opening */
+  const {X,Ry,rx,ry}=L();
+  for(let i=0;i<pieces;i++){const a=rnd(i*3.1+v)*Math.PI*2,rad=Math.sqrt(rnd(i*7.7+v))*.75;G.shells.push({x:X+12+Math.cos(a)*rx*rad*.7,y:Ry+6+Math.sin(a)*ry*rad*.8,s:2.5+rnd(i+v)*3.5,a:rnd(i*5+v)*6,d:.04*i});}
+  G.endIn=kind==='nocrack'?1700:kind==='crush'?2600:2300;
+  if(touched)G.t=.1; /* the egg is already on the rim: skip the swing-in */
+}
+function step(dt,now){
+  G.t+=dt;
+  if(G.phase==='aim'&&G.plan!==undefined&&G.t>(G.planAt||.6)){const p=G.plan;G.plan=undefined;flick(BEST*(1+p));}
+  if(G.phase==='hit'){
+    const k=G.res.kind;
+    if(!G.hitSnd&&G.t>=.1){G.hitSnd=true;
+      if(k==='nocrack')SFX.knock();else if(k==='crush'){SFX.crush();anim($('app'),'shake');try{navigator.vibrate&&navigator.vibrate([40,30,90]);}catch(e){}}else SFX.crack();}
+    if(!G.plopSnd&&G.t>=.75&&k!=='nocrack'){G.plopSnd=true;SFX.plop();for(let i=0;i<Math.min(8,G.res.pieces);i++)SFX.tick(.12+i*.05);}
+    if(!G.snapped&&G.t>=(k==='nocrack'?.5:1.3)){G.snapped=true;takeSnap();}
+    if(G.t*1000>=G.endIn&&!G.shown){G.shown=true;showResult();}
+  }
+}
+
+/* ---------- drawing ---------- */
+function drawTable(x){
+  x.fillStyle='#e9e2d4';x.fillRect(0,0,W,H);
+  /* a kitchen counter: tiles behind, wood in front */
+  const {Ry}=L();const top=Ry-60;
+  x.fillStyle='#f4f1ea';x.fillRect(0,0,W,top);
+  x.strokeStyle='rgba(150,140,125,.25)';x.lineWidth=1;
+  for(let y=top-40;y>0;y-=40){x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();}
+  for(let i=0;i<10;i++){const y0=Math.floor(i)*40;}
+  for(let r=0;r*40<top;r++)for(let c=0;c<10;c++){const xx=c*40+(r%2?20:0);x.beginPath();x.moveTo(xx,top-r*40);x.lineTo(xx,top-r*40-40);x.stroke();}
+  x.fillStyle='#c9a37a';x.fillRect(0,top,W,H-top);
+  x.strokeStyle='rgba(110,70,30,.14)';x.lineWidth=1.4;
+  for(let i=0;i<10;i++){const y=top+12+i*22;x.beginPath();x.moveTo(0,y);for(let k=1;k<=8;k++)x.lineTo(k*W/8,y+Math.sin(i*2.3+k*1.7)*3);x.stroke();}
+  x.fillStyle='rgba(255,255,255,.18)';x.fillRect(0,top,W,3);
+}
+function drawBowlBack(x){
+  const {X,Ry,rx,ry}=L();
+  x.fillStyle='rgba(60,40,20,.18)';x.beginPath();x.ellipse(X+6,Ry+104,rx*.62,16,0,0,Math.PI*2);x.fill();
+  /* outside of the bowl */
+  x.fillStyle='#fdfcf8';x.beginPath();x.moveTo(X-rx,Ry);x.bezierCurveTo(X-rx+6,Ry+70,X-rx*.55,Ry+98,X,Ry+100);x.bezierCurveTo(X+rx*.55,Ry+98,X+rx-6,Ry+70,X+rx,Ry);x.closePath();x.fill();
+  x.fillStyle='#3e6fa8';x.beginPath();x.moveTo(X-rx+3,Ry+16);x.bezierCurveTo(X-rx+20,Ry+26,X+rx-20,Ry+26,X+rx-3,Ry+16);x.lineTo(X+rx-6,Ry+24);x.bezierCurveTo(X+rx-20,Ry+34,X-rx+20,Ry+34,X-rx+6,Ry+24);x.closePath();x.fill();
+  x.fillStyle='rgba(0,0,0,.05)';x.beginPath();x.moveTo(X+rx*.4,Ry+20);x.bezierCurveTo(X+rx*.7,Ry+40,X+rx*.6,Ry+80,X+rx*.2,Ry+98);x.lineTo(X+rx*.5,Ry+90);x.bezierCurveTo(X+rx*.9,Ry+60,X+rx,Ry+30,X+rx,Ry);x.closePath();x.fill();
+  /* inside */
+  x.fillStyle='#e9eef3';x.beginPath();x.ellipse(X,Ry,rx-4,ry-4,0,0,Math.PI*2);x.fill();
+  x.fillStyle='#d9e1e9';x.beginPath();x.ellipse(X,Ry+6,rx-16,ry-12,0,0,Math.PI*2);x.fill();
+  /* rim */
+  x.strokeStyle='#fdfcf8';x.lineWidth=7;x.beginPath();x.ellipse(X,Ry,rx-3,ry-3,0,0,Math.PI*2);x.stroke();
+  x.strokeStyle='rgba(0,0,0,.12)';x.lineWidth=1;x.beginPath();x.ellipse(X,Ry,rx,ry,0,0,Math.PI*2);x.stroke();
+}
+/* what is in the bowl: the egg (white and yolk) and any bits of shell */
+function drawContents(x,a){
+  const r=G.res,{X,Ry}=L();if(r.kind==='nocrack')return;
+  const fall=ease((a-.45)/.3);if(a<.45)return;
+  const cy=Ry-60+(Ry+4-(Ry-60))*fall,sp=.5+.5*fall;
+  x.save();
+  x.fillStyle='rgba(255,255,255,.8)';x.beginPath();x.ellipse(X+12,cy+2,52*sp,15*sp+3*(1-fall)*10,0,0,Math.PI*2);x.fill();
+  x.strokeStyle='rgba(200,210,220,.7)';x.lineWidth=1;x.stroke();
+  if(r.yolkBroken){x.fillStyle='#f2a516';x.beginPath();for(let i=0;i<12;i++){const t=i/12*Math.PI*2,rr2=(18+rnd(i)*12)*sp;x.lineTo(X+14+Math.cos(t)*rr2*1.6,cy+Math.sin(t)*rr2*.45);}x.closePath();x.fill();}
+  else{x.fillStyle='#f6a91a';x.beginPath();x.ellipse(X+14,cy-1,17*sp,11*sp,0,0,Math.PI*2);x.fill();x.fillStyle='rgba(255,255,255,.55)';x.beginPath();x.ellipse(X+9,cy-5,5*sp,2.6*sp,-.3,0,Math.PI*2);x.fill();}
+  x.restore();
+  /* shell bits fall from the crack */
+  const {ex0}=L(),hx=ex0,hy=L().ehit;
+  for(const s of G.shells){const e=ease((a-.5-s.d)/.35);if(a<.5+s.d)continue;const px=hx+(s.x-hx)*e,py=hy+(s.y-hy)*e-30*e*(1-e)*4;
+    x.save();x.translate(px,py);x.rotate(s.a+e*3);x.fillStyle='#fbf3e4';x.strokeStyle='rgba(160,130,90,.7)';x.lineWidth=.8;x.beginPath();x.moveTo(-s.s,-s.s*.6);x.lineTo(s.s,-s.s*.3);x.lineTo(s.s*.2,s.s*.8);x.closePath();x.fill();x.stroke();x.restore();}
+}
+const SKIN='#f1c9a6',SKIN_D='#d9a37c';
+function capsule(x,x0,y0,x1,y1,w){const a=Math.atan2(y1-y0,x1-x0),l=Math.hypot(x1-x0,y1-y0);x.save();x.translate(x0,y0);x.rotate(a);x.fillStyle=SKIN;rr(x,-w/2,-w/2,l+w,w,w/2);x.fill();x.strokeStyle=SKIN_D;x.lineWidth=1.2;x.stroke();x.fillStyle='#f8e2d2';rr(x,l-w*.15,-w*.32,w*.55,w*.5,w*.2);x.fill();x.restore();}
+/* the egg in the hand. open: 0 = whole, 1 = pulled apart. crack: draw the crack line. */
+function drawEggHand(x,ex,ey,o){
+  const ER=31,EH=40;
+  x.save();
+  /* palm behind, up and to the right */
+  x.fillStyle=SKIN;x.beginPath();x.ellipse(ex+44,ey-62,34,26,-.5,0,Math.PI*2);x.fill();x.strokeStyle=SKIN_D;x.lineWidth=1.2;x.stroke();
+  x.save();x.translate(ex+52,ey-70);x.rotate(-1.0);x.fillStyle=SKIN;rr(x,-6,-22,240,44,22);x.fill();x.strokeStyle=SKIN_D;x.lineWidth=1.2;x.stroke();x.fillStyle='#4f7fb5';rr(x,70,-26,200,52,10);x.fill();x.restore();
+  /* the egg */
+  const op=o.open||0;
+  const egg=(side)=>{x.save();
+    if(op>0){x.translate(side*op*22,-op*6);x.rotate(side*op*.6);}
+    x.beginPath();x.rect(side<0?-60:0,-60,60,120);x.clip();
+    const g=x.createRadialGradient(-10,-14,6,0,0,EH);g.addColorStop(0,'#fffaf0');g.addColorStop(1,'#efdcc0');
+    x.fillStyle=g;x.beginPath();x.ellipse(0,0,ER,EH,0,0,Math.PI*2);x.fill();x.strokeStyle='rgba(150,120,80,.35)';x.lineWidth=1;x.stroke();
+    if(op>0){x.fillStyle='rgba(255,255,255,.9)';x.beginPath();x.ellipse(0,EH*.35,ER*.8,EH*.4,0,0,Math.PI);x.fill();}
+    x.restore();};
+  x.save();x.translate(ex,ey);x.rotate(.12);
+  if(o.crushed){
+    /* crushed: a few bits left between the fingers */
+    for(let i=0;i<7;i++){x.save();x.translate((rnd(i)-.5)*40,(rnd(i+9)-.5)*40);x.rotate(rnd(i+3)*6);x.fillStyle='#f4e6cf';x.beginPath();x.moveTo(-8,-6);x.lineTo(9,-2);x.lineTo(1,9);x.closePath();x.fill();x.restore();}
+    x.fillStyle='#f2a516';x.beginPath();x.ellipse(4,22,16,6,0,0,Math.PI*2);x.fill();
+  }else{
+    egg(-1);egg(1);
+    if(o.crack&&!op){x.strokeStyle='rgba(120,90,55,.8)';x.lineWidth=1.2;x.beginPath();x.moveTo(-ER+2,6);for(let i=1;i<=8;i++)x.lineTo(-ER+2+i*(2*ER-4)/8,6+((i%2)?-4:3)*o.crack);x.stroke();}
+  }
+  x.restore();
+  /* fingers over the top, thumb on the left */
+  capsule(x,ex+48,ey-58,ex+8,ey-34,15);
+  capsule(x,ex+56,ey-46,ex+22,ey-14,15);
+  capsule(x,ex+58,ey-32,ex+30,ey+6,14);
+  capsule(x,ex+30,ey-74,ex-24,ey-20,16);
+  x.restore();
+}
+function pill(label,lx,ly){cx.save();cx.font='900 15px '+BODY;cx.textAlign='center';cx.textBaseline='middle';
+  const w=cx.measureText(label).width+22;cx.fillStyle='rgba(42,34,28,.86)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
+function flickGuide(){
+  const {ex0,ey0}=L();const T=1.6,t=(G.t%T)/T;
+  const x0=ex0-110,y0=ey0-40,y1=ey0+70;
+  let fy=y0,show=true;
+  if(t<.35)fy=y0;else if(t<.5){const e=(t-.35)/.15;fy=y0+(y1-y0)*e*e;}else{fy=y1;show=false;}
+  cx.save();cx.setLineDash([5,5]);cx.strokeStyle='rgba(42,34,28,.6)';cx.lineWidth=2.5;cx.beginPath();cx.moveTo(x0,y0);cx.lineTo(x0,y1);cx.stroke();cx.setLineDash([]);
+  cx.fillStyle='rgba(42,34,28,.6)';cx.beginPath();cx.moveTo(x0,y1+12);cx.lineTo(x0-9,y1-4);cx.lineTo(x0+9,y1-4);cx.closePath();cx.fill();
+  if(show){cx.fillStyle='rgba(255,255,255,.85)';cx.strokeStyle='#2a221c';cx.lineWidth=2.5;cx.beginPath();cx.arc(x0,fy,15,0,Math.PI*2);cx.fill();cx.stroke();}
+  else{const r=(t-.5)/.5;cx.strokeStyle=`rgba(42,34,28,${.7*(1-r)})`;cx.lineWidth=2.5;cx.beginPath();cx.arc(x0,y1,15+r*16,0,Math.PI*2);cx.stroke();}
+  cx.restore();
+  pill('Flick down to crack it',180,Math.max(26,ey0-96));
+}
+function render(now){
+  cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
+  drawTable(cx);drawBowlBack(cx);
+  const {ex0,ey0,ehit}=L();
+  if(!G){drawEggHand(cx,ex0,ey0,{});return;}
+  let ex=ex0,ey=ey0+G.nudge,o={};
+  if(G.phase==='hit'){
+    const a=G.t,k=G.res.kind;
+    drawContents(cx,a);
+    if(a<.1)ey=ey0+(ehit-ey0)*(a/.1)*(a/.1);
+    else if(k==='nocrack'){const b=Math.min(1,(a-.1)/.35);ey=ehit-(ehit-ey0)*ease(b)*.6-Math.sin(Math.min(1,b)*Math.PI)*14;o.crack=.4;}
+    else if(k==='crush'){ey=ehit-6;o.crushed=true;}
+    else{ey=ehit-Math.min(1,(a-.1)/.3)*20;o.crack=1;o.open=ease((a-.35)/.3);}
+  }
+  drawEggHand(cx,ex,ey,o);
+  if(G.phase==='hit'&&G.res.kind==='crush'){const a=G.t;if(a>.1&&a<.9){for(let i=0;i<14;i++){const e=(a-.1)/.8,ang=rnd(i)*6.28;cx.fillStyle=i%3?'#fbf3e4':'#f2a516';cx.beginPath();cx.arc(ex+Math.cos(ang)*e*110,ehit+Math.sin(ang)*e*60+e*e*80,3,0,Math.PI*2);cx.fill();}}}
+  if(G.phase==='aim'&&!G.drag)flickGuide();
+}
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(G)step(dt,now);render(now);}
+requestAnimationFrame(loop);
+function anim(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);}
+
+/* ---------- result ---------- */
+function cropBox(){const {Ry,ey0}=L();return {y0:Math.max(0,ey0-110),y1:Math.min(H,Ry+112)};}
+function takeSnap(){
+  /* a resize (the phone's address bar moving) clears the canvas between frames; draw it again so the picture is never blank */
+  try{render(performance.now());}catch(e){}
+  try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
+    c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
+}
+/* how far off the right strength, in % (0.1 steps, rounded up so that a miss is never shown as 0) */
+function devOf(res){return res.kind==='clean'?0:Math.max(.1,Math.ceil(Math.abs(res.r)*1000-1e-9)/10);}
+/* one number: 100 only for a clean crack; otherwise 100 minus the % off (so "12.4% too strong" = 87.6%) */
+function score(){const r=G.res;if(r.kind==='clean')return 100;if(r.kind==='nocrack'||r.kind==='crush')return 0;return Math.max(0,Math.round((100-devOf(r))*10)/10);}
+function pctText(){const s=score();return s===100?'100':s.toFixed(1);}
+function finalize(){}
+function titleOf(){
+  const r=G.res,s=score();
+  if(r.kind==='clean')return 'One-Handed Egg Pro';
+  if(r.kind==='nocrack')return 'Politely Knocked on the Egg';
+  if(r.kind==='crush')return 'Egg Crusher';
+  if(s>=99)return 'Almost a One-Handed Pro';
+  if(s>=90)return 'Picks the Shell Out Later';
+  if(s>=50)return r.kind==='strong'?'Crunchy Omelette Chef':'Pried It Open with Fingers';
+  return 'Shell and All';
+}
+function devText(res){if(res.kind==='clean')return 'perfect';return `${devOf(res).toFixed(1)}% ${res.r<0?'softer':'harder'} than perfect`;}
+function feedback(){
+  const r=G.res,d=devText(r);
+  if(r.kind==='clean')return 'Force: perfect';
+  if(r.kind==='nocrack')return 'Force: '+d+' (it didn\u2019t crack)';
+  if(r.kind==='crush')return 'Force: '+d+' (you crushed it)';
+  return 'Force: '+d+(r.kind==='weak'?' (pried it open)':' (shell shattered)');
+}
+function statusLine(){const r=G.res;if(r.kind==='nocrack')return 'The egg didn\u2019t crack';if(r.kind==='clean')return 'Not a single bit of shell';return `${r.pieces} piece${r.pieces===1?'':'s'} of shell got in`+(r.yolkBroken?' (and the yolk broke)':'');}
+function bigLabel(){return 'Clean crack';}
+function bigNum(){return [pctText(),'%'];}
+function shareText(){
+  const r=G.res,p=r.kind==='nocrack'?'didn\u2019t crack':r.pieces===0?'no shell':`${r.pieces} shell piece${r.pieces===1?'':'s'}`;
+  return `Crack an egg with one hand. No shell allowed.\nClean crack ${pctText()}% (${p}) \u201c${titleOf()}\u201d\n${SHARE_URL}`;
+}
+
+async function showResult(){
+  finalize();
+  const [n,u]=bigNum();
+  $('rScore').innerHTML=`${bigLabel()}<b>${n}<small>${u}</small></b>`;
+  $('rCount').textContent=statusLine();
+  $('rTitle').textContent='\u201c'+titleOf()+'\u201d';
+  $('rSub').textContent=feedback();
+  if(PREV){const b=document.createElement('span');b.style.display='block';b.textContent='Last try: '+devText(PREV);$('rSub').appendChild(b);}
+  PREV=G.res;
+  $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(r=>G.cardCanvas.toBlob(r,'image/png'));if(b)G.cardFile=new File([b],'tamago-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'Share on X with image':'Share on X';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'Pick X in the share menu to post it with your result image.':t?'Pick X in the share menu. To add the result image, tap \u201cSave image\u201d or press and hold the image below.':'Save the result image with \u201cSave image\u201d (or press and hold it) and attach it to your post.';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='tamago-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
+
+/* The share image: the result on top, the scene at the moment that tells the story in the middle, then a line on the timing,
+   and a band with the game name and the creator. Portrait, 360 wide at 3x. */
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  if(!G.snap)takeSnap();
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',D='"Dela Gothic One",sans-serif';
+  const {y0,y1}=cropBox(),sh=y1-y0;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#6f7480';x.font=`900 16px ${F}`;x.fillText(bigLabel(),w/2,32);
+  const [n,u]=bigNum();let fs=96;x.font=`400 ${fs}px ${D}`;let tw=x.measureText(n).width;
+  while(tw*1.3>w-30&&fs>40){fs-=4;x.font=`400 ${fs}px ${D}`;tw=x.measureText(n).width;}
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;const pw=x.measureText(u).width;
+  const sx=(w-(tw+pw+4))/2;x.textAlign='left';x.fillStyle='#c8402c';x.font=`400 ${fs}px ${D}`;x.fillText(n,sx,124);
+  x.font=`400 ${Math.round(fs*.45)}px ${D}`;x.fillText(u,sx+tw+4,124);
+  x.textAlign='center';x.fillStyle='#24262b';x.font=`900 17px ${F}`;x.fillText(statusLine(),w/2,160);
+  x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('\u201c'+titleOf()+'\u201d',w/2,192);
+  x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
+  try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#e9e2d4';x.fillRect(0,top0,w,sh);}
+  x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
+  x.fillStyle='#6f7480';let ff=14;x.font=`700 ${ff}px ${F}`;while(x.measureText(feedback()).width>w-20&&ff>10){ff-=.5;x.font=`700 ${ff}px ${F}`;}x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
+  x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
+  x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${D}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('made by '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>9){gs-=.5;x.font=`400 ${gs}px ${D}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('made by '+CREATOR,w-12,bottom+band/2);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+
+/* ---------- start ---------- */
+function begin(){newGame();resize();$('title').hidden=true;$('result').hidden=true;$('mute').hidden=false;}
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+/* for checks and recording: play(r) flicks at BEST*(1+r) after `at` seconds (r=0 is a clean crack) */
+function play(r,at){begin();G.plan=r;G.planAt=at||.6;}
+window.__tamago={get G(){return G;},begin,flick,play,shareText,showResult,score,L,BEST,impactSpeed,feedback};
+</script>
+<!--moregames:v1-en Top-left "More games" on the title screen, "Play more games" under the result buttons. Hidden while playing.-->
+<style>
+#moreGames{position:absolute;left:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:#24262b;border-radius:999px;font:700 11px "Zen Maru Gothic","Hiragino Sans",sans-serif;line-height:1.5;padding:4px 10px;text-decoration:none}
+#moreGames[hidden]{display:none}
+#moreGames:focus-visible,#moreGamesBtn:focus-visible{outline:3px solid #ffd23f;outline-offset:3px}
+#result .btns a.btn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
+</style>
+<script>
+(function(){
+  var title=document.getElementById('title'),result=document.getElementById('result');
+  var mute=document.getElementById('mute'),host=(mute&&mute.parentNode)||document.getElementById('app')||document.body;
+  var a=document.createElement('a');a.id='moreGames';a.href='/en/';a.textContent='\u2039 More games';host.appendChild(a);
+  function sync(){a.hidden=title?title.hidden:!!(result&&!result.hidden);}
+  [title,result].forEach(function(el){if(el)new MutationObserver(sync).observe(el,{attributes:true,attributeFilter:['hidden']});});
+  sync();
+  var btns=result&&result.querySelector('.btns');
+  if(btns){var b=document.createElement('a');b.id='moreGamesBtn';b.className='btn ghost';b.href='/en/';b.textContent='Play more games';btns.appendChild(b);}
+})();
+</script>
+<script src="/ads/ads.js" defer></script>
+</body>
+</html>
