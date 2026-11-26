@@ -28,6 +28,7 @@
 - [ketchup](https://tapitta.com/ketchup/)
 - [nenrei](https://tapitta.com/nenrei/)
 - [tissue](https://tapitta.com/tissue/)
+- [kakinotane](https://tapitta.com/kakinotane/)
 
 ## 英語版（/en/）
 

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ぶちまけた柿の種を、落ち葉とまちがえずに拾え。</title>
+<meta name="description" content="道に柿の種をぶちまけた。でもそこは、柿の種そっくりの落ち葉だらけ。本物の10粒だけを10秒で拾え。登場するものはすべて架空です。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ぶちまけた柿の種を、落ち葉とまちがえずに拾え。">
+<meta property="og:description" content="本物は10粒。あとは全部、柿の種そっくりの落ち葉。">
+<meta property="og:url" content="https://tapitta.com/kakinotane/">
+<meta property="og:image" content="https://tapitta.com/kakinotane/play.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+
+/* Spilled rice-cracker seeds on a wet road full of fallen leaves that look just like them. Tap only the real ones. */
+:root{
+  --ink:#24262b; --muted:#6f7480; --paper:#f7f6f2; --red:#c8402c; --red-d:#8f2a1b; --gold:#ffd23f;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#2b2a27}
+body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none;-webkit-touch-callout:none}
+#app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#34363b;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app.shake{animation:shake .45s}
+@keyframes shake{15%{transform:translate(-9px,3px)}30%{transform:translate(8px,-3px)}45%{transform:translate(-6px,2px)}60%{transform:translate(4px,-1px)}75%{transform:translate(-2px,0)}}
+
+.panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));text-align:center}
+.panel[hidden]{display:none}
+#title{background:linear-gradient(rgba(40,24,8,.05),rgba(40,24,8,.35))}
+#title .tcard{background:rgba(255,250,242,.94);border-radius:24px;padding:26px 18px 16px;width:min(100%,340px);box-shadow:0 14px 40px rgba(30,20,5,.35),0 0 0 1px rgba(255,255,255,.6) inset}
+#title .tcard .btn{width:100%}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(22px,7vw,30px);line-height:1.45;margin:0 0 16px;word-break:keep-all;color:#3a1d0e;text-wrap:balance}
+.btn{border:0;border-radius:14px;background:var(--red);color:#fff;font:900 18px var(--body);padding:15px 0;width:min(100%,300px);box-shadow:0 5px 0 var(--red-d);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-d)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9ccd2}
+.btn.x{background:#000;box-shadow:0 5px 0 #444}
+.btn:focus-visible,#mute:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#title .fine{margin-top:22px;font-size:11.5px;color:var(--muted)}
+
+#result{background:var(--paper);justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#result .sheet{width:min(100%,420px);display:flex;flex-direction:column;gap:12px;text-align:left}
+#result h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;border-bottom:3px solid var(--ink);padding-bottom:6px}
+#rScore{margin:0;font-size:17px;font-weight:900;line-height:1.1}
+#rScore b{display:block;font-family:var(--display);font-weight:400;font-size:56px;color:var(--red);font-variant-numeric:tabular-nums;margin-top:2px}
+#rScore b small{font-size:30px;margin-left:2px}
+#rCount{font-size:15px;font-weight:900;margin:0;line-height:1.4}
+#rTitle{font-size:16px;font-weight:900;color:var(--red-d);margin:0}
+#rSub{font-size:14px;font-weight:700;color:var(--muted);margin:0;line-height:1.7}
+#card{width:100%;border-radius:10px;border:1px solid #d6d8dc;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#result .cap{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 -4px}
+#result .btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px}
+#result .btns .btn{width:100%}
+#result .btns .btn[hidden],#result .btns .link[hidden]{display:none}
+#result .link{background:none;border:0;color:var(--muted);font:700 13px var(--body);text-decoration:underline;padding:2px 8px;cursor:pointer}
+#result .fine{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px}
+.fine .me{color:inherit;font-weight:700;text-decoration:underline;margin-left:.5em;display:inline-block;padding:4px 0}
+#title .fine .me{margin:6px 0 0}
+#mute{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:var(--ink);border-radius:999px;font:700 11px var(--body);padding:4px 10px;cursor:pointer}
+#mute[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
+
+
+#result{background:linear-gradient(#fff7ec,#f3e2cf)}
+#result h2{color:#3a1d0e;border-bottom-color:#c0392b}
+#rScore b{color:#c0392b;text-shadow:0 3px 0 rgba(90,30,10,.15)}
+#card{border:0;box-shadow:0 8px 24px rgba(60,20,40,.22)}
+
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" aria-label="雨上がりの道。細長いオレンジ茶色の落ち葉と、本物の柿の種が散らばっている"></canvas>
+
+  <div id="title" class="panel"><div class="tcard">
+    <h1>ぶちまけた柿の種を、<br>落ち葉と<br>まちがえずに拾え。</h1>
+    <p style="margin:0 0 16px;font-size:13px;line-height:1.6">道に柿の種をぶちまけた。<br>…と思ったら、そっくりの落ち葉だらけ。<br>本物の10粒だけを、10秒でタップ。<br>葉っぱをつままずに全部拾えたら満点。</p>
+    <button class="btn" id="startBtn" type="button">はじめる</button>
+    <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+  </div></div>
+
+  <div id="result" class="panel" hidden>
+    <div class="sheet">
+      <h2>柿の種ひろいの結果</h2>
+      <p id="rScore"></p>
+      <p id="rCount"></p>
+      <p id="rTitle"></p>
+      <p id="rSub"></p>
+      <p class="cap" id="cap">画像を長押し（PCは右クリック）で保存できます。</p>
+      <div class="btns">
+        <button class="btn" id="retry" type="button">もう一回</button>
+        <button class="btn x" id="shareX" type="button">Xで共有</button>
+        <button class="btn ghost" id="saveImg" type="button" hidden>画像を保存</button>
+        <button class="link" id="textOnly" type="button" hidden>文字だけでXに投稿</button>
+      </div>
+      <img id="card" alt="結果と、柿の種を拾った道">
+      <p class="fine">登場するものはすべて架空です。<a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    </div>
+  </div>
+
+  <button id="mute" type="button" aria-pressed="false">音 ON</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const GAME='ぶちまけた柿の種を、落ち葉とまちがえずに拾え。';
+const CREATOR='@ordwxjhj';
+const SHARE_URL=(()=>{const h=location.href;if(/^https?:/.test(h)&&!/claude\.ai|claudeusercontent/.test(h))return h.split('#')[0].split('?')[0];return 'https://tapitta.com/kakinotane/';})();
+const BODYF=()=>getComputedStyle(document.documentElement).getPropertyValue('--body');
+const DISP=getComputedStyle(document.documentElement).getPropertyValue('--display');
+
+/* ---------- the rules (sim.js uses the same numbers) ---------- */
+const NS=10;       /* ten real seeds */
+const LIM=10;      /* seconds */
+const LOCK=.6;     /* after pinching a leaf, the hand is busy for 0.6 s */
+const REACH=14;    /* a tap picks the nearest thing whose edge is within 14 px */
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+try{muted=localStorage.getItem('kakinotane-mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+let NB=null;
+function nbuf(){if(!NB){const len=AC.sampleRate*1;NB=AC.createBuffer(1,len,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,vol,freq,delay=0,type='bandpass',q=1){
+  if(muted||!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=nbuf();s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur+.02);
+}
+function tone(f,dur,type='sine',vol=.05,delay=0,f2){
+  if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+}
+
+const SFX={
+  pick(){noise(.04,.09,3200,0,'bandpass',2);tone(1200,.05,'square',.018,0,900);},
+  bag(){noise(.09,.05,5000,.03,'highpass');},
+  leaf(){noise(.16,.07,1800,0,'bandpass',.7);tone(220,.16,'triangle',.05,.02,160);},
+  tick(){tone(1500,.03,'sine',.025);},
+  happy(){tone(880,.1,'sine',.05,0,1320);tone(1320,.12,'sine',.05,.12,1760);tone(1760,.2,'sine',.04,.26,2200);},
+  ok(){tone(660,.09,'sine',.045,0,880);tone(990,.14,'sine',.04,.1,1100);},
+  sad(){tone(330,.3,'triangle',.05,0,220);}
+};
+function syncMute(){$('mute').textContent=muted?'音 OFF':'音 ON';$('mute').setAttribute('aria-pressed',String(muted));}
+syncMute();
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;try{localStorage.setItem('kakinotane-mute',muted?'1':'0');}catch(err){}syncMute();});
+$('mute').addEventListener('pointerdown',e=>e.stopPropagation());
+
+/* ---------- canvas ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=360,H=640,SC=1,DPR=1,BG=null,BGkey='',ST=null,STkey='';
+function resize(){
+  const r=$('app').getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);
+  SC=r.width/360;W=360;H=r.height/SC;cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+}
+addEventListener('resize',()=>{resize();if(G&&G.layoutH&&Math.abs(G.layoutH-H)>1)layoutObjs(G);});try{visualViewport.addEventListener('resize',()=>resize());}catch(e){}
+resize();
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);}
+function ease(e){e=clamp(e,0,1);return e*e*(3-2*e);}
+
+/* ---------- layout: looking down at a wet road; a stone wall and three bollards at the top ---------- */
+function L(){const wall=Math.round(clamp(H*.19,96,150));return {wall,top:wall+34,bot:H-20,bag:{x:54,y:H-58}};}
+function persp(y){const {wall}=L();return .74+.38*clamp((y-wall)/(H-wall),0,1);}
+
+/* ---------- state ---------- */
+let G=null,ROUND=0,PREV=null;
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+/* positions are stored as fractions so the field survives a resize */
+function makeObjs(R){
+  const seeds=[],leaves=[];
+  for(let i=0;i<NS;i++){let u,v,ok,n=0;do{u=.06+R()*.88;v=.04+R()*.92;ok=seeds.every(s=>Math.hypot((s.u-u)*360,(s.v-v)*440)>58)&&!(u<.32&&v>.8);n++;}while(!ok&&n<400);
+    seeds.push({kind:'S',u,v,a:R()*Math.PI*2,len:20+R()*2.5,w:5.6+R()*.7,c:(R()<.5?-1:1)*(.9+R()*.4),hue:14+R()*6,lt:36+R()*6,spk:Math.floor(R()*1e6),z:R()});}
+  const nL=230;
+  for(let i=0;i<nL;i++){const curl=R()<.22;
+    leaves.push({kind:'L',u:R()*1.04-.02,v:R()*1.02-.01,a:R()*Math.PI*2,len:curl?17+R()*6:21+R()*13,w:curl?4.2+R()*1.6:4.6+R()*3,bend:(R()-.5)*(curl?7:4),hue:16+R()*20,sat:50+R()*28,lt:28+R()*22,st:3+R()*4,wet:R(),vein:R()<.85,z:R(),spk:Math.floor(R()*1e6)});}
+  return {seeds,leaves};
+}
+function layoutObjs(g){
+  const {top,bot,bag}=L();const hh=bot-top;
+  for(const o of g.all){o.x=8+o.u*344;o.y=top+o.v*hh;o.s=persp(o.y);}
+  /* leaves keep clear of seeds (a seed is never hidden) and of the bag */
+  for(const o of g.leaves){o.hide=false;
+    if(Math.hypot(o.x-bag.x,o.y-bag.y)<52){o.hide=true;continue;}
+    for(let n=0;n<6;n++){let bad=null;for(const s of g.seeds){const need=o.w*o.s/2+s.len*s.s*.5+1.5;if(Math.hypot(o.x-s.x,o.y-s.y)<need+o.len*o.s*.5&&segDist(o,s.x,s.y)<o.w*o.s/2+s.w*s.s/2+1.5){bad=s;break;}}
+      if(!bad)break;const dx=o.x-bad.x,dy=o.y-bad.y,d=Math.hypot(dx,dy)||1;o.x+=dx/d*6;o.y+=dy/d*6;if(n===5)o.hide=true;}
+    for(const s of g.seeds){if(!o.hide&&segDist(o,s.x,s.y)<s.w*s.s/2+o.w*o.s/2)o.hide=true;}}
+  g.layoutH=H;ST=null;
+}
+function ends(o){const h=o.len*o.s/2,c=Math.cos(o.a),s=Math.sin(o.a);return [o.x-c*h,o.y-s*h,o.x+c*h,o.y+s*h];}
+function segDist(o,px,py){const [ax,ay,bx,by]=ends(o);const dx=bx-ax,dy=by-ay;const t=clamp(((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy),0,1);return Math.hypot(px-ax-dx*t,py-ay-dy*t);}
+function newGame(seed){ROUND++;const R=mulberry(seed||((Date.now()&0xffff)+ROUND*977));
+  const {seeds,leaves}=makeObjs(R);const now=performance.now();
+  G={phase:'play',t0:now,seeds,leaves,all:[...leaves,...seeds].sort((a,b)=>a.z-b.z),k:0,m:0,taps:[],fx:[],lock:0,res:null,shown:false,plan:null,snap:null,round:ROUND,lastPick:now};
+  layoutObjs(G);
+}
+function tsOf(e){const n=performance.now();const t=e&&e.timeStamp;return (t&&Math.abs(n-t)<1000)?t:n;}
+/* a tap at (px,py) logical, time t */
+function tap(px,py,t){
+  if(!G||G.phase!=='play')return;ac();
+  G.taps.push({x:px,y:py,t});
+  if(t<G.lock)return;
+  let best=null,bd=1e9;
+  for(const o of G.all){if(o.got||o.hide)continue;let d=segDist(o,px,py)-o.w*o.s/2;if(o.kind==='S')d-=3;if(d<bd){bd=d;best=o;}}
+  if(!best||bd>REACH){G.fx.push({k:'none',x:px,y:py,t});return;}
+  if(best.kind==='S'){best.got=t;G.k++;G.lastPick=t;ST=null;SFX.pick();setTimeout(()=>SFX.bag(),380);G.fx.push({k:'seed',o:best,t});
+    if(G.k===NS)finish(t);}
+  else{G.m++;G.lock=t+LOCK*1000;best.flip=t;ST=null;SFX.leaf();G.fx.push({k:'leaf',o:best,t});}
+}
+function toLogical(e){const r=cv.getBoundingClientRect();return [(e.clientX-r.left)/SC,(e.clientY-r.top)/SC];}
+cv.addEventListener('pointerdown',e=>{if(!G||G.phase!=='play'||G.plan)return;e.preventDefault();const [px,py]=toLogical(e);tap(px,py,tsOf(e));try{if(navigator.vibrate)navigator.vibrate(8);}catch(err){}});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+
+function step(now){
+  if(G.phase==='title')return;
+  if(G.phase==='play'){
+    if(G.plan){for(const p of G.plan){if(p.done)continue;if(now-G.t0>=p.t*1000){p.done=true;const o=p.k==='S'?G.seeds[p.i]:p.k==='L'?G.leaves.filter(l=>!l.hide)[p.i]:null;
+      const [px,py]=o?[o.x+(p.dx||0),o.y+(p.dy||0)]:[p.x,p.y];G.lastTapXY=[px,py,now];tap(px,py,G.t0+p.t*1000);}}}
+    const left=LIM-(now-G.t0)/1000;
+    if(left<=3&&Math.ceil(left)!==G.tk&&left>0){G.tk=Math.ceil(left);SFX.tick();}
+    if(left<=0)finish(G.t0+LIM*1000);
+  }
+  if(G.phase==='done'){const a=(now-G.tj)/1000;
+    if(!G.played&&a>=1.3){G.played=true;const k=G.res.k;if(k===NS&&!G.res.m)SFX.happy();else if(k>=7)SFX.ok();else if(k<=3)SFX.sad();}
+    if(!G.snap&&a>=1.05)takeSnap();
+    if(a>=2.6&&!G.shown){G.shown=true;showResult();}}
+}
+function finish(t){
+  if(G.phase!=='play')return;
+  const used=Math.min(LIM,(t-G.t0)/1000);
+  G.res={k:G.k,m:G.m,used,per:G.k?(G.lastPick-G.t0)/1000/G.k:0,all:G.k===NS};G.phase='done';G.tj=performance.now();
+}
+
+/* ---------- drawing ---------- */
+function bg(){
+  const key=W+'x'+H+'@'+DPR*SC;if(BG&&BGkey===key)return BG;
+  const c=document.createElement('canvas');c.width=Math.round(W*SC*DPR);c.height=Math.round(H*SC*DPR);const x=c.getContext('2d');x.scale(SC*DPR,SC*DPR);
+  const {wall}=L();const R=mulberry(77);
+  /* asphalt, wet: dark with a cool sheen toward the top */
+  let g=x.createLinearGradient(0,wall,0,H);g.addColorStop(0,'#4d5058');g.addColorStop(.35,'#3c3e44');g.addColorStop(1,'#2e2f33');x.fillStyle=g;x.fillRect(0,wall,W,H-wall);
+  for(let i=0;i<5200;i++){const yy=wall+R()*(H-wall),s=persp(yy);const l=R();x.fillStyle=l<.5?`rgba(15,15,18,${.25+R()*.3})`:`rgba(${150+R()*60},${150+R()*55},${150+R()*50},${.12+R()*.22})`;x.fillRect(R()*W,yy,(.6+R()*1.2)*s,(.5+R()*.9)*s);}
+  /* wet sheen patches reflecting the sky */
+  for(let i=0;i<5;i++){const px=R()*W,py=wall+40+R()*(H-wall-80),rx=60+R()*90;g=x.createRadialGradient(px,py,4,px,py,rx);g.addColorStop(0,'rgba(190,200,215,.16)');g.addColorStop(1,'rgba(190,200,215,0)');x.fillStyle=g;x.save();x.translate(px,py);x.scale(1,.45);x.translate(-px,-py);x.beginPath();x.arc(px,py,rx,0,7);x.fill();x.restore();}
+  /* a puddle */
+  const pu={x:262,y:wall+(H-wall)*.42,rx:74,ry:24};
+  x.save();x.beginPath();x.ellipse(pu.x,pu.y,pu.rx,pu.ry,-.05,0,7);x.clip();
+  g=x.createLinearGradient(0,pu.y-pu.ry,0,pu.y+pu.ry);g.addColorStop(0,'#8c96a6');g.addColorStop(1,'#5a6170');x.fillStyle=g;x.fillRect(pu.x-pu.rx,pu.y-pu.ry,pu.rx*2,pu.ry*2);
+  x.fillStyle='rgba(255,255,255,.14)';x.fillRect(pu.x-pu.rx,pu.y-pu.ry,pu.rx*2,5);
+  for(const bx of [180,270]){g=x.createLinearGradient(bx-7,0,bx+7,0);g.addColorStop(0,'rgba(60,64,72,.7)');g.addColorStop(.5,'rgba(220,225,232,.55)');g.addColorStop(1,'rgba(60,64,72,.7)');x.fillStyle=g;x.fillRect(bx-7,pu.y-pu.ry,14,pu.ry*2);}
+  x.restore();
+  x.strokeStyle='rgba(20,20,24,.5)';x.lineWidth=2;x.beginPath();x.ellipse(pu.x,pu.y,pu.rx,pu.ry,-.05,0,7);x.stroke();
+  x.strokeStyle='rgba(210,220,235,.25)';x.lineWidth=1;x.beginPath();x.ellipse(pu.x,pu.y+1,pu.rx-3,pu.ry-2,-.05,.2,2.9);x.stroke();
+  /* the stone wall */
+  g=x.createLinearGradient(0,0,0,wall);g.addColorStop(0,'#6f6a60');g.addColorStop(1,'#4c4840');x.fillStyle=g;x.fillRect(0,0,W,wall);
+  let yy=-6,row=0;while(yy<wall-6){const rh=22+R()*10;let xx=-R()*30;while(xx<W){const sw=34+R()*34;
+      g=x.createLinearGradient(xx,yy,xx+sw*.3,yy+rh);const b=96+R()*40;g.addColorStop(0,`rgb(${b+18},${b+12},${b})`);g.addColorStop(1,`rgb(${b-26},${b-30},${b-36})`);
+      x.fillStyle=g;x.beginPath();x.moveTo(xx+3,yy+2+R()*2);x.lineTo(xx+sw-3,yy+1+R()*3);x.quadraticCurveTo(xx+sw+1,yy+rh/2,xx+sw-2,yy+rh-2);x.lineTo(xx+4,yy+rh-1-R()*2);x.quadraticCurveTo(xx-1,yy+rh/2,xx+3,yy+2);x.fill();
+      x.fillStyle='rgba(255,255,255,.08)';x.fillRect(xx+5,yy+3,sw-12,2);
+      if(R()<.35){x.fillStyle=`rgba(${80+R()*30},${110+R()*30},${60+R()*20},.55)`;x.beginPath();x.ellipse(xx+R()*sw,yy+rh-3,6+R()*8,2.5,0,0,7);x.fill();}
+      xx+=sw;}
+    yy+=rh;row++;}
+  /* wet foot of the wall and the curb */
+  g=x.createLinearGradient(0,wall-26,0,wall);g.addColorStop(0,'rgba(20,18,15,0)');g.addColorStop(1,'rgba(20,18,15,.55)');x.fillStyle=g;x.fillRect(0,wall-26,W,26);
+  g=x.createLinearGradient(0,wall,0,wall+10);g.addColorStop(0,'#8d8c88');g.addColorStop(1,'#5d5c59');x.fillStyle=g;x.fillRect(0,wall,W,9);
+  x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,wall+9,W,4);
+  /* three metal bollards */
+  for(const bx of [90,180,270]){const by=wall+30,bh=64,bw=13;
+    x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(bx+10,by+2,16,5,.3,0,7);x.fill();
+    g=x.createLinearGradient(bx-bw/2,0,bx+bw/2,0);g.addColorStop(0,'#55595f');g.addColorStop(.3,'#d9dde2');g.addColorStop(.45,'#ffffff');g.addColorStop(.7,'#8e949b');g.addColorStop(1,'#3e4246');
+    x.fillStyle=g;rr(x,bx-bw/2,by-bh,bw,bh,3);x.fill();
+    x.beginPath();x.ellipse(bx,by-bh,bw/2,3.2,0,0,7);x.fillStyle='#c9cdd2';x.fill();x.fillStyle='rgba(255,255,255,.7)';x.beginPath();x.ellipse(bx-1,by-bh-.5,bw/2-3,1.4,0,0,7);x.fill();
+    x.fillStyle='rgba(240,190,60,.9)';x.fillRect(bx-bw/2,by-bh+12,bw,5);x.fillStyle='rgba(255,255,255,.4)';x.fillRect(bx-bw/2+3,by-bh+12,2,5);
+    x.fillStyle='#2e3135';x.beginPath();x.ellipse(bx,by,bw/2+1,3,0,0,7);x.fill();}
+  BG=c;BGkey=key;return c;
+}
+/* a fallen leaf, flat on the road: long, orange-brown, a stem and a midrib, matte */
+function leafPath(x,o){const L2=o.len/2,w=o.w/2,b=o.bend;
+  x.beginPath();x.moveTo(-L2,0);x.bezierCurveTo(-L2*.45,-w*1.9+b,L2*.35,-w*1.5+b,L2,b*.35);x.bezierCurveTo(L2*.35,w*1.5+b,-L2*.45,w*1.9+b,-L2,0);x.closePath();}
+function leaf(x,o,lift){
+  x.save();x.translate(o.x,o.y-(lift||0));x.rotate(o.a);x.scale(o.s,o.s);
+  if(!lift){x.save();x.translate(.8,1.4);leafPath(x,o);x.fillStyle='rgba(0,0,0,.4)';x.fill();x.restore();}
+  const L2=o.len/2;
+  x.strokeStyle=`hsl(${o.hue-4},${o.sat-10}%,${o.lt-12}%)`;x.lineWidth=1.1;x.lineCap='round';x.beginPath();x.moveTo(-L2+1,0);x.quadraticCurveTo(-L2-o.st*.5,.4,-L2-o.st,1.2+o.bend*.2);x.stroke();
+  leafPath(x,o);const g=x.createLinearGradient(-L2,0,L2,0);
+  g.addColorStop(0,`hsl(${o.hue-3},${o.sat}%,${o.lt-7}%)`);g.addColorStop(.45,`hsl(${o.hue+3},${o.sat+6}%,${o.lt+5}%)`);g.addColorStop(1,`hsl(${o.hue},${o.sat}%,${o.lt-3}%)`);x.fillStyle=g;x.fill();
+  /* wet dark patches and edge */
+  if(o.wet>.45){x.save();leafPath(x,o);x.clip();const R=mulberry(o.spk);for(let i=0;i<3;i++){x.fillStyle=`rgba(40,20,10,${.18+R()*.2})`;x.beginPath();x.ellipse((R()-.5)*o.len*.8,(R()-.5)*o.w*.6+o.bend*.5,2+R()*4,1.2+R()*1.6,0,0,7);x.fill();}x.restore();}
+  x.strokeStyle=`hsla(${o.hue-6},${o.sat-15}%,${o.lt-16}%,.55)`;x.lineWidth=.6;leafPath(x,o);x.stroke();
+  if(o.vein){x.strokeStyle=`hsla(${o.hue+6},${o.sat-10}%,${o.lt+16}%,.6)`;x.lineWidth=.55;x.beginPath();x.moveTo(-L2+1,0);x.quadraticCurveTo(0,o.bend*.95,L2-2,o.bend*.35);x.stroke();}
+  x.restore();
+}
+/* a rice-cracker seed: plump crescent, red-brown, glossy, with chili specks */
+function seedPath(x,o){const L2=o.len/2,k=o.len*.2*(o.c||1),N=12,top=[],bot=[];
+  for(let i=0;i<=N;i++){const t=i/N,px=-L2+t*o.len,mid=-k*Math.sin(Math.PI*t)+k*.5,th=o.w*.5*Math.pow(Math.sin(Math.PI*t),.6)+.5;top.push([px,mid-th]);bot.push([px,mid+th*.85]);}
+  x.beginPath();x.moveTo(top[0][0],top[0][1]);for(let i=1;i<=N;i++)x.lineTo(top[i][0],top[i][1]);for(let i=N;i>=0;i--)x.lineTo(bot[i][0],bot[i][1]);x.closePath();}
+function seed(x,o,sc){
+  x.save();x.translate(o.x,o.y);x.rotate(o.a);x.scale(o.s*(sc||1),o.s*(sc||1));
+  if(!sc){x.save();x.translate(.9,1.8);seedPath(x,o);x.fillStyle='rgba(0,0,0,.45)';x.fill();x.restore();}
+  const k=o.len*.2*(o.c||1);seedPath(x,o);const g=x.createLinearGradient(0,-k*.5-o.w*.5,0,-k*.5+o.w*.5);
+  g.addColorStop(0,`hsl(${o.hue+4},60%,${o.lt+9}%)`);g.addColorStop(.5,`hsl(${o.hue},64%,${o.lt}%)`);g.addColorStop(1,`hsl(${o.hue-4},68%,${o.lt-12}%)`);x.fillStyle=g;x.fill();
+  x.save();seedPath(x,o);x.clip();const R=mulberry(o.spk);
+  for(let i=0;i<8;i++){x.fillStyle=R()<.6?'rgba(90,10,0,.5)':'rgba(30,8,0,.45)';x.beginPath();x.arc((R()-.5)*o.len*.8,(R()-.5)*o.w*.6-k*.4,.35+R()*.4,0,7);x.fill();}
+  x.restore();
+  /* a soft gloss along the back */
+  const L2=o.len/2;x.strokeStyle='rgba(255,232,205,.42)';x.lineWidth=.9;x.lineCap='round';x.beginPath();x.moveTo(-L2*.5,-k*.62-o.w*.2);x.quadraticCurveTo(0,-k*1.05-o.w*.32,L2*.5,-k*.62-o.w*.2);x.stroke();
+  x.fillStyle='rgba(255,248,236,.6)';x.beginPath();x.ellipse(-L2*.12,-k*.75-o.w*.24,1.3,.55,0,0,7);x.fill();
+  x.strokeStyle=`hsla(${o.hue-6},70%,${o.lt-22}%,.6)`;x.lineWidth=.5;seedPath(x,o);x.stroke();
+  x.restore();
+}
+/* the lying field (all leaves and the seeds not yet picked), cached */
+function stat(){
+  const key=W+'x'+H+'@'+DPR*SC;if(ST&&STkey===key&&ST.g===G)return ST.c;
+  const c=document.createElement('canvas');c.width=Math.round(W*SC*DPR);c.height=Math.round(H*SC*DPR);const x=c.getContext('2d');x.scale(SC*DPR,SC*DPR);
+  x.drawImage(bg(),0,0,W,H);
+  for(const o of G.all){if(o.hide)continue;if(o.kind==='S'){if(!o.got)seed(x,o);}else if(!o.flip||performance.now()-o.flip>620)leaf(x,o);}
+  bagDraw(x);
+  /* vignette */
+  const g=x.createRadialGradient(180,H*.55,120,180,H*.55,Math.max(W,H)*.8);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(8,6,10,.42)');x.fillStyle=g;x.fillRect(0,0,W,H);
+  ST={c,g:G};STkey=key;return c;
+}
+/* the opened snack bag lying at the bottom left (fictional) */
+function bagDraw(x){const {bag}=L();x.save();x.translate(bag.x,bag.y);x.rotate(-.32);
+  x.fillStyle='rgba(0,0,0,.4)';x.beginPath();x.ellipse(4,8,44,22,0,0,7);x.fill();
+  let g=x.createLinearGradient(-40,0,40,0);g.addColorStop(0,'#1c2a52');g.addColorStop(.5,'#2f4682');g.addColorStop(1,'#16213f');x.fillStyle=g;
+  x.beginPath();x.moveTo(-38,-24);for(let i=0;i<=12;i++)x.lineTo(-38+i*(76/12),-24-(i%2?3:0));x.lineTo(38,24);x.lineTo(-38,24);x.closePath();x.fill();
+  x.fillStyle='rgba(255,255,255,.16)';x.fillRect(-34,-18,68,4);
+  x.fillStyle='#ffd23f';x.beginPath();x.ellipse(-2,4,26,13,0,0,7);x.fill();
+  x.fillStyle='#c0392b';x.font='400 11px '+DISP;x.textAlign='center';x.textBaseline='middle';x.fillText('柿の種',-2,6);
+  x.fillStyle='#1c2a52';x.font='900 6.5px '+BODYF();x.fillText('ぴりっと',-2,-4);
+  /* torn opening, a few seeds peek out */
+  x.fillStyle='#120c08';x.beginPath();x.ellipse(30,-18,13,7,.5,0,7);x.fill();
+  x.restore();
+  for(let i=0;i<3;i++)seed(x,{x:bag.x+30+i*7,y:bag.y-30+i*3,a:.6+i*.9,s:.9,len:20,w:5.8,c:1,hue:16,lt:38,spk:i+5},1);
+}
+function pinch(x,px,py,a){/* thumb and index close on the spot */
+  const e=a<.12?ease(a/.12):1,gap=9*(1-e)+2;x.save();x.globalAlpha=a<.2?1:clamp(1-(a-.2)/.15,0,1);
+  for(const [dx,dy,rot] of [[gap,-gap*1.2,-.7],[-gap*.9,gap,2.2]]){x.save();x.translate(px+dx+(dx>0?10:-8),py+dy+(dy<0?-14:12));x.rotate(rot);
+    x.fillStyle='rgba(0,0,0,.25)';rr(x,-7,-3,30,15,7);x.fill();
+    const g=x.createLinearGradient(0,-7,0,7);g.addColorStop(0,'#f6d3b4');g.addColorStop(1,'#d9a67f');x.fillStyle=g;rr(x,-8,-7,34,14,7);x.fill();
+    x.fillStyle='rgba(255,240,235,.8)';rr(x,-6,-4.5,8,9,3.5);x.fill();x.restore();}
+  x.restore();}
+function bubble(x,px,py,txt,al,col){x.save();x.globalAlpha=al;x.font='900 12px '+BODYF();const w=x.measureText(txt).width+16;px=clamp(px,w/2+6,W-w/2-6);x.fillStyle=col||'rgba(255,255,255,.95)';rr(x,px-w/2,py-12,w,24,12);x.fill();
+  x.fillStyle='#2a2430';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,px,py);x.restore();}
+function scene(x,now){
+  if(!G){x.drawImage(bg(),0,0,W,H);return;}
+  x.drawImage(stat(),0,0,W,H);
+  if(G.phase==='title')return;
+  const {bag}=L();
+  /* leaves being flipped up */
+  for(const o of G.leaves){if(!o.flip)continue;const a=(now-o.flip)/1000;if(a>.62){if(!o.settled){o.settled=true;ST=null;}continue;}
+    o.settled=false;const lift=Math.sin(Math.min(1,a/.62)*Math.PI)*10;x.save();x.translate(o.x,o.y-lift);x.scale(1,Math.cos(a*Math.PI*3.2)*.5+.5);x.translate(-o.x,-o.y+lift);leaf(x,o,lift);x.restore();}
+  /* picked seeds fly into the bag */
+  for(const f of G.fx){const a=(now-f.t)/1000;
+    if(f.k==='seed'&&a<.5){const o=f.o,e=ease(a/.45),px=o.x+(bag.x+26-o.x)*e,py=o.y+(bag.y-26-o.y)*e-Math.sin(e*Math.PI)*60;x.save();x.translate(px,py);x.rotate(a*9);x.translate(-px,-py);seed(x,{...o,x:px,y:py},1-.3*e);x.restore();}
+    if(f.k==='seed'&&a<.8)bubble(x,f.o.x,f.o.y-26,'本物！',a<.55?1:1-(a-.55)/.25,'#ffe27a');
+    if(f.k==='leaf'&&a<.9)bubble(x,f.o.x,f.o.y-26,'葉っぱだった',a<.65?1:1-(a-.65)/.25,'#ffd0c8');
+    if(a<.35&&(f.k==='seed'||f.k==='leaf'))pinch(x,f.k==='seed'?f.o.x:f.o.x,f.o.y,a);
+    if(f.k==='none'&&a<.3){x.save();x.globalAlpha=1-a/.3;x.strokeStyle='rgba(255,255,255,.7)';x.lineWidth=2;x.beginPath();x.arc(f.x,f.y,6+a*30,0,7);x.stroke();x.restore();}}
+  /* after the bell: show where the missed seeds were */
+  if(G.phase==='done'){const a=(now-G.tj)/1000;if(a>.25){for(const o of G.seeds){if(o.got)continue;const p=.5+.5*Math.sin((a-.25)*8);x.save();x.globalAlpha=clamp((a-.25)/.25,0,1);
+      x.strokeStyle='#ffd23f';x.lineWidth=3;x.shadowColor='rgba(0,0,0,.5)';x.shadowBlur=4;x.beginPath();x.arc(o.x,o.y,15+p*3,0,7);x.stroke();x.restore();}}}
+  hud(x,now);
+  if(G.phase==='done'&&!NOOV)overlay((now-G.tj)/1000);
+}
+/* top: ten seed marks and the time left */
+function hud(x,now){const y=62;const left=G.phase==='play'?Math.max(0,LIM-(now-G.t0)/1000):Math.max(0,LIM-G.res.used);
+  x.save();x.fillStyle='rgba(16,12,10,.66)';rr(x,40,y-24,280,48,16);x.fill();
+  for(let i=0;i<NS;i++){const px=62+i*17.5;const got=i<G.k;x.save();x.translate(px,y-8);x.rotate(-.5);
+    if(got){seed(x,{x:0,y:0,a:0,s:.8,len:20,w:5.8,c:1,hue:16,lt:40,spk:i},1);}else{x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=1.2;x.scale(.8,.8);seedPath(x,{len:20,w:5.8,c:1});x.stroke();}x.restore();}
+  x.fillStyle='rgba(255,255,255,.18)';rr(x,54,y+8,214,7,3.5);x.fill();
+  const f=left/LIM;x.fillStyle=left<=3?'#ff6a4a':'#ffd23f';if(f>0){rr(x,54,y+8,Math.max(7,214*f),7,3.5);x.fill();}
+  x.fillStyle=left<=3?'#ff8a6a':'#fff';x.font='400 15px '+DISP;x.textAlign='right';x.textBaseline='middle';x.fillText(left.toFixed(1),310,y+9);
+  if(G.m){x.fillStyle='#ffb3a6';x.font='900 10px '+BODYF();x.textAlign='right';x.fillText('葉っぱ×'+G.m,310,y-10);}
+  x.restore();}
+function overlay(a){
+  if(a<.5)return;const r=G.res,f=clamp((a-.5)/.7,0,1),n=Math.round(r.k*(1-Math.pow(1-f,3)));
+  const pop=f<1?1:1+.12*Math.max(0,1-(a-1.2)/.25)*Math.sin(Math.min(1,(a-1.2)/.25)*Math.PI);
+  const y=Math.round(H*.47);cx.save();cx.globalAlpha=clamp((a-.5)/.2,0,1);
+  cx.fillStyle='rgba(16,12,10,.84)';rr(cx,62,y-50,236,104,22);cx.fill();
+  cx.textAlign='center';cx.textBaseline='middle';cx.fillStyle='#ffe9c8';cx.font='900 14px '+BODYF();cx.fillText(r.all?'10粒ぜんぶ拾えた':'時間切れ。拾えた柿の種',180,y-31);
+  cx.fillStyle='#ffb3a6';cx.font='900 12px '+BODYF();cx.fillText('葉っぱをつまんだ '+r.m+'回',180,y+38);
+  cx.translate(180,y+5);cx.scale(pop,pop);cx.font='400 42px '+DISP;cx.lineWidth=6;cx.strokeStyle='#4a1f0e';cx.lineJoin='round';const t=n+'粒';cx.strokeText(t,0,0);cx.fillStyle=r.all&&!r.m&&f>=1?'#ffd23f':'#fff';cx.fillText(t,0,0);
+  cx.restore();
+  if(f>=1&&r.all&&!r.m){cx.save();for(let i=0;i<18;i++){const ph=((a-1.2)*1.3+rnd(i))%1,al=Math.sin(ph*Math.PI),s=2+rnd(i+9)*5;cx.globalAlpha=al;cx.fillStyle=i%3?'#fff8d0':'#ffd23f';cx.save();cx.translate(180+(rnd(i+2)-.5)*260,y+(rnd(i+4)-.5)*130-ph*14);cx.rotate(ph*2);cx.beginPath();for(let k=0;k<8;k++){const rr2=k%2?s*.32:s;cx.lineTo(Math.cos(k*Math.PI/4)*rr2,Math.sin(k*Math.PI/4)*rr2);}cx.closePath();cx.fill();cx.restore();}cx.restore();}
+}
+function pill(label,lx,ly){cx.save();cx.font='900 14px '+BODYF();cx.textAlign='center';cx.textBaseline='middle';
+  const w=cx.measureText(label).width+22;cx.fillStyle='rgba(16,12,10,.82)';rr(cx,lx-w/2,ly-15,w,30,15);cx.fill();cx.fillStyle='#fff';cx.fillText(label,lx,ly+1);cx.restore();}
+let NOOV=false;
+function render(now){
+  cx.setTransform(DPR*SC,0,0,DPR*SC,0,0);
+  scene(cx,now);
+  if(G&&G.phase==='play'&&G.round===1&&!G.plan&&now-G.t0<2200&&!G.taps.length)pill('本物の柿の種だけタップ（10粒）',196,H-34);
+}
+function loop(now){requestAnimationFrame(loop);if(G)step(now);render(now);}
+requestAnimationFrame(loop);
+
+/* ---------- result ---------- */
+function cropBox(){const y0=88;return {y0,y1:Math.min(H,y0+400)};}
+function takeSnap(){
+  NOOV=true;try{render(performance.now());}catch(e){}NOOV=false;
+  try{const {y0,y1}=cropBox(),r=SC*DPR;const c=document.createElement('canvas');c.width=cv.width;c.height=Math.round((y1-y0)*r);
+    c.getContext('2d').drawImage(cv,0,Math.round(y0*r),cv.width,c.height,0,0,c.width,c.height);G.snap=c;}catch(e){}
+}
+function failed(){return true;}           /* the big number on the card is always "N粒" */
+function score(){return G.res.k;}
+function pct(){return String(G.res.k);}
+function bigWord(r=G.res){return r.k+'粒';}
+function statusLine(r=G.res){
+  if(r.all)return '10粒ぜんぶ・葉っぱをつまんだ'+r.m+'回';
+  return '拾えた'+r.k+'粒・葉っぱをつまんだ'+r.m+'回';
+}
+function titleOf(r=G.res){
+  if(r.all&&!r.m)return '柿の種の目利き';
+  if(r.all)return '葉っぱもつまむ目利き';
+  if(r.m>=4)return '落ち葉ごと食べそうな人';
+  if(r.k>=7)return 'あと少しで完食の人';
+  if(r.k===0)return '全部落ち葉に見えた人';
+  return '道に柿の種を残した人';
+}
+function lineOf(r){
+  if(!r.k)return '1粒も拾えなかった（10秒）';
+  if(r.all)return '10粒を'+r.used.toFixed(2)+'秒で拾った（1粒'+r.per.toFixed(2)+'秒）';
+  return '時間切れ。1粒あたり'+r.per.toFixed(2)+'秒（あと'+(NS-r.k)+'粒）';
+}
+function feedback(){return lineOf(G.res);}
+function shareText(){
+  return `ぶちまけた柿の種を、落ち葉とまちがえずに拾え　10粒中${G.res.k}粒（${statusLine()}）【${titleOf()}】\n${SHARE_URL}`;
+}
+async function showResult(){
+  const r=G.res;
+  $('rScore').innerHTML=`10粒中、拾えた柿の種<b>${r.k}<small>粒</small></b>`;
+  $('rCount').textContent=statusLine();
+  $('rTitle').textContent='【'+titleOf()+'】';
+  const lines=[feedback()];
+  if(PREV)lines.push('前の回：'+PREV.k+'粒・葉っぱ'+PREV.m+'回、'+lineOf(PREV));
+  $('rSub').innerHTML=lines.map(s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))).join('<br>');
+  PREV=r;
+  $('card').style.visibility='hidden';$('result').hidden=false;$('mute').hidden=true;
+  G.cardFile=null;setShareUI();
+  try{$('card').src=await drawCard();$('card').style.visibility='visible';}catch(e){}
+  try{const b=await new Promise(res=>G.cardCanvas.toBlob(res,'image/png'));if(b)G.cardFile=new File([b],'kakinotane-result.png',{type:'image/png'});}catch(e){}
+  setShareUI();
+}
+const TOUCH=matchMedia('(pointer:coarse)').matches;
+function canShareFile(){
+  try{return TOUCH&&!!G.cardFile&&!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[G.cardFile],text:'x'});}catch(e){return false;}
+}
+function canShareText(){return TOUCH&&!!navigator.share;}
+function setShareUI(){
+  const f=canShareFile(),t=canShareText();
+  $('shareX').textContent=f?'結果画像つきでXに共有':'Xで共有';
+  $('textOnly').hidden=!f;
+  $('saveImg').hidden=f||!G.cardFile;
+  $('cap').textContent=f?'共有メニューでXを選ぶと、画像つきで投稿できます。':t?'共有メニューでXを選んでください。結果画像は「画像を保存」か、下の画像の長押しで保存できます。':'結果画像は「画像を保存」か、下の画像の長押しで保存できます。';
+}
+function openIntent(){
+  const url='https://x.com/intent/post?text='+encodeURIComponent(shareText());
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function shareTextOnly(){
+  if(!canShareText()){openIntent();return;}
+  try{await navigator.share({text:shareText()});}catch(e){if(e&&e.name==='AbortError')return;openIntent();}
+}
+$('shareX').addEventListener('click',async()=>{
+  if(!canShareFile()){shareTextOnly();return;}
+  try{await navigator.share({files:[G.cardFile],text:shareText()});}
+  catch(e){if(e&&e.name==='AbortError')return;shareTextOnly();}
+});
+$('textOnly').addEventListener('click',shareTextOnly);
+$('saveImg').addEventListener('click',()=>{
+  if(!G.cardFile)return;const u=URL.createObjectURL(G.cardFile);
+  const a=document.createElement('a');a.href=u;a.download='kakinotane-result.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+});
+$('retry').addEventListener('click',()=>{$('result').hidden=true;$('mute').hidden=false;begin();});
+
+
+async function drawCard(){
+  try{await document.fonts.ready;}catch(e){}
+  if(!G.snap)takeSnap();
+  const k=3,w=360,F='"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif',Df='"Dela Gothic One",sans-serif';
+  const {y0,y1}=cropBox(),sh=y1-y0;
+  const hd=212,top0=hd,fbTop=top0+sh+3,fbH=44,band=46,bottom=fbTop+fbH;
+  const c=document.createElement('canvas');c.width=w*k;c.height=(bottom+band)*k;const x=c.getContext('2d');x.scale(k,k);
+  x.fillStyle='#f7f6f2';x.fillRect(0,0,w,hd);
+  x.textBaseline='alphabetic';x.textAlign='center';
+  x.fillStyle='#6f7480';x.font=`900 16px ${F}`;x.fillText('10粒中、拾えた柿の種',w/2,32);
+  const fl=failed(),n=fl?bigWord():pct(),u=fl?'':'%';let fs=fl?64:96;x.font=`400 ${fs}px ${Df}`;let tw=x.measureText(n).width;
+  while(tw*1.3>w-30&&fs>40){fs-=4;x.font=`400 ${fs}px ${Df}`;tw=x.measureText(n).width;}
+  x.font=`400 ${Math.round(fs*.45)}px ${Df}`;const pw=u?x.measureText(u).width+4:0;
+  const sx=(w-(tw+pw))/2;x.textAlign='left';x.fillStyle='#c0392b';x.font=`400 ${fs}px ${Df}`;x.fillText(n,sx,124);
+  if(u){x.font=`400 ${Math.round(fs*.45)}px ${Df}`;x.fillText(u,sx+tw+4,124);}
+  x.textAlign='center';x.fillStyle='#24262b';let ss=17;x.font=`900 ${ss}px ${F}`;while(x.measureText(statusLine()).width>w-20&&ss>11){ss-=.5;x.font=`900 ${ss}px ${F}`;}x.fillText(statusLine(),w/2,160);
+  x.fillStyle='#8f2a1b';x.font=`900 19px ${F}`;x.fillText('【'+titleOf()+'】',w/2,192);
+  x.fillStyle='#24262b';x.fillRect(0,top0-3,w,3);
+  try{x.drawImage(G.snap,0,0,G.snap.width,G.snap.height,0,top0,w,sh);}catch(e){x.fillStyle='#e2cfb6';x.fillRect(0,top0,w,sh);}
+  x.fillStyle='#24262b';x.fillRect(0,fbTop-3,w,3);x.fillStyle='#f7f6f2';x.fillRect(0,fbTop,w,fbH);
+  x.fillStyle='#6f7480';let ff=14;x.font=`700 ${ff}px ${F}`;while(x.measureText(feedback()).width>w-20&&ff>10){ff-=.5;x.font=`700 ${ff}px ${F}`;}
+  x.textBaseline='middle';x.fillText(feedback(),w/2,fbTop+fbH/2);
+  x.fillStyle='#24262b';x.fillRect(0,bottom,w,band);
+  x.textAlign='left';x.fillStyle='#fff';let gs=14;x.font=`400 ${gs}px ${Df}`;
+  x.save();x.font=`700 9.5px ${F}`;const cw=x.measureText('作った人 '+CREATOR).width;x.restore();
+  while(x.measureText(GAME).width>w-28-cw-10&&gs>8){gs-=.5;x.font=`400 ${gs}px ${Df}`;}
+  x.fillText(GAME,12,bottom+band/2);
+  x.textAlign='right';x.fillStyle='#ffd23f';x.font=`700 9.5px ${F}`;x.fillText('作った人 '+CREATOR,w-12,bottom+band/2);
+  G.cardCanvas=c;
+  return c.toDataURL('image/png');
+}
+
+
+/* ---------- start ---------- */
+function begin(seed){newGame(seed);resize();layoutObjs(G);$('title').hidden=true;$('result').hidden=true;$('mute').hidden=false;}
+$('startBtn').addEventListener('click',()=>{ac();begin();});
+/* the title shows a field too */
+newGame(5);G.phase='title';ROUND=0;
+/* for checks and recording: play(plan, seed). plan: [{t:sec, k:'S'|'L'|'X', i:index, x,y}] */
+function play(plan,seed){begin(seed);G.plan=plan.map(p=>({...p}));}
+window.__kakinotane={get G(){return G;},begin,play,tap,shareText,showResult,score,L,NS,LIM,REACH,segDist};
+
+</script>
+<!--moregames:v1 タイトル画面の左上に「他のゲーム」、結果画面のボタンの下に「ほかのゲームで遊ぶ」。遊んでいる最中は出さない。-->
+<style>
+#moreGames{position:absolute;left:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.15);color:#24262b;border-radius:999px;font:700 11px "Zen Maru Gothic","Hiragino Sans",sans-serif;line-height:1.5;padding:4px 10px;text-decoration:none}
+#moreGames[hidden]{display:none}
+#moreGames:focus-visible,#moreGamesBtn:focus-visible{outline:3px solid #ffd23f;outline-offset:3px}
+#result .btns a.btn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
+</style>
+<script>
+(function(){
+  var title=document.getElementById('title'),result=document.getElementById('result');
+  var mute=document.getElementById('mute'),host=(mute&&mute.parentNode)||document.getElementById('app')||document.body;
+  var a=document.createElement('a');a.id='moreGames';a.href='/';a.textContent='‹ 他のゲーム';host.appendChild(a);
+  function sync(){a.hidden=title?title.hidden:!!(result&&!result.hidden);}
+  [title,result].forEach(function(el){if(el)new MutationObserver(sync).observe(el,{attributes:true,attributeFilter:['hidden']});});
+  sync();
+  var btns=result&&result.querySelector('.btns');
+  if(btns){var b=document.createElement('a');b.id='moreGamesBtn';b.className='btn ghost';b.href='/';b.textContent='ほかのゲームで遊ぶ';btns.appendChild(b);}
+})();
+</script>
+<script src="/ads/ads.js" defer></script>
+</body>
+</html>
