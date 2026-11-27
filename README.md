@@ -31,6 +31,7 @@
 - [kakinotane](https://tapitta.com/kakinotane/)
 - [shampoo](https://tapitta.com/shampoo/)
 - [mochi](https://tapitta.com/mochi/)
+- [nemurineko](https://tapitta.com/nemurineko/)
 
 ## 英語版（/en/）
 
