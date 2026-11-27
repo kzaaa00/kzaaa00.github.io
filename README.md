@@ -32,6 +32,7 @@
 - [shampoo](https://tapitta.com/shampoo/)
 - [mochi](https://tapitta.com/mochi/)
 - [nemurineko](https://tapitta.com/nemurineko/)
+- [strawbukuro](https://tapitta.com/strawbukuro/)
 
 ## 英語版（/en/）
 
