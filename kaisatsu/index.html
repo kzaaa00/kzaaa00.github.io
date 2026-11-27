@@ -66,16 +66,30 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 @media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+<!--tpGuideCss:v1--><style>
+#title.tpG{justify-content:flex-start;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#title.tpG>.tpHero{flex:0 0 auto;width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-bottom:40px;box-sizing:border-box}
+#title .tpHint{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font:700 12px/1.4 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:inherit;opacity:.8;text-decoration:none;white-space:nowrap;padding:8px 12px}
+#title .tpGuide{flex:0 0 auto;width:min(100%,420px);box-sizing:border-box;margin:12px auto 28px;padding:18px 18px 14px;background:#fffdf8;color:#2a2622;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);text-align:left;font:500 14px/1.85 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;letter-spacing:0;-webkit-user-select:text;user-select:text;text-shadow:none}
+#title .tpGuide h2{font:900 15px/1.5 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:#2a2622;margin:18px 0 6px;padding:0 0 4px;border:0;border-bottom:2px solid #e8dfd2;text-align:left;letter-spacing:0;text-transform:none}
+#title .tpGuide h2:first-child{margin-top:0}
+#title .tpGuide p,#title .tpGuide li{font-size:14px;line-height:1.85;color:#2a2622;margin:0 0 8px;opacity:1;font-weight:500}
+#title .tpGuide ol,#title .tpGuide ul{margin:0 0 8px;padding:0 0 0 1.4em}
+#title .tpGuide .tpNav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 2px;font-size:13px}
+#title .tpGuide a{color:#b3261e;font-weight:700;text-decoration:underline}
+</style><!--/tpGuideCss-->
 </head>
 <body>
 <div id="app">
   <canvas id="cv" aria-label="駅の改札を横から見た画面。人が歩いてきて、カードを読み取り部にタッチする"></canvas>
 
-  <div id="title" class="panel">
+  <div id="title" class="panel tpG"><!--tpHero--><div class="tpHero">
     <h1>改札で、<br>止まらずに<br>ICカードをタッチしろ。</h1>
     <p class="how">下のメーターの<b>▼</b>が、<b>緑</b>に入ったらタップ。</p>
     <button class="btn" id="startBtn" type="button">はじめる</button>
     <p class="fine">駅・改札・カードはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    <!--tpHint--><a class="tpHint" href="#tpGuide">▼ 遊び方とコツ</a></div><!--/tpHero-->
+    <!--tpGuide--><section class="tpGuide" id="tpGuide" aria-label="遊び方と解説"><h2>遊び方</h2><ol><li>駅の改札に向かって人が歩いていきます。</li><li>画面の下のメーターの▼が緑の範囲に入ったら、タップしてICカードを読み取り部にタッチします。</li><li>読み取り部の中心からのズレ（mm）が結果です。ずれすぎると「ピンポーン」と改札に止められます。</li></ol><h2>うまくいくコツ</h2><ul><li>歩く速さは一定なので、▼の動きをよく見て、緑の真ん中に来る瞬間を狙いましょう。</li><li>早すぎるとカードを空中でかざすことになり、遅すぎると改札に突っ込みます。</li></ul><h2>このゲームについて</h2><p>交通系ICカードは、読み取り部にかざすだけで改札を通れる便利なものですが、浮かせたままだと読み取れないことがあります。鉄道会社が「しっかりタッチ」を呼びかけているのはそのためです。</p><p>毎日通る改札を、止まらずにスムーズに抜けられたときのちょっとした気持ちよさをゲームにしました。駅・改札・カードはすべて架空です。</p><p class="tpNav"><a href="/">ほかのゲームを見る</a><a href="/about/">このサイトについて</a></p></section><script>(function(){var t=document.getElementById("title");if(!t)return;new MutationObserver(function(){if(!t.hidden)t.scrollTop=0;}).observe(t,{attributes:true,attributeFilter:["hidden"]});})();</script><!--/tpGuide-->
   </div>
 
   <div id="result" class="panel" hidden>

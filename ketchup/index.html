@@ -73,17 +73,32 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+<!--tpGuideCss:v1--><style>
+#title.tpG{justify-content:flex-start;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#title.tpG>.tpHero{flex:0 0 auto;width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-bottom:40px;box-sizing:border-box}
+#title .tpHint{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font:700 12px/1.4 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:inherit;opacity:.8;text-decoration:none;white-space:nowrap;padding:8px 12px}
+#title .tpGuide{flex:0 0 auto;width:min(100%,420px);box-sizing:border-box;margin:12px auto 28px;padding:18px 18px 14px;background:#fffdf8;color:#2a2622;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);text-align:left;font:500 14px/1.85 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;letter-spacing:0;-webkit-user-select:text;user-select:text;text-shadow:none}
+#title .tpGuide h2{font:900 15px/1.5 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:#2a2622;margin:18px 0 6px;padding:0 0 4px;border:0;border-bottom:2px solid #e8dfd2;text-align:left;letter-spacing:0;text-transform:none}
+#title .tpGuide h2:first-child{margin-top:0}
+#title .tpGuide p,#title .tpGuide li{font-size:14px;line-height:1.85;color:#2a2622;margin:0 0 8px;opacity:1;font-weight:500}
+#title .tpGuide ol,#title .tpGuide ul{margin:0 0 8px;padding:0 0 0 1.4em}
+#title .tpGuide .tpNav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 2px;font-size:13px}
+#title .tpGuide a{color:#b3261e;font-weight:700;text-decoration:underline}
+</style><!--/tpGuideCss-->
 </head>
 <body>
 <div id="app">
   <canvas id="cv" aria-label="木のテーブルの上のお皿とオムライスを真上から見た画面。ハートの点線とうすい帯がある"></canvas>
 
-  <div id="title" class="panel"><div class="tcard">
+  <div id="title" class="panel tpG"><!--tpHero--><div class="tpHero"><div class="tcard">
     <h1>オムライスの<br>ケチャップを、<br>はみ出さずに<br>ハートに描け。</h1>
     <p style="margin:0 0 14px;font-size:13px;line-height:1.6">指で1筆、ハートの点線をなぞる。<br>ゆっくりだと太く、速いと細く出る。<br><b>うすい帯からはみ出さずに、<br>点線を全部ケチャップでかくせば100%</b>。</p>
     <button class="btn" id="startBtn" type="button">はじめる</button>
     <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
-  </div></div>
+  </div>
+    <!--tpHint--><a class="tpHint" href="#tpGuide">▼ 遊び方とコツ</a></div><!--/tpHero-->
+    <!--tpGuide--><section class="tpGuide" id="tpGuide" aria-label="遊び方と解説"><h2>遊び方</h2><ol><li>お皿の上のオムライスに、ハートの点線とうすい帯が描かれています。</li><li>指で1筆、点線の上をなぞってケチャップでハートを描きます。どこから描いてもかまいません。</li><li>うすい帯からはみ出さずに、点線を全部ケチャップでかくせば100%です。</li></ol><h2>うまくいくコツ</h2><ul><li>ゆっくりなぞると線が太く、速くなぞると細く出ます。カーブはゆっくり、まっすぐな所は少し速く、と変えると帯からはみ出しにくくなります。</li><li>ハートの先のとがった所と、上のくぼみがむずかしいポイントです。</li></ul><h2>このゲームについて</h2><p>喫茶店や洋食屋さんのオムライスに描かれたケチャップのハート。自分でやってみると、線がかすれたり、ぶにゅっと太くなったりして、意外ときれいに描けません。</p><p>このゲームは、そのハートを1筆で描くゲームです。登場するものはすべて架空です。</p><p class="tpNav"><a href="/">ほかのゲームを見る</a><a href="/about/">このサイトについて</a></p></section><script>(function(){var t=document.getElementById("title");if(!t)return;new MutationObserver(function(){if(!t.hidden)t.scrollTop=0;}).observe(t,{attributes:true,attributeFilter:["hidden"]});})();</script><!--/tpGuide-->
+  </div>
 
   <div id="result" class="panel" hidden>
     <div class="sheet">

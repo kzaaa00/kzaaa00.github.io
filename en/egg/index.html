@@ -64,15 +64,29 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 @media (prefers-reduced-motion:reduce){#app.shake{animation:none}}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+<!--tpGuideCss:v1--><style>
+#title.tpG{justify-content:flex-start;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#title.tpG>.tpHero{flex:0 0 auto;width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-bottom:40px;box-sizing:border-box}
+#title .tpHint{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font:700 12px/1.4 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:inherit;opacity:.8;text-decoration:none;white-space:nowrap;padding:8px 12px}
+#title .tpGuide{flex:0 0 auto;width:min(100%,420px);box-sizing:border-box;margin:12px auto 28px;padding:18px 18px 14px;background:#fffdf8;color:#2a2622;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);text-align:left;font:500 14px/1.85 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;letter-spacing:0;-webkit-user-select:text;user-select:text;text-shadow:none}
+#title .tpGuide h2{font:900 15px/1.5 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:#2a2622;margin:18px 0 6px;padding:0 0 4px;border:0;border-bottom:2px solid #e8dfd2;text-align:left;letter-spacing:0;text-transform:none}
+#title .tpGuide h2:first-child{margin-top:0}
+#title .tpGuide p,#title .tpGuide li{font-size:14px;line-height:1.85;color:#2a2622;margin:0 0 8px;opacity:1;font-weight:500}
+#title .tpGuide ol,#title .tpGuide ul{margin:0 0 8px;padding:0 0 0 1.4em}
+#title .tpGuide .tpNav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 2px;font-size:13px}
+#title .tpGuide a{color:#b3261e;font-weight:700;text-decoration:underline}
+</style><!--/tpGuideCss-->
 </head>
 <body>
 <div id="app">
   <canvas id="cv" aria-label="Holding an egg in one hand above a bowl in a kitchen"></canvas>
 
-  <div id="title" class="panel">
+  <div id="title" class="panel tpG"><!--tpHero--><div class="tpHero">
     <h1>Crack an egg with one hand. No shell allowed.</h1>
     <button class="btn" id="startBtn" type="button">Start</button>
     <p class="fine">Everything in this game is made up. This game has sound.<br><a class="me" href="https://x.com/tapitta_games" target="_blank" rel="noopener">made by @tapitta_games</a></p>
+    <!--tpHint--><a class="tpHint" href="#tpGuide">▼ How to play & tips</a></div><!--/tpHero-->
+    <!--tpGuide--><section class="tpGuide" id="tpGuide" aria-label="How to play and notes"><h2>How to play</h2><ol><li>You are holding an egg in one hand above a bowl.</li><li>Flick down on the screen to knock the egg on the rim of the bowl and crack it in one go.</li><li>Your score is how clean the crack was and how many bits of shell ended up in the bowl.</li></ol><h2>Tips</h2><ul><li>Too soft and the egg does not crack, or the crack is so shallow you have to pry it open. Too hard and you crush it, shell and all.</li><li>The result screen tells you how much stronger or softer than perfect you were. Use it to adjust your next flick.</li></ul><h2>About this game</h2><p>Cracking an egg with one hand is a small kitchen skill that looks effortless when a chef does it and is surprisingly messy when you try it yourself. Many cooks say cracking on a flat counter, not the rim of a bowl, keeps shell out, but this game makes you do it the hard way.</p><p>Everything in the game is made up.</p><p class="tpNav"><a href="/en/">More games</a><a href="/en/about/">About tapitta</a></p></section><script>(function(){var t=document.getElementById("title");if(!t)return;new MutationObserver(function(){if(!t.hidden)t.scrollTop=0;}).observe(t,{attributes:true,attributeFilter:["hidden"]});})();</script><!--/tpGuide-->
   </div>
 
   <div id="result" class="panel" hidden>
