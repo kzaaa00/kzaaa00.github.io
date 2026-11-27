@@ -93,6 +93,18 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 #title .fine .me{margin:6px 0 0}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+<!--tpGuideCss:v1--><style>
+#title.tpG{justify-content:flex-start;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#title.tpG>.tpHero{flex:0 0 auto;width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-bottom:40px;box-sizing:border-box}
+#title .tpHint{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font:700 12px/1.4 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:inherit;opacity:.8;text-decoration:none;white-space:nowrap;padding:8px 12px}
+#title .tpGuide{flex:0 0 auto;width:min(100%,420px);box-sizing:border-box;margin:12px auto 28px;padding:18px 18px 14px;background:#fffdf8;color:#2a2622;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);text-align:left;font:500 14px/1.85 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;letter-spacing:0;-webkit-user-select:text;user-select:text;text-shadow:none}
+#title .tpGuide h2{font:900 15px/1.5 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:#2a2622;margin:18px 0 6px;padding:0 0 4px;border:0;border-bottom:2px solid #e8dfd2;text-align:left;letter-spacing:0;text-transform:none}
+#title .tpGuide h2:first-child{margin-top:0}
+#title .tpGuide p,#title .tpGuide li{font-size:14px;line-height:1.85;color:#2a2622;margin:0 0 8px;opacity:1;font-weight:500}
+#title .tpGuide ol,#title .tpGuide ul{margin:0 0 8px;padding:0 0 0 1.4em}
+#title .tpGuide .tpNav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 2px;font-size:13px}
+#title .tpGuide a{color:#b3261e;font-weight:700;text-decoration:underline}
+</style><!--/tpGuideCss-->
 </head>
 <body>
 <div id="app">
@@ -108,12 +120,14 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
     <div id="opts"></div>
   </div>
 
-  <div id="title" class="panel">
+  <div id="title" class="panel tpG"><!--tpHero--><div class="tpHero">
     <p class="kicker">聖徳太子体験</p>
     <h1>10人の話を、<br>いっぺんに<br>聞き分けろ。</h1>
     <button class="btn" id="startBtn" type="button">聞く</button>
     <p id="loading"></p>
     <p class="fine">音が出ます。イヤホンだと聞き分けやすいです。<br>声は読み上げAIです。登場する人はすべて架空です。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    <!--tpHint--><a class="tpHint" href="#tpGuide">▼ 遊び方とコツ</a></div><!--/tpHero-->
+    <!--tpGuide--><section class="tpGuide" id="tpGuide" aria-label="遊び方と解説"><h2>遊び方</h2><ol><li>「聞く」を押すと、何人もの人が同時にしゃべりだします。</li><li>話が終わったら、誰が何と言ったかを選んで答えます。</li><li>最初は2人。正解すると人数が増えていき、最後は10人が同時に話します。</li></ol><h2>うまくいくコツ</h2><ul><li>イヤホンを使うと、声の左右の位置が分かるので聞き分けやすくなります。</li><li>全部を覚えようとせず、声の高さ（子ども・お年寄り・大人）で1人ずつ聞く相手を決めて追うと、正解しやすくなります。</li><li>話す内容は人物ごとに「それらしい」ものになっています。お坊さんならお寺の話、お侍さんなら刀の話、というように手がかりにできます。</li></ul><h2>このゲームについて</h2><p>聖徳太子には、10人が同時に訴えるのを一度に聞き分けたという伝説があり、「日本書紀」にもそれにあたる話が書かれています。このゲームは、その伝説を実際に体験してみようというものです。</p><p>人は、にぎやかな場所でも聞きたい声だけを拾うことができます（カクテルパーティー効果と呼ばれます）。それでも10人となると、ほとんどの人は聞き分けられません。声は読み上げAIで作っていて、登場する人はすべて架空です。</p><p class="tpNav"><a href="/">ほかのゲームを見る</a><a href="/about/">このサイトについて</a></p></section><script>(function(){var t=document.getElementById("title");if(!t)return;new MutationObserver(function(){if(!t.hidden)t.scrollTop=0;}).observe(t,{attributes:true,attributeFilter:["hidden"]});})();</script><!--/tpGuide-->
   </div>
 
   <div id="result" class="panel" hidden>

@@ -2,6 +2,9 @@
 
 トップページ（ゲーム一覧）: `index.html`。ゲームを足したら `index.html` の一覧にも1枚足す（ai-tegara-binta・ronten-binta・potechi は一覧に出さない）。
 各ゲームには `_parts/moregames.html`（タイトル画面の左上「‹ 他のゲーム」と結果画面の「ほかのゲームで遊ぶ」）を `</body>` の直前に貼る。
+各ゲームのタイトル画面の下には「遊び方・うまくいくコツ・このゲームについて」の文章を入れる（AdSense の審査で「中身のない画面」と判断されないため）。
+文章は `_tools/guides_ja.py`（英語版は `_tools/guides_en.py`）に1本ずつ書いて、`python3 _tools/guide.py` を実行するとページに入る（何度実行しても同じ）。新しいゲームを足したら、ここにも足して実行する。英語版を build_en.py で作り直したあとも実行する。
+AdSense のタグ（head の adsbygoogle.js）は、文章のあるページだけに入れる（omakase・ads/frame.html・広告なしのゲームには入れない）。`sitemap.xml` にもページを足す。
 ほかに `about/`（このサイトについて・お問い合わせ）と `privacy/`（プライバシーポリシー）。
 
 - [ai-tegara-binta](https://tapitta.com/ai-tegara-binta/)

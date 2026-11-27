@@ -73,17 +73,32 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+<!--tpGuideCss:v1--><style>
+#title.tpG{justify-content:flex-start;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#title.tpG>.tpHero{flex:0 0 auto;width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-bottom:40px;box-sizing:border-box}
+#title .tpHint{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font:700 12px/1.4 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:inherit;opacity:.8;text-decoration:none;white-space:nowrap;padding:8px 12px}
+#title .tpGuide{flex:0 0 auto;width:min(100%,420px);box-sizing:border-box;margin:12px auto 28px;padding:18px 18px 14px;background:#fffdf8;color:#2a2622;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);text-align:left;font:500 14px/1.85 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;letter-spacing:0;-webkit-user-select:text;user-select:text;text-shadow:none}
+#title .tpGuide h2{font:900 15px/1.5 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:#2a2622;margin:18px 0 6px;padding:0 0 4px;border:0;border-bottom:2px solid #e8dfd2;text-align:left;letter-spacing:0;text-transform:none}
+#title .tpGuide h2:first-child{margin-top:0}
+#title .tpGuide p,#title .tpGuide li{font-size:14px;line-height:1.85;color:#2a2622;margin:0 0 8px;opacity:1;font-weight:500}
+#title .tpGuide ol,#title .tpGuide ul{margin:0 0 8px;padding:0 0 0 1.4em}
+#title .tpGuide .tpNav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 2px;font-size:13px}
+#title .tpGuide a{color:#b3261e;font-weight:700;text-decoration:underline}
+</style><!--/tpGuideCss-->
 </head>
 <body>
 <div id="app">
   <canvas id="cv" aria-label="Looking down at a wooden cafe table: a straw in a paper wrapper and a glass of iced tea"></canvas>
 
-  <div id="title" class="panel"><div class="tcard">
+  <div id="title" class="panel tpG"><!--tpHero--><div class="tpHero"><div class="tcard">
     <h1>Scrunch the straw wrapper.<br>Don’t tear it.</h1>
     <p style="margin:0 0 16px;font-size:13px;line-height:1.6"><b>Swipe down</b> the wrapper to scrunch it (one stroke).<br>It gets stiffer as it shrinks. Too fast and it tears.<br>You get 1.8 seconds.<br><b>Stop dead</b> at the 2 cm limit for 100% (go past it and it tears).<br>Then a drop of water…</p>
     <button class="btn" id="startBtn" type="button">Start</button>
     <p class="fine">Everything in this game is made up. This game has sound.<br><a class="me" href="https://x.com/tapitta_games" target="_blank" rel="noopener">made by @tapitta_games</a></p>
-  </div></div>
+  </div>
+    <!--tpHint--><a class="tpHint" href="#tpGuide">▼ How to play & tips</a></div><!--/tpHero-->
+    <!--tpGuide--><section class="tpGuide" id="tpGuide" aria-label="How to play and notes"><h2>How to play</h2><ol><li>A straw in a paper wrapper is lying on a cafe table.</li><li>Swipe down the wrapper in one stroke to scrunch it up. You have 1.8 seconds.</li><li>Stop right at the 2 cm limit for a perfect score. Go past it and the wrapper tears. Then add a drop of water and watch it move.</li></ol><h2>Tips</h2><ul><li>The wrapper gets stiffer as it shrinks. Swipe fast at first, then slow down as you get close to the 2 cm line.</li><li>Too slow and you run out of time. Too fast near the end and it tears.</li></ul><h2>About this game</h2><p>If you scrunch up a straw wrapper and drip a little water on it, the paper soaks up the water and the wrapper wiggles like a worm. Lots of people did this as kids at restaurants.</p><p>This game turns that trick into a challenge to scrunch it as short as possible. Everything in it is made up.</p><p class="tpNav"><a href="/en/">More games</a><a href="/en/about/">About tapitta</a></p></section><script>(function(){var t=document.getElementById("title");if(!t)return;new MutationObserver(function(){if(!t.hidden)t.scrollTop=0;}).observe(t,{attributes:true,attributeFilter:["hidden"]});})();</script><!--/tpGuide-->
+  </div>
 
   <div id="result" class="panel" hidden>
     <div class="sheet">

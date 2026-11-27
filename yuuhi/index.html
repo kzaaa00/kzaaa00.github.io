@@ -65,18 +65,32 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+<!--tpGuideCss:v1--><style>
+#title.tpG{justify-content:flex-start;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#title.tpG>.tpHero{flex:0 0 auto;width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-bottom:40px;box-sizing:border-box}
+#title .tpHint{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font:700 12px/1.4 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:inherit;opacity:.8;text-decoration:none;white-space:nowrap;padding:8px 12px}
+#title .tpGuide{flex:0 0 auto;width:min(100%,420px);box-sizing:border-box;margin:12px auto 28px;padding:18px 18px 14px;background:#fffdf8;color:#2a2622;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);text-align:left;font:500 14px/1.85 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;letter-spacing:0;-webkit-user-select:text;user-select:text;text-shadow:none}
+#title .tpGuide h2{font:900 15px/1.5 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:#2a2622;margin:18px 0 6px;padding:0 0 4px;border:0;border-bottom:2px solid #e8dfd2;text-align:left;letter-spacing:0;text-transform:none}
+#title .tpGuide h2:first-child{margin-top:0}
+#title .tpGuide p,#title .tpGuide li{font-size:14px;line-height:1.85;color:#2a2622;margin:0 0 8px;opacity:1;font-weight:500}
+#title .tpGuide ol,#title .tpGuide ul{margin:0 0 8px;padding:0 0 0 1.4em}
+#title .tpGuide .tpNav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 2px;font-size:13px}
+#title .tpGuide a{color:#b3261e;font-weight:700;text-decoration:underline}
+</style><!--/tpGuideCss-->
 </head>
 <body>
 <div id="app">
   <canvas id="gl" aria-label="夕焼けの海辺を、しゃがんだスマホで真横から見た画面。犬が踏ん張っていて、その後ろで夕日が沈んでいく"></canvas>
   <canvas id="hud"></canvas>
 
-  <div id="title" class="panel">
+  <div id="title" class="panel tpG"><!--tpHero--><div class="tpHero">
     <h1>沈む夕日を、<br>犬のおしりから<br>出せ。</h1>
     <p style="margin:0 0 14px;font-weight:900;font-size:14px;line-height:1.6">あなたは飼い主。夕方の海辺の散歩で、<br>犬が夕日に向かって踏ん張りはじめた。</p>
     <p style="margin:0 0 14px;font-size:13px;line-height:1.6">夕日が沈んでいく。タップでシャッター。<br><b>夕日のてっぺんが、おしりから<br>出きった瞬間（すき間0）が100%</b>。<br>早いとまだおしりの中、遅いとすき間があく。</p>
     <button class="btn" id="startBtn" type="button" disabled>はじめる</button>
     <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    <!--tpHint--><a class="tpHint" href="#tpGuide">▼ 遊び方とコツ</a></div><!--/tpHero-->
+    <!--tpGuide--><section class="tpGuide" id="tpGuide" aria-label="遊び方と解説"><h2>遊び方</h2><ol><li>あなたは犬の飼い主。夕方の海辺で、犬が夕日に向かって踏ん張りはじめました。</li><li>しゃがんで真横から見ると、沈んでいく夕日が犬のおしりに重なっています。</li><li>夕日のてっぺんがおしりから出きった瞬間（すき間0）にタップしてシャッターを切ります。</li></ol><h2>うまくいくコツ</h2><ul><li>早いと夕日はまだおしりの中、遅いとすき間があいてしまいます。</li><li>夕日の沈むスピードは一定です。てっぺんがおしりの線に近づいてきたら、指を準備しておきましょう。</li></ul><h2>このゲームについて</h2><p>夕日は、地平線（水平線）に触れてから沈みきるまで、ほんの数分しかかかりません。写真を撮ろうと思ったら、あっという間に沈んでしまうものです。</p><p>「沈む夕日を犬のおしりから出す」という、くだらないけれど狙いたくなる一枚を、本気のタイミングゲームにしました。</p><p class="tpNav"><a href="/">ほかのゲームを見る</a><a href="/about/">このサイトについて</a></p></section><script>(function(){var t=document.getElementById("title");if(!t)return;new MutationObserver(function(){if(!t.hidden)t.scrollTop=0;}).observe(t,{attributes:true,attributeFilter:["hidden"]});})();</script><!--/tpGuide-->
   </div>
 
   <div id="result" class="panel" hidden>

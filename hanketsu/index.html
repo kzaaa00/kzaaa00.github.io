@@ -107,14 +107,28 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 @media (prefers-reduced-motion:reduce){#mark.on{animation-duration:.01s}}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+<!--tpGuideCss:v1--><style>
+#title.tpG{justify-content:flex-start;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#title.tpG>.tpHero{flex:0 0 auto;width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-bottom:40px;box-sizing:border-box}
+#title .tpHint{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font:700 12px/1.4 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:inherit;opacity:.8;text-decoration:none;white-space:nowrap;padding:8px 12px}
+#title .tpGuide{flex:0 0 auto;width:min(100%,420px);box-sizing:border-box;margin:12px auto 28px;padding:18px 18px 14px;background:#fffdf8;color:#2a2622;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);text-align:left;font:500 14px/1.85 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;letter-spacing:0;-webkit-user-select:text;user-select:text;text-shadow:none}
+#title .tpGuide h2{font:900 15px/1.5 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:#2a2622;margin:18px 0 6px;padding:0 0 4px;border:0;border-bottom:2px solid #e8dfd2;text-align:left;letter-spacing:0;text-transform:none}
+#title .tpGuide h2:first-child{margin-top:0}
+#title .tpGuide p,#title .tpGuide li{font-size:14px;line-height:1.85;color:#2a2622;margin:0 0 8px;opacity:1;font-weight:500}
+#title .tpGuide ol,#title .tpGuide ul{margin:0 0 8px;padding:0 0 0 1.4em}
+#title .tpGuide .tpNav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 2px;font-size:13px}
+#title .tpGuide a{color:#b3261e;font-weight:700;text-decoration:underline}
+</style><!--/tpGuideCss-->
 </head>
 <body>
 <div id="app">
-  <div id="title" class="panel">
+  <div id="title" class="panel tpG"><!--tpHero--><div class="tpHero">
     <svg viewBox="0 0 120 90" aria-hidden="true"><g transform="rotate(-28 60 45)"><rect x="18" y="20" width="56" height="26" rx="5" fill="#8a5a2b"/><rect x="14" y="17" width="10" height="32" rx="3" fill="#6b4220"/><rect x="68" y="17" width="10" height="32" rx="3" fill="#6b4220"/><rect x="42" y="44" width="8" height="46" rx="3" fill="#a06a35"/></g><rect x="60" y="74" width="50" height="12" rx="4" fill="#6b4220"/></svg>
     <h1>六法を見ずに、判決を当てろ。</h1>
     <button class="btn" id="startBtn" type="button">はじめる</button>
     <p class="fine">出てくるのは、すべて本当にあった裁判です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    <!--tpHint--><a class="tpHint" href="#tpGuide">▼ 遊び方とコツ</a></div><!--/tpHero-->
+    <!--tpGuide--><section class="tpGuide" id="tpGuide" aria-label="遊び方と解説"><h2>遊び方</h2><ol><li>本当にあった裁判のあらましが出ます。</li><li>3つの選択肢から、裁判所がどんな判決を出したかを当てます。</li><li>全部で10問。何問当てられたかが結果になり、各問題には判決の理由の解説がつきます。</li></ol><h2>うまくいくコツ</h2><ul><li>法律の知識がなくても大丈夫です。「その時代の人がどう考えたか」「どちらの言い分が筋が通っているか」を想像すると当たりやすくなります。</li><li>意外な結論の判決ほど、教科書に載るような有名な事件になっています。直感と逆を選ぶのも一つの手です。</li></ul><h2>このゲームについて</h2><p>出てくるのは、電気を盗んだら窃盗になるのかが争われた「電気窃盗事件」（明治36年）、たぬきとむじなは同じ動物かが問題になった「たぬき・むじな事件」（大正14年）、温泉の湯を引く管をめぐる「宇奈月温泉事件」（昭和10年）など、法律を学ぶ人がよく出会う実際の裁判です。</p><p>説明は分かりやすく短くしています。気になった事件があれば、判決の日付で調べてみてください。</p><p class="tpNav"><a href="/">ほかのゲームを見る</a><a href="/about/">このサイトについて</a></p></section><script>(function(){var t=document.getElementById("title");if(!t)return;new MutationObserver(function(){if(!t.hidden)t.scrollTop=0;}).observe(t,{attributes:true,attributeFilter:["hidden"]});})();</script><!--/tpGuide-->
   </div>
 
   <div id="play" hidden>

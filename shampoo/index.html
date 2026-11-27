@@ -70,17 +70,31 @@ body{font-family:var(--body);color:var(--ink);overflow:hidden;-webkit-tap-highli
 
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2540616238933875" crossorigin="anonymous"></script>
+<!--tpGuideCss:v1--><style>
+#title.tpG{justify-content:flex-start;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#title.tpG>.tpHero{flex:0 0 auto;width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-bottom:40px;box-sizing:border-box}
+#title .tpHint{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font:700 12px/1.4 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:inherit;opacity:.8;text-decoration:none;white-space:nowrap;padding:8px 12px}
+#title .tpGuide{flex:0 0 auto;width:min(100%,420px);box-sizing:border-box;margin:12px auto 28px;padding:18px 18px 14px;background:#fffdf8;color:#2a2622;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);text-align:left;font:500 14px/1.85 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;letter-spacing:0;-webkit-user-select:text;user-select:text;text-shadow:none}
+#title .tpGuide h2{font:900 15px/1.5 "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;color:#2a2622;margin:18px 0 6px;padding:0 0 4px;border:0;border-bottom:2px solid #e8dfd2;text-align:left;letter-spacing:0;text-transform:none}
+#title .tpGuide h2:first-child{margin-top:0}
+#title .tpGuide p,#title .tpGuide li{font-size:14px;line-height:1.85;color:#2a2622;margin:0 0 8px;opacity:1;font-weight:500}
+#title .tpGuide ol,#title .tpGuide ul{margin:0 0 8px;padding:0 0 0 1.4em}
+#title .tpGuide .tpNav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 2px;font-size:13px}
+#title .tpGuide a{color:#b3261e;font-weight:700;text-decoration:underline}
+</style><!--/tpGuideCss-->
 </head>
 <body>
 <div id="app">
   <canvas id="gl" aria-label="湯気の立つお風呂。タイルの棚にポンプ式のシャンプーがあり、その下に手のひらを広げている"></canvas>
   <canvas id="hud"></canvas>
 
-  <div id="title" class="panel">
+  <div id="title" class="panel tpG"><!--tpHero--><div class="tpHero">
     <h1>シャンプーを、<br>ワンプッシュで<br>ちょうど出せ。</h1>
     <p style="margin:0 0 14px;font-size:13px;line-height:1.6">押している間、ポンプが下がって<br>手のひらにシャンプーが出る。離すと止まる。<br><b>点線の円（500円玉の大きさ）に<br>ぴったりで100%</b>。離したあとも少し出る。</p>
     <button class="btn" id="startBtn" type="button" disabled>はじめる</button>
     <p class="fine">登場するものはすべて架空です。音が出ます。<br><a class="me" href="https://x.com/ordwxjhj" target="_blank" rel="noopener">作った人 @ordwxjhj</a></p>
+    <!--tpHint--><a class="tpHint" href="#tpGuide">▼ 遊び方とコツ</a></div><!--/tpHero-->
+    <!--tpGuide--><section class="tpGuide" id="tpGuide" aria-label="遊び方と解説"><h2>遊び方</h2><ol><li>お風呂のタイルの棚に、ポンプ式のシャンプーがあります。その下で手のひらを広げています。</li><li>画面を押している間ポンプが下がり、手のひらにシャンプーが出ます。離すと止まります。</li><li>点線の円（500円玉の大きさ）にぴったりで100%です。</li></ol><h2>うまくいくコツ</h2><ul><li>離したあとも、少しだけシャンプーが出ます。円のふちに届く少し前に離すのがコツです。</li><li>底まで押しきると出すぎてしまいます。結果画面の「離すのが早い／遅い」を見て調整しましょう。</li></ul><h2>このゲームについて</h2><p>シャンプーの容器の横や上には、ギザギザの印がついているものが多くあります。目を閉じて髪を洗っているときや、目の不自由な人でも、リンスやコンディショナーと区別できるようにするための工夫です。</p><p>「ワンプッシュで500円玉くらい」はよく言われる目安ですが、ちょうどの量を出すのは意外と難しいものです。</p><p class="tpNav"><a href="/">ほかのゲームを見る</a><a href="/about/">このサイトについて</a></p></section><script>(function(){var t=document.getElementById("title");if(!t)return;new MutationObserver(function(){if(!t.hidden)t.scrollTop=0;}).observe(t,{attributes:true,attributeFilter:["hidden"]});})();</script><!--/tpGuide-->
   </div>
 
   <div id="result" class="panel" hidden>
