@@ -57,6 +57,20 @@ G = {
         'In Japan, people peel the label and remove the cap before recycling plastic bottles, so most labels have a perforation. Even so, labels often tear halfway and stay stuck around the bottle.',
         'The bottled water in the game is a made-up product.',
     ]),
+'mochi': dict(
+    play=[
+        'Three square rice cakes (mochi) are toasting on a small charcoal grill.',
+        'They puff up one at a time. Tap to take the one that is puffing off the grill and onto the plate.',
+        'How puffed it was when you took it off is your score. If it bursts, it scores 0. 98% or more on all three is a perfect.',
+    ],
+    tips=[
+        'When it starts hissing steam, it is about to burst. From there it is a split second, so take it off as soon as you see the steam.',
+        'One burst mochi drags your average way down. Aim for three good ones instead of one great one.',
+    ],
+    about=[
+        'Grilled mochi is a winter snack in Japan. As it heats, the water inside turns to steam. The outside hardens first, so the soft part balloons out all at once and finally splits open.',
+        'This game asks you to wait for that puff and pull it off just before it pops. Everything in it is made up.',
+    ]),
 'shampoo': dict(
     play=[
         'You are in the shower with a pump bottle of shampoo above your open palm.',
