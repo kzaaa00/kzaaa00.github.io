@@ -29,6 +29,7 @@
 - [nenrei](https://tapitta.com/nenrei/)
 - [tissue](https://tapitta.com/tissue/)
 - [kakinotane](https://tapitta.com/kakinotane/)
+- [mochi](https://tapitta.com/mochi/)
 - [shampoo](https://tapitta.com/shampoo/)
 
 ## 英語版（/en/）
