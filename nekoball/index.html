@@ -386,7 +386,7 @@ function bigWord(){return 'ほどけた';}
 function statusLine(r=G.res){
   if(r.kind==='late')return '何事もなかった猫が2匹写った';
   if(r.perfect)return 'ほどける直前の、まんまるネコボール';
-  if(r.pc>=90)return '足もとまであと'+Math.round((r.dt*(Z0-ZG)/TROLL)*100)+'cm';
+  if(r.dt<=TROLL)return '足もとまであと'+Math.max(1,Math.round((r.dt*(Z0-ZG)/TROLL)*100))+'cm';
   return 'まだ石段の上を転がっていた';
 }
 function titleOf(r=G.res){
