@@ -37,6 +37,7 @@ AdSense のタグ（head の adsbygoogle.js）は、文章のあるページだ�
 - [nemurineko](https://tapitta.com/nemurineko/)
 - [strawbukuro](https://tapitta.com/strawbukuro/)
 - [curtain](https://tapitta.com/curtain/)
+- [nekoball](https://tapitta.com/nekoball/)
 
 ## 英語版（/en/）
 
